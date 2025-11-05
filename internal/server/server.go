@@ -65,3 +65,11 @@ func (s *Server) Config() *Config {
 	defer s.mu.RUnlock()
 	return s.config
 }
+
+// UpdateConfig updates the server configuration atomically.
+// The update function is called with the current config under a write lock.
+func (s *Server) UpdateConfig(update func(*Config)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	update(s.config)
+}

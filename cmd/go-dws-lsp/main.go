@@ -72,6 +72,10 @@ func main() {
 		Initialized: lsp.Initialized,
 		Shutdown:    lsp.Shutdown,
 		SetTrace:    func(context *glsp.Context, params *protocol.SetTraceParams) error { return nil },
+
+		// Workspace notifications
+		WorkspaceDidChangeConfiguration:   lsp.DidChangeConfiguration,
+		WorkspaceDidChangeWorkspaceFolders: lsp.DidChangeWorkspaceFolders,
 	}
 
 	// Create GLSP server
