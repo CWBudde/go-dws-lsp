@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.523,=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.CommandLine.Arguments.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.134,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.dproj=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.380,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Capabilities.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Capabilities.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.474,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Document.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Document.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.562,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.LanguageServer.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.LanguageServer.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.471,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Window.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Document.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.433,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Utils.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Utils.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.227,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Workspace.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Workspace.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.821,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Capabilities.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.860,C:\Users\Public\Code\DWScript-Language-Server\Server\DWScriptServer.dproj=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.729,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Configuration.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Settings.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.632,C:\Users\Public\Code\DWScript-Language-Server\Server\dls.Main.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Main.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.864,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.IO.Pipe.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.IO.Pipe.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.626,C:\Users\Public\Code\DWScript-Language-Server\Server\dws.Classes.Common.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Common.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.201,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Common.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Common.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.310,C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.JSON.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.JSON.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.140,C:\Users\Christian\Documents\Embarcadero\Studio\Projekte\Project2.dproj=C:\Users\Public\Code\DWScript-Language-Server\Server\DWScriptServer.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.057,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsc.Classes.Configuration.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.015,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dls.Main.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.545,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.520,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.JSON.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.192,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dws.Classes.Common.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.161,=C:\Users\Christian\Documents\Embarcadero\Studio\Projekte\Unit3.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.910,=C:\Users\Christian\Documents\Embarcadero\Studio\Projekte\Unit3.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.179,=C:\Users\Christian\Documents\Embarcadero\Studio\Projekte\Unit3.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.281,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Workspace.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.729,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.360,C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas=C:\Users\Public\Code\DWScript-Language-Server\Server\dwsls.Classes.Window.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.431,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.902,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.177,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.322,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.074,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.588,=C:\Users\Public\Code\DWScript-Language-Server\Server\Unit1.pas</Transaction>
+    <Transaction>2025.10.09 09:54:45.922,=E:\Public\DWScript-Language-Server\Server\dwsc.RequestManager.pas</Transaction>
+  </Transactions>
+</BorlandProject>
