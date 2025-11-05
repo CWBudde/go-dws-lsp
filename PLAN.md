@@ -31,142 +31,142 @@ The implementation is organized into the following phases:
 
 ### Tasks (21)
 
-- [ ] **Initialize Go module (go-dws-lsp) and repository structure**
-  - [ ] Run `go mod init github.com/CWBudde/go-dws-lsp`
-  - [ ] Create directory structure:
-    - [ ] `cmd/go-dws-lsp/` for main executable
-    - [ ] `internal/lsp/` for LSP protocol handlers
-    - [ ] `internal/server/` for server state management
-    - [ ] `internal/document/` for document management
-    - [ ] `internal/analysis/` for DWScript integration
+- [x] **Initialize Go module (go-dws-lsp) and repository structure**
+  - [x] Run `go mod init github.com/CWBudde/go-dws-lsp`
+  - [x] Create directory structure:
+    - [x] `cmd/go-dws-lsp/` for main executable
+    - [x] `internal/lsp/` for LSP protocol handlers
+    - [x] `internal/server/` for server state management
+    - [x] `internal/document/` for document management
+    - [x] `internal/analysis/` for DWScript integration
     - [ ] `pkg/protocol/` for LSP types (if extending GLSP)
-  - [ ] Create `.gitignore` with Go-specific entries
-  - [ ] Initialize git repository with initial commit
+  - [x] Create `.gitignore` with Go-specific entries
+  - [x] Initialize git repository with initial commit
 
-- [ ] **Create main.go to launch the server**
-  - [ ] Create `cmd/go-dws-lsp/main.go`
-  - [ ] Implement command-line flag parsing structure
-  - [ ] Add version constant/variable
-  - [ ] Implement basic main() function skeleton
+- [x] **Create main.go to launch the server**
+  - [x] Create `cmd/go-dws-lsp/main.go`
+  - [x] Implement command-line flag parsing structure
+  - [x] Add version constant/variable
+  - [x] Implement basic main() function skeleton
 
-- [ ] **Set up separate packages for LSP handlers and DWScript integration**
-  - [ ] Create `internal/lsp/handlers.go` for handler registration
-  - [ ] Create `internal/analysis/analyzer.go` for DWScript wrapper
-  - [ ] Define clear package boundaries and interfaces
-  - [ ] Document package responsibilities in package comments
+- [x] **Set up separate packages for LSP handlers and DWScript integration**
+  - [x] Create `internal/lsp/handlers.go` for handler registration
+  - [x] Create `internal/analysis/analyzer.go` for DWScript wrapper
+  - [x] Define clear package boundaries and interfaces
+  - [x] Document package responsibilities in package comments
 
-- [ ] **Add GLSP dependency (github.com/tliron/glsp) for LSP protocol handling**
-  - [ ] Run `go get github.com/tliron/glsp`
-  - [ ] Run `go get github.com/tliron/commonlog`
-  - [ ] Verify dependencies compile correctly
-  - [ ] Study GLSP examples to understand usage patterns
+- [x] **Add GLSP dependency (github.com/tliron/glsp) for LSP protocol handling**
+  - [x] Run `go get github.com/tliron/glsp`
+  - [x] Run `go get github.com/tliron/commonlog`
+  - [x] Verify dependencies compile correctly
+  - [x] Study GLSP examples to understand usage patterns
 
-- [ ] **Implement Initialize request handler with server capabilities**
-  - [ ] Create `internal/lsp/initialize.go`
-  - [ ] Define handler function: `func Initialize(context *glsp.Context, params *protocol.InitializeParams) (interface{}, error)`
-  - [ ] Extract workspace folders from params
-  - [ ] Store initialization info in server state
-  - [ ] Build and return InitializeResult
+- [x] **Implement Initialize request handler with server capabilities**
+  - [x] Create `internal/lsp/initialize.go`
+  - [x] Define handler function: `func Initialize(context *glsp.Context, params *protocol.InitializeParams) (interface{}, error)`
+  - [x] Extract workspace folders from params
+  - [x] Store initialization info in server state
+  - [x] Build and return InitializeResult
 
-- [ ] **Advertise text document sync, diagnostics, hover, completion capabilities in Initialize**
-  - [ ] Set `TextDocumentSyncKind` to `Incremental`
-  - [ ] Enable `TextDocumentSyncOptions` with openClose, change, willSave flags
-  - [ ] Mark `HoverProvider: true`
-  - [ ] Mark `DefinitionProvider: true`
-  - [ ] Mark `ReferencesProvider: true`
-  - [ ] Mark `DocumentSymbolProvider: true`
-  - [ ] Set `CompletionProvider` with trigger characters (`.`, etc.)
-  - [ ] Mark `SignatureHelpProvider` with trigger characters (`(`, `,`)
+- [x] **Advertise text document sync, diagnostics, hover, completion capabilities in Initialize**
+  - [x] Set `TextDocumentSyncKind` to `Incremental`
+  - [x] Enable `TextDocumentSyncOptions` with openClose, change, willSave flags
+  - [x] Mark `HoverProvider: true`
+  - [x] Mark `DefinitionProvider: true`
+  - [x] Mark `ReferencesProvider: true`
+  - [x] Mark `DocumentSymbolProvider: true`
+  - [x] Set `CompletionProvider` with trigger characters (`.`, etc.)
+  - [x] Mark `SignatureHelpProvider` with trigger characters (`(`, `,`)
 
-- [ ] **Provide ServerInfo name and version in Initialize response**
-  - [ ] Set `serverInfo.name = "go-dws-lsp"`
-  - [ ] Set `serverInfo.version` from build constant
-  - [ ] Include in InitializeResult
+- [x] **Provide ServerInfo name and version in Initialize response**
+  - [x] Set `serverInfo.name = "go-dws-lsp"`
+  - [x] Set `serverInfo.version` from build constant
+  - [x] Include in InitializeResult
 
-- [ ] **Implement Shutdown request handler**
-  - [ ] Create handler: `func Shutdown(context *glsp.Context) error`
+- [x] **Implement Shutdown request handler**
+  - [x] Create handler: `func Shutdown(context *glsp.Context) error`
   - [ ] Set shutdown flag in server state
   - [ ] Clean up resources (close files, flush caches)
-  - [ ] Return nil on success
+  - [x] Return nil on success
 
-- [ ] **Implement STDIN/STDOUT transport layer using server.RunStdio()**
-  - [ ] Create GLSP server instance
-  - [ ] Register all handlers with server
-  - [ ] Call `server.RunStdio()` for stdio mode
-  - [ ] Handle errors and exit codes
+- [x] **Implement STDIN/STDOUT transport layer using server.RunStdio()**
+  - [x] Create GLSP server instance
+  - [x] Register all handlers with server
+  - [x] Call `server.RunStdio()` for stdio mode
+  - [x] Handle errors and exit codes
 
-- [ ] **Add TCP transport option (-tcp flag) for debugging**
-  - [ ] Add `-tcp` flag (default: false)
-  - [ ] Add `-port` flag (default: 8765)
-  - [ ] Implement TCP server mode using `server.RunTCP()`
-  - [ ] Log connection info when TCP mode active
+- [x] **Add TCP transport option (-tcp flag) for debugging**
+  - [x] Add `-tcp` flag (default: false)
+  - [x] Add `-port` flag (default: 8765)
+  - [x] Implement TCP server mode using `server.RunTCP()`
+  - [x] Log connection info when TCP mode active
 
-- [ ] **Parse command-line flags for transport mode selection**
-  - [ ] Use `flag` package for CLI parsing
-  - [ ] Add `-tcp` boolean flag
-  - [ ] Add `-port` int flag
-  - [ ] Add `-log-level` string flag (debug, info, warn, error)
-  - [ ] Parse flags before server initialization
+- [x] **Parse command-line flags for transport mode selection**
+  - [x] Use `flag` package for CLI parsing
+  - [x] Add `-tcp` boolean flag
+  - [x] Add `-port` int flag
+  - [x] Add `-log-level` string flag (debug, info, warn, error)
+  - [x] Parse flags before server initialization
 
-- [ ] **Set up logging facility with adjustable verbosity (LSPTrace flag)**
-  - [ ] Initialize commonlog logger
-  - [ ] Create log level mapping (debug, info, warn, error)
-  - [ ] Configure log output destination (stderr or file)
-  - [ ] Add structured logging helpers
+- [x] **Set up logging facility with adjustable verbosity (LSPTrace flag)**
+  - [x] Initialize commonlog logger
+  - [x] Create log level mapping (debug, info, warn, error)
+  - [x] Configure log output destination (stderr or file)
+  - [x] Add structured logging helpers
 
-- [ ] **Add command-line flags or environment variables for log level control**
-  - [ ] Implement `-log-level` flag handling
+- [x] **Add command-line flags or environment variables for log level control**
+  - [x] Implement `-log-level` flag handling
   - [ ] Support `LSP_LOG_LEVEL` environment variable
-  - [ ] Support `-log-file` flag for output redirection
-  - [ ] Default to error-level logging in production
+  - [x] Support `-log-file` flag for output redirection
+  - [x] Default to error-level logging in production
 
-- [ ] **Design lightweight struct-based architecture instead of heavy classes**
-  - [ ] Define `Server` struct to hold server state
-  - [ ] Define `DocumentStore` for managing open documents
+- [x] **Design lightweight struct-based architecture instead of heavy classes**
+  - [x] Define `Server` struct to hold server state
+  - [x] Define `DocumentStore` for managing open documents
   - [ ] Define `SymbolIndex` for workspace symbols
-  - [ ] Use composition over inheritance
-  - [ ] Keep structs focused on data, functions separate
+  - [x] Use composition over inheritance
+  - [x] Keep structs focused on data, functions separate
 
-- [ ] **Set up global/package-level state with mutex protection for open documents**
-  - [ ] Create `DocumentStore` struct with `sync.RWMutex`
-  - [ ] Implement `documents map[string]*Document` field
-  - [ ] Add methods: `Get()`, `Set()`, `Delete()`, `List()`
-  - [ ] Ensure all access goes through mutex-protected methods
+- [x] **Set up global/package-level state with mutex protection for open documents**
+  - [x] Create `DocumentStore` struct with `sync.RWMutex`
+  - [x] Implement `documents map[string]*Document` field
+  - [x] Add methods: `Get()`, `Set()`, `Delete()`, `List()`
+  - [x] Ensure all access goes through mutex-protected methods
 
-- [ ] **Implement thread-safe access patterns using sync.RWMutex**
-  - [ ] Use `RLock()`/`RUnlock()` for read operations
-  - [ ] Use `Lock()`/`Unlock()` for write operations
-  - [ ] Document locking requirements in comments
-  - [ ] Avoid holding locks during long operations
+- [x] **Implement thread-safe access patterns using sync.RWMutex**
+  - [x] Use `RLock()`/`RUnlock()` for read operations
+  - [x] Use `Lock()`/`Unlock()` for write operations
+  - [x] Document locking requirements in comments
+  - [x] Avoid holding locks during long operations
 
-- [ ] **Implement explicit error handling throughout (Go idioms)**
-  - [ ] Return errors from all functions that can fail
-  - [ ] Use `errors.New()` or `fmt.Errorf()` for error creation
-  - [ ] Check errors immediately: `if err != nil { return err }`
-  - [ ] Log errors before returning them to caller
-  - [ ] Never panic in production code paths
+- [x] **Implement explicit error handling throughout (Go idioms)**
+  - [x] Return errors from all functions that can fail
+  - [x] Use `errors.New()` or `fmt.Errorf()` for error creation
+  - [x] Check errors immediately: `if err != nil { return err }`
+  - [x] Log errors before returning them to caller
+  - [x] Never panic in production code paths
 
-- [ ] **Write test for initialize request/response cycle**
-  - [ ] Create `internal/lsp/initialize_test.go`
-  - [ ] Mock GLSP context
-  - [ ] Create test InitializeParams
-  - [ ] Call Initialize handler
-  - [ ] Assert InitializeResult contains expected capabilities
-  - [ ] Verify serverInfo is populated correctly
+- [x] **Write test for initialize request/response cycle**
+  - [x] Create `internal/lsp/initialize_test.go`
+  - [x] Mock GLSP context
+  - [x] Create test InitializeParams
+  - [x] Call Initialize handler
+  - [x] Assert InitializeResult contains expected capabilities
+  - [x] Verify serverInfo is populated correctly
 
-- [ ] **Write test for shutdown request handling**
-  - [ ] Create test that calls Shutdown handler
+- [x] **Write test for shutdown request handling**
+  - [x] Create test that calls Shutdown handler
   - [ ] Verify server state is marked as shutting down
-  - [ ] Verify no errors returned
+  - [x] Verify no errors returned
   - [ ] Verify resources are cleaned up
 
-- [ ] **Manually verify server lifecycle with minimal LSP client**
-  - [ ] Write simple test script that sends initialize JSON-RPC message
-  - [ ] Verify InitializeResult is received
+- [x] **Manually verify server lifecycle with minimal LSP client**
+  - [x] Write simple test script that sends initialize JSON-RPC message
+  - [x] Verify InitializeResult is received
   - [ ] Send initialized notification
   - [ ] Send shutdown request
   - [ ] Send exit notification
-  - [ ] Verify process exits cleanly
+  - [x] Verify process exits cleanly
 
 **Outcome**: A running LSP server skeleton that communicates over STDIO/TCP, correctly handles the initialize/shutdown lifecycle, and logs its activity.
 
