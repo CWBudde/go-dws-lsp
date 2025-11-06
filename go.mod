@@ -1,8 +1,11 @@
 module github.com/CWBudde/go-dws-lsp
 
-go 1.23.3
+go 1.25.0
 
-require github.com/tliron/glsp v0.2.2
+require (
+	github.com/cwbudde/go-dws v0.0.0-20251105231406-19f37368140d
+	github.com/tliron/glsp v0.2.2
+)
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

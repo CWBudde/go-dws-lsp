@@ -1,389 +1,386 @@
 # go-dws-lsp Implementation Plan
 
-This document provides a detailed, phase-by-phase implementation plan for the go-dws Language Server Protocol (LSP) implementation. The plan breaks down the project into 13 distinct phases, each focusing on a specific feature or set of related features.
+This document provides a detailed, phase-by-phase implementation plan for the go-dws Language Server Protocol (LSP) implementation. The plan breaks down the project into 14 distinct phases, each focusing on a specific feature or set of related features.
 
 ## Overview
 
 The implementation is organized into the following phases:
 
-- **Phase 0**: Foundation - LSP Scaffolding and Setup
-- **Phase 1**: Document Synchronization
-- **Phase 2**: Diagnostics (Syntax and Semantic Analysis)
-- **Phase 3**: Hover Support
-- **Phase 4**: Go-to Definition
-- **Phase 5**: Find References
-- **Phase 6**: Document Symbols
-- **Phase 7**: Workspace Symbols
-- **Phase 8**: Code Completion
-- **Phase 9**: Signature Help
-- **Phase 10**: Rename Support
-- **Phase 11**: Semantic Tokens
-- **Phase 12**: Code Actions
-- **Phase 13**: Testing, Quality, and Finalization
+- **Phase 0**: Foundation - LSP Scaffolding and Setup ✅
+- **Phase 1**: Document Synchronization ✅
+- **Phase 2**: go-dws API Enhancements for LSP Integration
+- **Phase 3**: Diagnostics (Syntax and Semantic Analysis)
+- **Phase 4**: Hover Support
+- **Phase 5**: Go-to Definition
+- **Phase 6**: Find References
+- **Phase 7**: Document Symbols
+- **Phase 8**: Workspace Symbols
+- **Phase 9**: Code Completion
+- **Phase 10**: Signature Help
+- **Phase 11**: Rename Support
+- **Phase 12**: Semantic Tokens
+- **Phase 13**: Code Actions
+- **Phase 14**: Testing, Quality, and Finalization
 
-**Total Tasks**: 254
-
----
-
-## Phase 0: Foundation - LSP Scaffolding and Setup
-
-**Goal**: Establish the basic language server framework: communication, lifecycle handling, and project structure.
-
-### Tasks (21)
-
-- [x] **Initialize Go module (go-dws-lsp) and repository structure**
-  - [x] Run `go mod init github.com/CWBudde/go-dws-lsp`
-  - [x] Create directory structure:
-    - [x] `cmd/go-dws-lsp/` for main executable
-    - [x] `internal/lsp/` for LSP protocol handlers
-    - [x] `internal/server/` for server state management
-    - [x] `internal/document/` for document management
-    - [x] `internal/analysis/` for DWScript integration
-    - [ ] `pkg/protocol/` for LSP types (if extending GLSP)
-  - [x] Create `.gitignore` with Go-specific entries
-  - [x] Initialize git repository with initial commit
-
-- [x] **Create main.go to launch the server**
-  - [x] Create `cmd/go-dws-lsp/main.go`
-  - [x] Implement command-line flag parsing structure
-  - [x] Add version constant/variable
-  - [x] Implement basic main() function skeleton
-
-- [x] **Set up separate packages for LSP handlers and DWScript integration**
-  - [x] Create `internal/lsp/handlers.go` for handler registration
-  - [x] Create `internal/analysis/analyzer.go` for DWScript wrapper
-  - [x] Define clear package boundaries and interfaces
-  - [x] Document package responsibilities in package comments
-
-- [x] **Add GLSP dependency (github.com/tliron/glsp) for LSP protocol handling**
-  - [x] Run `go get github.com/tliron/glsp`
-  - [x] Run `go get github.com/tliron/commonlog`
-  - [x] Verify dependencies compile correctly
-  - [x] Study GLSP examples to understand usage patterns
-
-- [x] **Implement Initialize request handler with server capabilities**
-  - [x] Create `internal/lsp/initialize.go`
-  - [x] Define handler function: `func Initialize(context *glsp.Context, params *protocol.InitializeParams) (interface{}, error)`
-  - [x] Extract workspace folders from params
-  - [x] Store initialization info in server state
-  - [x] Build and return InitializeResult
-
-- [x] **Advertise text document sync, diagnostics, hover, completion capabilities in Initialize**
-  - [x] Set `TextDocumentSyncKind` to `Incremental`
-  - [x] Enable `TextDocumentSyncOptions` with openClose, change, willSave flags
-  - [x] Mark `HoverProvider: true`
-  - [x] Mark `DefinitionProvider: true`
-  - [x] Mark `ReferencesProvider: true`
-  - [x] Mark `DocumentSymbolProvider: true`
-  - [x] Set `CompletionProvider` with trigger characters (`.`, etc.)
-  - [x] Mark `SignatureHelpProvider` with trigger characters (`(`, `,`)
-
-- [x] **Provide ServerInfo name and version in Initialize response**
-  - [x] Set `serverInfo.name = "go-dws-lsp"`
-  - [x] Set `serverInfo.version` from build constant
-  - [x] Include in InitializeResult
-
-- [x] **Implement Shutdown request handler**
-  - [x] Create handler: `func Shutdown(context *glsp.Context) error`
-  - [ ] Set shutdown flag in server state
-  - [ ] Clean up resources (close files, flush caches)
-  - [x] Return nil on success
-
-- [x] **Implement STDIN/STDOUT transport layer using server.RunStdio()**
-  - [x] Create GLSP server instance
-  - [x] Register all handlers with server
-  - [x] Call `server.RunStdio()` for stdio mode
-  - [x] Handle errors and exit codes
-
-- [x] **Add TCP transport option (-tcp flag) for debugging**
-  - [x] Add `-tcp` flag (default: false)
-  - [x] Add `-port` flag (default: 8765)
-  - [x] Implement TCP server mode using `server.RunTCP()`
-  - [x] Log connection info when TCP mode active
-
-- [x] **Parse command-line flags for transport mode selection**
-  - [x] Use `flag` package for CLI parsing
-  - [x] Add `-tcp` boolean flag
-  - [x] Add `-port` int flag
-  - [x] Add `-log-level` string flag (debug, info, warn, error)
-  - [x] Parse flags before server initialization
-
-- [x] **Set up logging facility with adjustable verbosity (LSPTrace flag)**
-  - [x] Initialize commonlog logger
-  - [x] Create log level mapping (debug, info, warn, error)
-  - [x] Configure log output destination (stderr or file)
-  - [x] Add structured logging helpers
-
-- [x] **Add command-line flags or environment variables for log level control**
-  - [x] Implement `-log-level` flag handling
-  - [ ] Support `LSP_LOG_LEVEL` environment variable
-  - [x] Support `-log-file` flag for output redirection
-  - [x] Default to error-level logging in production
-
-- [x] **Design lightweight struct-based architecture instead of heavy classes**
-  - [x] Define `Server` struct to hold server state
-  - [x] Define `DocumentStore` for managing open documents
-  - [ ] Define `SymbolIndex` for workspace symbols
-  - [x] Use composition over inheritance
-  - [x] Keep structs focused on data, functions separate
-
-- [x] **Set up global/package-level state with mutex protection for open documents**
-  - [x] Create `DocumentStore` struct with `sync.RWMutex`
-  - [x] Implement `documents map[string]*Document` field
-  - [x] Add methods: `Get()`, `Set()`, `Delete()`, `List()`
-  - [x] Ensure all access goes through mutex-protected methods
-
-- [x] **Implement thread-safe access patterns using sync.RWMutex**
-  - [x] Use `RLock()`/`RUnlock()` for read operations
-  - [x] Use `Lock()`/`Unlock()` for write operations
-  - [x] Document locking requirements in comments
-  - [x] Avoid holding locks during long operations
-
-- [x] **Implement explicit error handling throughout (Go idioms)**
-  - [x] Return errors from all functions that can fail
-  - [x] Use `errors.New()` or `fmt.Errorf()` for error creation
-  - [x] Check errors immediately: `if err != nil { return err }`
-  - [x] Log errors before returning them to caller
-  - [x] Never panic in production code paths
-
-- [x] **Write test for initialize request/response cycle**
-  - [x] Create `internal/lsp/initialize_test.go`
-  - [x] Mock GLSP context
-  - [x] Create test InitializeParams
-  - [x] Call Initialize handler
-  - [x] Assert InitializeResult contains expected capabilities
-  - [x] Verify serverInfo is populated correctly
-
-- [x] **Write test for shutdown request handling**
-  - [x] Create test that calls Shutdown handler
-  - [ ] Verify server state is marked as shutting down
-  - [x] Verify no errors returned
-  - [ ] Verify resources are cleaned up
-
-- [x] **Manually verify server lifecycle with minimal LSP client**
-  - [x] Write simple test script that sends initialize JSON-RPC message
-  - [x] Verify InitializeResult is received
-  - [x] Send initialized notification (deferred to integration testing)
-  - [x] Send shutdown request (deferred to integration testing)
-  - [x] Send exit notification (deferred to integration testing)
-  - [x] Verify process exits cleanly
-
-**Outcome**: ✅ COMPLETE - A running LSP server skeleton that communicates over STDIO/TCP, correctly handles the initialize/shutdown lifecycle, and logs its activity.
+**Total Tasks**: 296 (254 original + 42 go-dws enhancements)
 
 ---
 
-## Phase 1: Document Synchronization
+## Phase 0: Foundation - LSP Scaffolding and Setup ✅
 
-**Goal**: Implement basic text document management for real-time synchronization with the editor.
+**Status**: COMPLETE (21/21 tasks)
 
-### Tasks (15)
+**Implemented:**
+- Go module structure with `cmd/go-dws-lsp/` and `internal/` packages
+- GLSP library integration for LSP protocol handling
+- Initialize/Shutdown request handlers with full server capabilities advertised
+- STDIO and TCP transport modes with command-line flags (`-tcp`, `-port`, `-log-level`, `-log-file`)
+- Thread-safe `DocumentStore` with mutex-protected operations
+- `Server` struct for state management with `Config` support
+- Comprehensive initialize tests in `internal/lsp/initialize_test.go`
 
-- [ ] **Implement textDocument/didOpen handler**
-  - [ ] Create `internal/lsp/text_document.go`
-  - [ ] Define handler: `func DidOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error`
-  - [ ] Extract URI, text, languageId, version from params
-  - [ ] Create Document struct instance with content
-  - [ ] Store document in DocumentStore
-  - [ ] Log document open event
-  - [ ] Trigger initial parse and diagnostics
-
-- [ ] **Store document content in in-memory map (URI to struct with text and metadata)**
-  - [ ] Define `Document` struct with fields: URI, Text, Version, LanguageID, AST, Diagnostics
-  - [ ] Implement `DocumentStore.Set(uri string, doc *Document)`
-  - [ ] Use map[string]*Document for storage
-  - [ ] Ensure mutex protection during insertion
-
-- [ ] **Record document version on open**
-  - [ ] Store `version` field from DidOpenTextDocumentParams
-  - [ ] Use version for conflict detection in later operations
-  - [ ] Increment local version counter on changes
-
-- [ ] **Implement textDocument/didClose handler**
-  - [ ] Define handler: `func DidClose(context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error`
-  - [ ] Extract URI from params
-  - [ ] Remove document from DocumentStore
-  - [ ] Log document close event
-
-- [ ] **Remove document from map on close to free memory**
-  - [ ] Implement `DocumentStore.Delete(uri string)`
-  - [ ] Clear AST references to allow garbage collection
-  - [ ] Acquire write lock before deletion
-  - [ ] Release lock after deletion
-
-- [ ] **Send empty diagnostics array on document close**
-  - [ ] Create empty PublishDiagnosticsParams for URI
-  - [ ] Send notification via GLSP context
-  - [ ] Verify client clears error markers
-
-- [ ] **Implement textDocument/didChange handler**
-  - [ ] Define handler: `func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error`
-  - [ ] Extract URI and version from params
-  - [ ] Retrieve document from store
-  - [ ] Iterate through contentChanges array
-  - [ ] Apply each change to document text
-  - [ ] Update document version
-  - [ ] Trigger re-parse and diagnostics
-
-- [ ] **Mark TextDocumentSync capability as incremental in Initialize**
-  - [ ] Set `TextDocumentSyncKind = Incremental` in capabilities
-  - [ ] Configure `TextDocumentSyncOptions.Change = Incremental`
-  - [ ] Enable `OpenClose = true`
-
-- [ ] **Implement full sync mode (replace whole text on change)**
-  - [ ] Check if `contentChange.Range == nil` (indicates full sync)
-  - [ ] Replace entire document text with `contentChange.Text`
-  - [ ] Update version number
-  - [ ] Mark document as modified
-
-- [ ] **Implement incremental sync mode (apply text diffs)**
-  - [ ] Check if `contentChange.Range != nil` (indicates incremental)
-  - [ ] Extract Range (start line/char, end line/char) and new text
-  - [ ] Calculate byte offset from line/character positions
-  - [ ] Apply text replacement at specified range
-  - [ ] Adjust document length tracking
-
-- [ ] **Implement utility to apply TextDocumentContentChangeEvent diffs**
-  - [ ] Create `internal/document/text_edit.go`
-  - [ ] Implement `ApplyContentChange(text string, change ContentChangeEvent) (string, error)`
-  - [ ] Convert LSP Position (line, character) to byte offset
-  - [ ] Handle multi-line text correctly
-  - [ ] Handle UTF-8/UTF-16 encoding issues (LSP uses UTF-16 code units)
-  - [ ] Return updated text or error
-
-- [ ] **Ensure thread safety when updating document content**
-  - [ ] Acquire write lock before any document mutation
-  - [ ] Hold lock for minimal duration (just the update)
-  - [ ] Use defer to ensure lock release
-  - [ ] Test concurrent didChange events
-
-- [ ] **Handle workspace/didChangeConfiguration notification**
-  - [ ] Define handler: `func DidChangeConfiguration(context *glsp.Context, params *protocol.DidChangeConfigurationParams) error`
-  - [ ] Parse settings from params.Settings (JSON)
-  - [ ] Update server configuration state
-  - [ ] Log configuration changes
-
-- [ ] **Set up data structures for configuration settings**
-  - [ ] Define `Config` struct with fields: MaxProblems, Trace, etc.
-  - [ ] Add `Config` to Server struct
-  - [ ] Implement default configuration values
-  - [ ] Support dynamic configuration updates
-
-- [ ] **Write unit tests for document open/close/change handlers**
-  - [ ] Test didOpen: verify document stored correctly
-  - [ ] Test didClose: verify document removed
-  - [ ] Test didChange full sync: verify text replaced
-  - [ ] Test didChange incremental: verify diff applied
-  - [ ] Test version tracking across operations
-  - [ ] Test concurrent access (race detector enabled)
-
-- [ ] **Test incremental update: open valid code, introduce error, fix error**
-  - [ ] Create integration test with valid DWScript code
-  - [ ] Simulate didOpen
-  - [ ] Verify no diagnostics published
-  - [ ] Simulate didChange introducing syntax error
-  - [ ] Verify diagnostic published
-  - [ ] Simulate didChange fixing error
-  - [ ] Verify diagnostics cleared
-
-**Outcome**: The LSP server fully supports document synchronization, properly tracking open documents and their changes in memory.
+**Deferred:**
+- [ ] **SymbolIndex implementation** (Phase 3) - Workspace symbol tracking
+- [ ] **Shutdown cleanup** (Phase 14) - Resource cleanup and shutdown flag (low priority, server exits cleanly)
 
 ---
 
-## Phase 2: Diagnostics (Syntax and Semantic Analysis)
+## Phase 1: Document Synchronization ✅
+
+**Status**: COMPLETE (15/15 tasks)
+
+**Implemented:**
+- `textDocument/didOpen`, `didClose`, `didChange` handlers in `internal/lsp/text_document.go`
+- Full and incremental sync modes with version tracking
+- UTF-16 to UTF-8 position conversion utilities in `internal/document/text_edit.go`
+- Empty diagnostics notification on document close
+- `workspace/didChangeConfiguration` handler with dynamic config updates
+- 27 comprehensive tests (10 handler tests + 17 text editing tests) - all passing
+
+**Deferred:**
+- [ ] **Trigger diagnostics on open/change** (Phase 3) - Parse and publish diagnostics when documents open or change
+
+---
+
+## Phase 2: go-dws API Enhancements for LSP Integration
+
+**Goal**: Enhance the go-dws library to expose structured errors, AST access, and position metadata needed for LSP features.
+
+**Repository**: `github.com/CWBudde/go-dws`
+
+**Why This Phase**: The current go-dws API provides string-based errors and opaque Program objects. To implement LSP features (hover, go-to-definition, completion, etc.), we need structured error information, direct AST access, and position metadata on AST nodes.
+
+### Tasks (42)
+
+- [ ] **Create structured error types in pkg/dwscript**
+  - [ ] Create `pkg/dwscript/error.go` file
+  - [ ] Define `Error` struct with fields:
+    - [ ] `Message string` - The error message
+    - [ ] `Line int` - 1-based line number
+    - [ ] `Column int` - 1-based column number
+    - [ ] `Length int` - Length of the error span in characters
+    - [ ] `Severity string` - Either "error" or "warning"
+    - [ ] `Code string` - Optional error code (e.g., "E001", "W002")
+  - [ ] Implement `Error() string` method to satisfy error interface
+  - [ ] Add documentation explaining 1-based indexing
+
+- [ ] **Update CompileError to use structured errors**
+  - [ ] Change `CompileError.Errors` from `[]string` to `[]Error`
+  - [ ] Update `CompileError.Error()` method to format structured errors
+  - [ ] Ensure backwards compatibility or document breaking change
+  - [ ] Update all internal code that creates CompileError instances
+
+- [ ] **Update internal lexer to capture position metadata**
+  - [ ] Verify `internal/lexer/token.go` includes position information
+  - [ ] Ensure Token struct has `Line`, `Column`, `Offset` fields
+  - [ ] If missing, add position tracking to tokenization
+  - [ ] Add `Length` calculation for tokens (end - start)
+
+- [ ] **Update internal parser to capture error positions**
+  - [ ] Modify parser error generation to include line/column
+  - [ ] Change from `fmt.Sprintf()` strings to structured Error objects
+  - [ ] Extract position from current token when error occurs
+  - [ ] Calculate error span length where possible
+  - [ ] Update all parser error sites (syntax errors)
+
+- [ ] **Update internal semantic analyzer to capture error positions**
+  - [ ] Modify semantic analysis error generation
+  - [ ] Include position from AST node being analyzed
+  - [ ] Set appropriate severity (error vs warning)
+  - [ ] Add error codes for common semantic errors:
+    - [ ] "E_UNDEFINED_VAR" - Undefined variable
+    - [ ] "E_TYPE_MISMATCH" - Type mismatch
+    - [ ] "E_WRONG_ARG_COUNT" - Wrong argument count
+    - [ ] "W_UNUSED_VAR" - Unused variable (warning)
+    - [ ] "W_UNUSED_PARAM" - Unused parameter (warning)
+
+- [ ] **Add position metadata to AST node types**
+  - [ ] Open `internal/ast/ast.go`
+  - [ ] Define `Position` struct:
+    - [ ] `Line int` - 1-based line number
+    - [ ] `Column int` - 1-based column number
+    - [ ] `Offset int` - Byte offset from start of file
+  - [ ] Define `Node` interface with position methods:
+    - [ ] `Pos() Position` - Returns start position
+    - [ ] `End() Position` - Returns end position
+  - [ ] Document that all AST node types must implement Node interface
+
+- [ ] **Add position fields to statement AST nodes**
+  - [ ] Add `StartPos Position` and `EndPos Position` fields to:
+    - [ ] `Program`
+    - [ ] `BlockStatement`
+    - [ ] `ExpressionStatement`
+    - [ ] `AssignmentStatement`
+    - [ ] `IfStatement`
+    - [ ] `WhileStatement`
+    - [ ] `ForStatement`
+    - [ ] `ReturnStatement`
+    - [ ] `BreakStatement`
+    - [ ] `ContinueStatement`
+  - [ ] Implement `Pos()` and `End()` methods for each
+
+- [ ] **Add position fields to expression AST nodes**
+  - [ ] Add `StartPos Position` and `EndPos Position` fields to:
+    - [ ] `Identifier`
+    - [ ] `IntegerLiteral`
+    - [ ] `FloatLiteral`
+    - [ ] `StringLiteral`
+    - [ ] `BooleanLiteral`
+    - [ ] `BinaryExpression`
+    - [ ] `UnaryExpression`
+    - [ ] `CallExpression`
+    - [ ] `IndexExpression`
+    - [ ] `MemberExpression`
+  - [ ] Implement `Pos()` and `End()` methods for each
+
+- [ ] **Add position fields to declaration AST nodes**
+  - [ ] Add `StartPos Position` and `EndPos Position` fields to:
+    - [ ] `FunctionDeclaration`
+    - [ ] `ProcedureDeclaration`
+    - [ ] `VariableDeclaration`
+    - [ ] `ConstantDeclaration`
+    - [ ] `TypeDeclaration`
+    - [ ] `ClassDeclaration`
+    - [ ] `FieldDeclaration`
+    - [ ] `MethodDeclaration`
+    - [ ] `PropertyDeclaration`
+  - [ ] Implement `Pos()` and `End()` methods for each
+
+- [ ] **Update parser to populate position information**
+  - [ ] Modify parser to capture start position before parsing node
+  - [ ] Capture end position after parsing node
+  - [ ] Set `StartPos` from first token of construct
+  - [ ] Set `EndPos` from last token of construct
+  - [ ] Handle multi-line constructs correctly
+  - [ ] Test position accuracy with sample programs
+
+- [ ] **Export AST types as public API**
+  - [ ] Create `pkg/ast/` directory
+  - [ ] Copy AST types from `internal/ast/` to `pkg/ast/`
+  - [ ] Update package declaration to `package ast`
+  - [ ] Add comprehensive package documentation
+  - [ ] Export all node types (capitalize struct names if needed)
+  - [ ] Keep `internal/ast/` as alias to `pkg/ast/` for internal use
+  - [ ] OR: Make `internal/ast/` types directly accessible (less preferred)
+
+- [ ] **Add AST accessor to Program type**
+  - [ ] Open `pkg/dwscript/dwscript.go`
+  - [ ] Add method: `func (p *Program) AST() *ast.Program`
+  - [ ] Return the underlying parsed AST
+  - [ ] Add documentation explaining AST structure
+  - [ ] Explain that AST is read-only, modifications won't affect execution
+  - [ ] Add example in documentation showing AST traversal
+
+- [ ] **Add parse-only mode for LSP use cases**
+  - [ ] Add method to Engine: `func (e *Engine) Parse(source string) (*ast.Program, error)`
+  - [ ] Parse source code without semantic analysis
+  - [ ] Return partial AST even if syntax errors exist (best-effort)
+  - [ ] Return structured syntax errors only (no type checking errors)
+  - [ ] Document use case: "For editors/IDEs that need AST without full compilation"
+  - [ ] Optimize for speed (skip expensive semantic checks)
+
+- [ ] **Create visitor pattern for AST traversal**
+  - [ ] Create `pkg/ast/visitor.go`
+  - [ ] Define `Visitor` interface:
+    - [ ] `Visit(node Node) (w Visitor)` - Standard Go AST walker pattern
+  - [ ] Implement `Walk(v Visitor, node Node)` function
+  - [ ] Handle all node types in Walk
+  - [ ] Add documentation with examples
+  - [ ] Add `Inspect(node Node, f func(Node) bool)` helper
+
+- [ ] **Add symbol table access for semantic information**
+  - [ ] Create `pkg/dwscript/symbols.go`
+  - [ ] Define `Symbol` struct:
+    - [ ] `Name string`
+    - [ ] `Kind string` - "variable", "function", "class", "parameter", etc.
+    - [ ] `Type string` - Type name
+    - [ ] `Position Position` - Definition location
+    - [ ] `Scope string` - "local", "global", "class"
+  - [ ] Add method: `func (p *Program) Symbols() []Symbol`
+  - [ ] Extract symbols from semantic analyzer's symbol table
+  - [ ] Include all declarations with their positions
+
+- [ ] **Add type information access**
+  - [ ] Add method: `func (p *Program) TypeAt(pos Position) (string, bool)`
+  - [ ] Return type of expression at given position
+  - [ ] Use semantic analyzer's type information
+  - [ ] Return ("", false) if position doesn't map to typed expression
+  - [ ] Add method: `func (p *Program) DefinitionAt(pos Position) (*Position, bool)`
+  - [ ] Return definition location for identifier at position
+
+- [ ] **Update error formatting for better IDE integration**
+  - [ ] Ensure error messages are clear and concise
+  - [ ] Remove redundant position info from message text
+  - [ ] Use consistent error message format
+  - [ ] Add suggested fixes where applicable (future enhancement)
+  - [ ] Document error message format
+
+- [ ] **Write unit tests for structured errors**
+  - [ ] Create `pkg/dwscript/error_test.go`
+  - [ ] Test Error struct creation and formatting
+  - [ ] Test CompileError with multiple structured errors
+  - [ ] Test that positions are accurate
+  - [ ] Test severity levels (error vs warning)
+  - [ ] Test error codes if implemented
+
+- [ ] **Write unit tests for AST position metadata**
+  - [ ] Create `pkg/ast/position_test.go`
+  - [ ] Test position on simple statements
+  - [ ] Test position on nested expressions
+  - [ ] Test position on multi-line constructs
+  - [ ] Test Pos() and End() methods on all node types
+  - [ ] Verify 1-based line numbering
+  - [ ] Test with Unicode/multi-byte characters
+
+- [ ] **Write unit tests for AST export**
+  - [ ] Create `pkg/ast/ast_test.go`
+  - [ ] Test that Program.AST() returns valid AST
+  - [ ] Test AST traversal with visitor pattern
+  - [ ] Test AST structure for various programs
+  - [ ] Test that AST nodes have correct types
+  - [ ] Test accessing child nodes
+
+- [ ] **Write unit tests for Parse() mode**
+  - [ ] Test parsing valid code
+  - [ ] Test parsing code with syntax errors
+  - [ ] Verify partial AST is returned on error
+  - [ ] Test that structured errors are returned
+  - [ ] Compare Parse() vs Compile() behavior
+  - [ ] Measure performance difference
+
+- [ ] **Write integration tests**
+  - [ ] Create `pkg/dwscript/integration_test.go`
+  - [ ] Test complete workflow: Parse → AST → Symbols
+  - [ ] Test error recovery scenarios
+  - [ ] Test position mapping accuracy
+  - [ ] Use real DWScript code samples from testdata/
+  - [ ] Verify no regressions in existing functionality
+
+- [ ] **Update package documentation**
+  - [ ] Update `pkg/dwscript/doc.go` with new API
+  - [ ] Add examples for accessing AST
+  - [ ] Add examples for structured errors
+  - [ ] Document position coordinate system (1-based)
+  - [ ] Add migration guide if breaking changes
+  - [ ] Document LSP use case
+
+- [ ] **Update README with new capabilities**
+  - [ ] Add section on LSP/IDE integration
+  - [ ] Show example of using structured errors
+  - [ ] Show example of AST traversal
+  - [ ] Show example of symbol extraction
+  - [ ] Link to pkg.go.dev documentation
+  - [ ] Note minimum Go version if changed
+
+- [ ] **Verify backwards compatibility or version bump**
+  - [ ] Run all existing tests
+  - [ ] Check if API changes are backwards compatible
+  - [ ] If breaking: plan major version bump (v2.0.0)
+  - [ ] If compatible: plan minor version bump (v1.x.0)
+  - [ ] Update go.mod version if needed
+  - [ ] Document breaking changes in CHANGELOG
+
+- [ ] **Performance testing**
+  - [ ] Benchmark parsing with position tracking
+  - [ ] Ensure position metadata doesn't significantly slow parsing
+  - [ ] Target: <10% performance impact
+  - [ ] Benchmark Parse() vs Compile()
+  - [ ] Profile memory usage with AST export
+  - [ ] Optimize if needed
+
+- [ ] **Tag release and publish**
+  - [ ] Create git tag for new version
+  - [ ] Push tag to trigger pkg.go.dev update
+  - [ ] Write release notes
+  - [ ] Announce new LSP-friendly features
+  - [ ] Update go-dws-lsp dependency to new version
+
+**Outcome**: The go-dws library exposes structured errors with precise position information, provides direct AST access with position metadata on all nodes, and includes symbol table access - enabling full LSP feature implementation in go-dws-lsp.
+
+**Estimated Effort**: 3-5 days of focused development
+
+---
+
+## Phase 3: Diagnostics (Syntax and Semantic Analysis)
 
 **Goal**: Provide real-time error reporting with syntax and semantic diagnostics.
 
+**Prerequisites**: Phase 2 must be complete (structured errors and AST access available in go-dws)
+
 ### Tasks (27)
 
-- [ ] **Integrate go-dws lexer.New() for tokenization**
-  - [ ] Import `github.com/CWBudde/go-dws/pkg/lexer` package
-  - [ ] Create `internal/analysis/parse.go`
-  - [ ] Implement `ParseDocument(text string, filename string) (*ast.Program, []Diagnostic, error)`
-  - [ ] Create lexer instance: `l := lexer.New(text)`
-  - [ ] Verify lexer initialization succeeds
+- [x] **Integrate go-dws engine for parsing and compilation** ✅
+  - [x] Import `github.com/cwbudde/go-dws/pkg/dwscript` package ✅
+  - [x] Update `internal/analysis/parse.go` ✅
+  - [x] Implement `ParseDocument(text string, filename string) ([]Diagnostic, error)` ✅
+  - [x] Create engine instance: `engine, err := dwscript.New()` ✅
+  - [x] Handle engine creation errors ✅
 
-- [ ] **Integrate go-dws parser.New() for AST generation**
-  - [ ] Import `github.com/CWBudde/go-dws/pkg/parser` package
-  - [ ] Create parser from lexer: `p := parser.New(l)`
-  - [ ] Handle parser creation errors
+- [ ] **Update ParseDocument to use Phase 2 structured errors** (After Phase 2)
+  - [ ] Replace string-based error parsing with structured `dwscript.Error` types
+  - [ ] Access `CompileError.Errors []Error` directly
+  - [ ] Use `Error.Line`, `Error.Column`, `Error.Length` for position
+  - [ ] Map `Error.Severity` to LSP DiagnosticSeverity
+  - [ ] Use `Error.Code` for diagnostic codes if available
 
-- [ ] **Parse document text into AST on open/change using p.ParseProgram()**
-  - [ ] Call `program := p.ParseProgram()`
-  - [ ] Check if program is nil (parsing failed completely)
-  - [ ] Handle parser panics with recover() if needed
-  - [ ] Log parse duration for performance monitoring
+- [ ] **Update Document struct to store compiled Program** (After Phase 2)
+  - [ ] Add `Program *dwscript.Program` field to Document struct in `internal/server/document_store.go`
+  - [ ] Store compiled program after successful compilation
+  - [ ] Access AST via `program.AST()` method (from Phase 2)
+  - [ ] Keep previous program if compilation fails (for error recovery)
+  - [ ] Clear program on document close
 
-- [ ] **Store AST with document in in-memory map**
-  - [ ] Add `AST *ast.Program` field to Document struct
-  - [ ] Store parsed AST in document after successful parse
-  - [ ] Keep previous AST if parsing fails (for error recovery)
-  - [ ] Clear AST on document close
+- [x] **Convert compile errors to LSP Diagnostic objects** ✅
+  - [x] Extract errors from `CompileError` ✅
+  - [x] Parse error messages to extract line/column info (temporary) ✅
+  - [x] Create Diagnostic with appropriate fields ✅
+  - [x] Convert 1-based to 0-based line/column ✅
+  - [x] Set severity and source ✅
 
-- [ ] **Collect syntax errors from p.Errors() after parsing**
-  - [ ] Call `syntaxErrors := p.Errors()` after ParseProgram
-  - [ ] Check if error slice is empty
-  - [ ] Iterate through each error string
-  - [ ] Log total syntax error count
+- [ ] **Simplify error conversion after Phase 2** (After Phase 2)
+  - [ ] Remove regex-based position extraction
+  - [ ] Directly use structured error fields
+  - [ ] No need for `parseErrorMessage()` function
+  - [ ] No need for `cleanErrorMessage()` function
+  - [ ] Simplified, more reliable code
 
-- [ ] **Convert parser errors to LSP Diagnostic objects with line/column info**
-  - [ ] Create `convertSyntaxError(err string, source string) protocol.Diagnostic`
-  - [ ] Parse error string to extract line/column info
-  - [ ] Create Diagnostic with:
-    - [ ] `severity = DiagnosticSeverity.Error`
-    - [ ] `source = "go-dws-parser"`
-    - [ ] `message` = error text
-    - [ ] `range` = calculated from position
+- [ ] **Leverage semantic analysis from compilation** (After Phase 2)
+  - [ ] Note: `engine.Compile()` already performs semantic analysis
+  - [ ] Both syntax and semantic errors are in `CompileError.Errors`
+  - [ ] Use `Error.Code` to distinguish error types (if available)
+  - [ ] Semantic errors include:
+    - [ ] Type mismatches (already included)
+    - [ ] Undefined variables (already included)
+    - [ ] Wrong argument counts (already included)
+    - [ ] Unused variables as warnings (if available)
 
-- [ ] **Use errors.FromStringErrors() to format errors with source context**
-  - [ ] Import `github.com/CWBudde/go-dws/pkg/errors` package
-  - [ ] Call `structuredErrors := errors.FromStringErrors(p.Errors(), source, filename)`
-  - [ ] Extract position information from structured errors
-  - [ ] Use structured error's Line, Column, Length fields
-
-- [ ] **Extract position info from errors and fill Diagnostic.Range**
-  - [ ] Convert 1-based line numbers to 0-based (LSP uses 0-based)
-  - [ ] Convert column numbers appropriately
-  - [ ] Create Range with Start and End positions
-  - [ ] Handle errors without position (use line 0, col 0)
-  - [ ] Calculate End position from error length or use single character
-
-- [ ] **Mark syntax errors with severity Error**
-  - [ ] Set `diagnostic.Severity = protocol.DiagnosticSeverityError`
-  - [ ] Use consistent severity levels
-  - [ ] Add related information if available
-
-- [ ] **Create semantic.NewAnalyzer() for semantic analysis**
-  - [ ] Import `github.com/CWBudde/go-dws/pkg/semantic` package
-  - [ ] Create `internal/analysis/semantic.go`
-  - [ ] Implement `AnalyzeDocument(program *ast.Program) ([]Diagnostic, error)`
-  - [ ] Create analyzer: `analyzer := semantic.NewAnalyzer()`
-  - [ ] Configure analyzer options if available
-
-- [ ] **Call analyzer.Analyze(program) on successfully parsed AST**
-  - [ ] Skip analysis if program is nil
-  - [ ] Call `err := analyzer.Analyze(program)`
-  - [ ] Handle analysis errors gracefully
-  - [ ] Log analysis duration
-
-- [ ] **Retrieve semantic errors from analyzer.Errors() or analyzer.StructuredErrors()**
-  - [ ] Try `analyzer.StructuredErrors()` first if available
-  - [ ] Fall back to `analyzer.Errors()` if structured not available
-  - [ ] Collect all semantic error messages
-  - [ ] Distinguish between errors and warnings
-
-- [ ] **Convert semantic errors to LSP Diagnostic objects (type mismatches, unknown variables)**
-  - [ ] Create `convertSemanticError()` function
-  - [ ] Map go-dws error types to LSP diagnostics
-  - [ ] Set appropriate severity:
-    - [ ] Type errors: Error
-    - [ ] Unknown identifiers: Error
-    - [ ] Unused items: Warning
-  - [ ] Include error code if available
-
-- [ ] **Include warnings in diagnostics if available (unused variables)**
-  - [ ] Set severity = DiagnosticSeverityWarning for warnings
-  - [ ] Add diagnostic tags (Unnecessary, Deprecated) where appropriate
-  - [ ] Allow configuration to enable/disable warnings
+- [ ] **Add support for warnings** (After Phase 2)
+  - [ ] Check if `Error.Severity == "warning"`
+  - [ ] Set `DiagnosticSeverity = Warning` for warnings
+  - [ ] Add diagnostic tags where appropriate:
+    - [ ] `DiagnosticTag.Unnecessary` for unused variables
+    - [ ] `DiagnosticTag.Deprecated` for deprecated constructs
+  - [ ] Make warning level configurable via workspace settings
 
 - [ ] **Implement textDocument/publishDiagnostics notification**
   - [ ] Create `PublishDiagnostics(ctx *glsp.Context, uri string, diagnostics []protocol.Diagnostic) error`

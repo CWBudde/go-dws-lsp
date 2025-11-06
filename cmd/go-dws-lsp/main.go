@@ -76,6 +76,11 @@ func main() {
 		// Workspace notifications
 		WorkspaceDidChangeConfiguration:   lsp.DidChangeConfiguration,
 		WorkspaceDidChangeWorkspaceFolders: lsp.DidChangeWorkspaceFolders,
+
+		// Text document notifications (Phase 1: Document Synchronization)
+		TextDocumentDidOpen:   lsp.DidOpen,
+		TextDocumentDidClose:  lsp.DidClose,
+		TextDocumentDidChange: lsp.DidChange,
 	}
 
 	// Create GLSP server
