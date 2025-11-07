@@ -3,6 +3,8 @@ package server
 
 import (
 	"sync"
+
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 )
 
 // Server holds the state of the LSP server.
@@ -12,6 +14,9 @@ type Server struct {
 
 	// symbolIndex caches references for workspace documents (even when not open)
 	symbolIndex *SymbolIndex
+
+	// workspaceIndex stores workspace-wide symbol definitions for global symbol search
+	workspaceIndex *workspace.SymbolIndex
 
 	// config holds server configuration
 	config *Config
@@ -35,8 +40,9 @@ type Config struct {
 // New creates a new LSP server instance.
 func New() *Server {
 	return &Server{
-		documents:   NewDocumentStore(),
-		symbolIndex: NewSymbolIndex(),
+		documents:      NewDocumentStore(),
+		symbolIndex:    NewSymbolIndex(),
+		workspaceIndex: workspace.NewSymbolIndex(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -66,6 +72,11 @@ func (s *Server) Documents() *DocumentStore {
 // Symbols returns the workspace symbol index.
 func (s *Server) Symbols() *SymbolIndex {
 	return s.symbolIndex
+}
+
+// WorkspaceIndex returns the workspace-wide symbol index.
+func (s *Server) WorkspaceIndex() *workspace.SymbolIndex {
+	return s.workspaceIndex
 }
 
 // Config returns the server configuration.

@@ -94,6 +94,9 @@ func main() {
 		// Text document requests (Phase 7: Document Symbols)
 		TextDocumentDocumentSymbol: lsp.DocumentSymbol,
 
+		// Workspace requests (Phase 8: Workspace Symbols)
+		WorkspaceSymbol: lsp.WorkspaceSymbol,
+
 		// Text document requests (Phase 9: Code Completion)
 		TextDocumentCompletion: lsp.Completion,
 	}
