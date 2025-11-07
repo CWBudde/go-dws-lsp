@@ -3,6 +3,7 @@ package analysis
 
 import (
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
@@ -63,11 +64,14 @@ func getKeywordCompletions() []protocol.CompletionItem {
 
 	for _, keyword := range keywords {
 		detail := "DWScript keyword"
+		// Use sortText to ensure keywords appear after local/global symbols
+		sortText := "~keyword~" + keyword // ~ sorts after most alphanumeric characters
 		item := protocol.CompletionItem{
 			Label:      keyword,
 			Kind:       &kind,
 			Detail:     &detail,
 			InsertText: &keyword,
+			SortText:   &sortText,
 		}
 		items = append(items, item)
 	}
@@ -98,10 +102,14 @@ func getLocalCompletions(program *ast.Program, line, column int) []protocol.Comp
 			detail = "Parameter: " + param.Type.String()
 		}
 
+		// Use sortText to prioritize local symbols
+		sortText := "0param~" + param.Name.Value
+
 		item := protocol.CompletionItem{
-			Label:  param.Name.Value,
-			Kind:   &paramKind,
-			Detail: &detail,
+			Label:    param.Name.Value,
+			Kind:     &paramKind,
+			Detail:   &detail,
+			SortText: &sortText,
 		}
 		items = append(items, item)
 	}
@@ -156,10 +164,14 @@ func extractLocalVariables(block *ast.BlockStatement) []protocol.CompletionItem 
 					detail = "Local variable: " + varDecl.Type.String()
 				}
 
+				// Use sortText to prioritize local variables
+				sortText := "0local~" + name.Value
+
 				item := protocol.CompletionItem{
-					Label:  name.Value,
-					Kind:   &kind,
-					Detail: &detail,
+					Label:    name.Value,
+					Kind:     &kind,
+					Detail:   &detail,
+					SortText: &sortText,
 				}
 				items = append(items, item)
 			}
@@ -182,10 +194,18 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindFunction
 			signature := buildFunctionSignature(s)
+			sortText := "1global~" + s.Name.Value
+
+			// Build snippet for function with parameters
+			insertText, insertTextFormat := buildFunctionSnippet(s)
+
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &signature,
+				Label:            s.Name.Value,
+				Kind:             &kind,
+				Detail:           &signature,
+				SortText:         &sortText,
+				InsertText:       &insertText,
+				InsertTextFormat: &insertTextFormat,
 			}
 			items = append(items, item)
 
@@ -195,10 +215,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindClass
 			detail := "Class"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -208,10 +230,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindStruct
 			detail := "Record"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -221,10 +245,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindInterface
 			detail := "Interface"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -235,10 +261,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 				if s.Type != nil {
 					detail = "Global variable: " + s.Type.String()
 				}
+				sortText := "1global~" + name.Value
 				item := protocol.CompletionItem{
-					Label:  name.Value,
-					Kind:   &kind,
-					Detail: &detail,
+					Label:    name.Value,
+					Kind:     &kind,
+					Detail:   &detail,
+					SortText: &sortText,
 				}
 				items = append(items, item)
 			}
@@ -255,10 +283,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Value != nil {
 				detail += " = " + s.Value.String()
 			}
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -268,10 +298,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindEnum
 			detail := "Enumeration"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -279,10 +311,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			constKind := protocol.CompletionItemKindEnumMember
 			for _, enumVal := range s.Values {
 				enumDetail := "Enum value: " + s.Name.Value
+				enumSortText := "1global~" + enumVal.Name
 				enumItem := protocol.CompletionItem{
-					Label:  enumVal.Name,
-					Kind:   &constKind,
-					Detail: &enumDetail,
+					Label:    enumVal.Name,
+					Kind:     &constKind,
+					Detail:   &enumDetail,
+					SortText: &enumSortText,
 				}
 				items = append(items, enumItem)
 			}
@@ -330,6 +364,100 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	return signature
 }
 
+// buildFunctionSnippet builds an LSP snippet string for function insertion.
+// Returns the snippet string and insertTextFormat.
+// Example: "MyFunc(${1:param1}, ${2:param2})$0"
+func buildFunctionSnippet(fn *ast.FunctionDecl) (string, protocol.InsertTextFormat) {
+	if fn.Name == nil {
+		return "", protocol.InsertTextFormatPlainText
+	}
+
+	// If function has no parameters, use plain text
+	if len(fn.Parameters) == 0 {
+		return fn.Name.Value + "()", protocol.InsertTextFormatPlainText
+	}
+
+	snippet := fn.Name.Value + "("
+
+	for i, param := range fn.Parameters {
+		if i > 0 {
+			snippet += ", "
+		}
+
+		// Add tabstop with parameter name as placeholder
+		tabstopNum := i + 1
+		paramName := "param"
+		if param.Name != nil {
+			paramName = param.Name.Value
+		}
+
+		// Build tabstop: ${1:paramName}
+		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+	}
+
+	snippet += ")$0" // $0 is the final cursor position
+
+	return snippet, protocol.InsertTextFormatSnippet
+}
+
+// buildSnippetFromSignature builds a snippet from a signature string.
+// Example: "Print(value: Variant)" -> "Print(${1:value})$0"
+func buildSnippetFromSignature(functionName, signature string) (string, protocol.InsertTextFormat) {
+	// Extract parameters from signature
+	// Find the parameter list between parentheses
+	startIdx := strings.Index(signature, "(")
+	endIdx := strings.LastIndex(signature, ")")
+
+	if startIdx == -1 || endIdx == -1 || startIdx >= endIdx {
+		// No parameters or malformed signature
+		return functionName + "()", protocol.InsertTextFormatPlainText
+	}
+
+	paramsStr := signature[startIdx+1 : endIdx]
+	paramsStr = strings.TrimSpace(paramsStr)
+
+	if paramsStr == "" {
+		// No parameters
+		return functionName + "()", protocol.InsertTextFormatPlainText
+	}
+
+	// Split parameters by comma
+	params := strings.Split(paramsStr, ",")
+	snippet := functionName + "("
+
+	for i, param := range params {
+		if i > 0 {
+			snippet += ", "
+		}
+
+		param = strings.TrimSpace(param)
+
+		// Extract parameter name (before colon if present)
+		paramName := param
+		if colonIdx := strings.Index(param, ":"); colonIdx != -1 {
+			paramName = strings.TrimSpace(param[:colonIdx])
+		}
+
+		// Remove modifiers like "var", "const", "lazy"
+		paramName = strings.TrimPrefix(paramName, "var ")
+		paramName = strings.TrimPrefix(paramName, "const ")
+		paramName = strings.TrimPrefix(paramName, "lazy ")
+		paramName = strings.TrimSpace(paramName)
+
+		if paramName == "" {
+			paramName = "param" + strconv.Itoa(i+1)
+		}
+
+		// Build tabstop: ${1:paramName}
+		tabstopNum := i + 1
+		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+	}
+
+	snippet += ")$0"
+
+	return snippet, protocol.InsertTextFormatSnippet
+}
+
 // getBuiltInCompletions returns completion items for built-in functions and types.
 func getBuiltInCompletions() []protocol.CompletionItem {
 	var items []protocol.CompletionItem
@@ -345,10 +473,12 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 	typeKind := protocol.CompletionItemKindClass
 	for _, typeName := range builtInTypes {
 		detail := "Built-in type"
+		sortText := "2builtin~" + typeName
 		item := protocol.CompletionItem{
-			Label:  typeName,
-			Kind:   &typeKind,
-			Detail: &detail,
+			Label:    typeName,
+			Kind:     &typeKind,
+			Detail:   &detail,
+			SortText: &sortText,
 		}
 		items = append(items, item)
 	}
@@ -392,10 +522,25 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 	funcKind := protocol.CompletionItemKindFunction
 	for name, signature := range builtInFunctions {
 		detail := signature
+		sortText := "2builtin~" + name
+
+		// Create MarkupContent for better documentation
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: "**Built-in function**\n\n```pascal\n" + signature + "\n```",
+		}
+
+		// Build snippet for function with parameters
+		insertText, insertTextFormat := buildSnippetFromSignature(name, signature)
+
 		item := protocol.CompletionItem{
-			Label:  name,
-			Kind:   &funcKind,
-			Detail: &detail,
+			Label:            name,
+			Kind:             &funcKind,
+			Detail:           &detail,
+			SortText:         &sortText,
+			Documentation:    doc,
+			InsertText:       &insertText,
+			InsertTextFormat: &insertTextFormat,
 		}
 		items = append(items, item)
 	}

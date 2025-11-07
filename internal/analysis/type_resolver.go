@@ -3,6 +3,7 @@ package analysis
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
@@ -326,9 +327,12 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		}
 
 		kind := protocol.CompletionItemKindField
+		sortText := "0field~" + field.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: field.Name.Value,
-			Kind:  &kind,
+			Label:    field.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Add type information in detail
@@ -337,12 +341,19 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 			item.Detail = &detail
 		}
 
-		// Add documentation
-		documentation := "Field"
+		// Add documentation with MarkupContent
+		docValue := "**Field**"
 		if field.IsClassVar {
-			documentation = "Class variable (static field)"
+			docValue = "**Class variable** (static field)"
 		}
-		item.Documentation = documentation
+		if field.Type != nil {
+			docValue += "\n\n```pascal\n" + field.Name.Value + ": " + field.Type.String() + "\n```"
+		}
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}
@@ -354,21 +365,34 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		}
 
 		kind := protocol.CompletionItemKindMethod
-		item := protocol.CompletionItem{
-			Label: method.Name.Value,
-			Kind:  &kind,
-		}
+		sortText := "1method~" + method.Name.Value
 
 		// Build method signature
 		signature := buildMethodSignature(method)
-		item.Detail = &signature
 
-		// Add documentation
-		documentation := "Method"
+		// Build snippet for method with parameters
+		insertText, insertTextFormat := buildMethodSnippet(method)
+
+		// Add documentation with MarkupContent
+		docValue := "**Method**"
 		if method.IsClassMethod {
-			documentation = "Class method (static method)"
+			docValue = "**Class method** (static method)"
 		}
-		item.Documentation = documentation
+		docValue += "\n\n```pascal\n" + signature + "\n```"
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+
+		item := protocol.CompletionItem{
+			Label:            method.Name.Value,
+			Kind:             &kind,
+			SortText:         &sortText,
+			Detail:           &signature,
+			Documentation:    doc,
+			InsertText:       &insertText,
+			InsertTextFormat: &insertTextFormat,
+		}
 
 		items = append(items, item)
 	}
@@ -380,9 +404,12 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		}
 
 		kind := protocol.CompletionItemKindProperty
+		sortText := "2property~" + prop.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: prop.Name.Value,
-			Kind:  &kind,
+			Label:    prop.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Add type information in detail
@@ -391,14 +418,23 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 			item.Detail = &detail
 		}
 
-		// Add documentation about read/write access
-		documentation := "Property"
+		// Add documentation about read/write access with MarkupContent
+		docValue := "**Property**"
+		accessMode := ""
 		if prop.ReadSpec != nil && prop.WriteSpec == nil {
-			documentation = "Property (read-only)"
+			accessMode = " (read-only)"
 		} else if prop.ReadSpec == nil && prop.WriteSpec != nil {
-			documentation = "Property (write-only)"
+			accessMode = " (write-only)"
 		}
-		item.Documentation = documentation
+		docValue += accessMode
+		if prop.Type != nil {
+			docValue += "\n\n```pascal\nproperty " + prop.Name.Value + ": " + prop.Type.String() + "\n```"
+		}
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}
@@ -438,9 +474,12 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 		}
 
 		kind := protocol.CompletionItemKindField
+		sortText := "0field~" + field.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: field.Name.Value,
-			Kind:  &kind,
+			Label:    field.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Add type information in detail
@@ -449,7 +488,16 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 			item.Detail = &detail
 		}
 
-		item.Documentation = "Record field"
+		// Add documentation with MarkupContent
+		docValue := "**Record field**"
+		if field.Type != nil {
+			docValue += "\n\n```pascal\n" + field.Name.Value + ": " + field.Type.String() + "\n```"
+		}
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}
@@ -499,6 +547,42 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 	}
 
 	return signature
+}
+
+// buildMethodSnippet builds an LSP snippet string for method insertion.
+// Returns the snippet string and insertTextFormat.
+// Example: "MyMethod(${1:param1}, ${2:param2})$0"
+func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFormat) {
+	if method.Name == nil {
+		return "", protocol.InsertTextFormatPlainText
+	}
+
+	// If method has no parameters, use plain text
+	if len(method.Parameters) == 0 {
+		return method.Name.Value + "()", protocol.InsertTextFormatPlainText
+	}
+
+	snippet := method.Name.Value + "("
+
+	for i, param := range method.Parameters {
+		if i > 0 {
+			snippet += ", "
+		}
+
+		// Add tabstop with parameter name as placeholder
+		tabstopNum := i + 1
+		paramName := "param"
+		if param.Name != nil {
+			paramName = param.Name.Value
+		}
+
+		// Build tabstop: ${1:paramName}
+		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+	}
+
+	snippet += ")$0" // $0 is the final cursor position
+
+	return snippet, protocol.InsertTextFormatSnippet
 }
 
 // sortCompletionItems sorts completion items alphabetically by label.

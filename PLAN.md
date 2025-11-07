@@ -801,25 +801,36 @@ The implementation is organized into the following phases:
   - **Built-ins included**: String manipulation, type conversion, math, date/time, I/O functions
   - **Note**: Implemented directly in scope_completion.go rather than separate builtins package
 
-- [ ] **9.13 Construct CompletionItem list with label, kind, detail**
-  - [ ] Create CompletionItem struct for each suggestion
-  - [ ] Set required fields:
-    - [ ] label = display name
-    - [ ] kind = appropriate SymbolKind
-  - [ ] Set optional fields:
-    - [ ] detail = type or signature summary
-    - [ ] documentation = longer description (optional)
-    - [ ] sortText = for custom ordering (optional)
-    - [ ] filterText = for filtering (usually same as label)
-  - [ ] Add all items to CompletionList
+- [x] **9.13 Construct CompletionItem list with label, kind, detail**
+  - [x] Create CompletionItem struct for each suggestion
+  - [x] Set required fields:
+    - [x] label = display name
+    - [x] kind = appropriate SymbolKind
+  - [x] Set optional fields:
+    - [x] detail = type or signature summary
+    - [x] documentation = longer description (optional)
+    - [x] sortText = for custom ordering (optional)
+    - [x] filterText = for filtering (usually same as label)
+  - [x] Add all items to CompletionList
+  - **Implementation**:
+    - All CompletionItems now have proper label, kind, and detail fields set
+    - Added sortText to control completion ordering: local symbols (0*) > global symbols (1*) > built-ins (2*) > keywords (~*)
+    - Enhanced documentation using MarkupContent with markdown formatting and code blocks
+    - Applied consistent structure across all completion types (scope, member, built-in)
 
-- [ ] **9.14 For functions: provide snippet-style insert text with parameters**
-  - [ ] Parse function signature to extract parameters
-  - [ ] Build snippet string: `FunctionName($1:param1, $2:param2)$0`
-  - [ ] Use LSP snippet syntax with tabstops
-  - [ ] Set `insertTextFormat = InsertTextFormat.Snippet`
-  - [ ] Set `insertText = snippet string`
-  - [ ] Example: `"WriteLine(${1:text})$0"`
+- [x] **9.14 For functions: provide snippet-style insert text with parameters**
+  - [x] Parse function signature to extract parameters
+  - [x] Build snippet string: `FunctionName($1:param1, $2:param2)$0`
+  - [x] Use LSP snippet syntax with tabstops
+  - [x] Set `insertTextFormat = InsertTextFormat.Snippet`
+  - [x] Set `insertText = snippet string`
+  - [x] Example: `"WriteLine(${1:text})$0"`
+  - **Implementation**:
+    - Added `buildFunctionSnippet()` for AST-based functions (global functions, methods)
+    - Added `buildSnippetFromSignature()` for signature-based functions (built-ins)
+    - Applied snippets to global functions, built-in functions, and class methods
+    - Functions with parameters use Snippet format, no-parameter functions use PlainText
+    - Snippet syntax: `FunctionName(${1:param1}, ${2:param2})$0` with proper tabstops
 
 - [ ] **9.15 Set insertTextFormat to Snippet where appropriate**
   - [ ] For functions with parameters: use Snippet
