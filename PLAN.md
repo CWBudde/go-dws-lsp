@@ -790,26 +790,27 @@ The implementation is organized into the following phases:
   - [x] Workspace results sorted by relevance (same directory first)
   - **Implementation**: ResolveSymbol() returns []protocol.Location with all matches
 
-- [ ] **5.12 Write unit tests for local symbol definitions**
-  - [ ] Create `internal/lsp/definition_test.go`
-  - [ ] Test go-to-definition on local variable declaration
-  - [ ] Test go-to-definition on local variable reference
-  - [ ] Test go-to-definition on function parameter
-  - [ ] Test go-to-definition with shadowed variables (should go to nearest)
-  - [ ] Test go-to-definition in nested blocks
-  - [ ] Test go-to-definition on loop variables
-  - [ ] Verify returned Location has correct URI and Range
-  - [ ] Test with invalid positions (should return nil)
+- [x] **5.12 Write unit tests for local symbol definitions** ✅
+  - [x] Create `internal/lsp/definition_test.go`
+  - [x] Test go-to-definition on local variable declaration
+  - [x] Test go-to-definition on local variable reference
+  - [x] Test go-to-definition on function parameter
+  - [x] Test go-to-definition with shadowed variables (should go to nearest)
+  - [x] Test go-to-definition in nested blocks
+  - [x] Test go-to-definition on loop variables
+  - [x] Verify returned Location has correct URI and Range
+  - [x] Test with invalid positions (should return nil)
 
-- [ ] **5.13 Write unit tests for global symbol definitions**
-  - [ ] Test go-to-definition on global function declaration
-  - [ ] Test go-to-definition on global function call
-  - [ ] Test go-to-definition on global variable
-  - [ ] Test go-to-definition on class name
-  - [ ] Test go-to-definition on class field
-  - [ ] Test go-to-definition on class method
-  - [ ] Test go-to-definition with multiple definitions (overloads)
-  - [ ] Verify array of Locations returned for overloads
+- [x] **5.13 Write unit tests for global symbol definitions** ✅
+  - [x] Test go-to-definition on global function declaration
+  - [x] Test go-to-definition on global function call
+  - [x] Test go-to-definition on global variable
+  - [x] Test go-to-definition on class name
+  - [x] Test go-to-definition on class field
+  - [x] Test go-to-definition on class method
+  - [x] Test go-to-definition with multiple definitions (overloads)
+  - [x] Verify array of Locations returned for overloads
+  - **Note**: DWScript does not support function overloading (like Pascal); test documents expected behavior
 
 - [ ] **5.14 Write unit tests for cross-file definitions (unit imports)**
   - [ ] Create test workspace with multiple .dws files
