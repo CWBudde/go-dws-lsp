@@ -1,9 +1,9 @@
 package analysis
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/cwbudde/go-dws/pkg/dwscript"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -39,9 +39,13 @@ end.`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diagnostics, err := ParseDocument(tt.source, "test.dws")
+			program, diagnostics, err := ParseDocument(tt.source, "test.dws")
 			if err != nil {
 				t.Fatalf("ParseDocument returned unexpected error: %v", err)
+			}
+
+			if program == nil {
+				t.Error("Expected non-nil program for valid code")
 			}
 
 			if len(diagnostics) > 0 {
@@ -93,7 +97,7 @@ end.`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diagnostics, err := ParseDocument(tt.source, "test.dws")
+			_, diagnostics, err := ParseDocument(tt.source, "test.dws")
 			if err != nil {
 				t.Fatalf("ParseDocument returned unexpected error: %v", err)
 			}
@@ -120,7 +124,7 @@ end.`,
 }
 
 func TestParseDocument_EmptySource(t *testing.T) {
-	diagnostics, err := ParseDocument("", "test.dws")
+	_, diagnostics, err := ParseDocument("", "test.dws")
 	if err != nil {
 		t.Fatalf("ParseDocument returned unexpected error: %v", err)
 	}
@@ -130,37 +134,54 @@ func TestParseDocument_EmptySource(t *testing.T) {
 	_ = diagnostics // Just verify we got a result
 }
 
-func TestConvertCompileErrors(t *testing.T) {
+func TestConvertStructuredErrors(t *testing.T) {
 	tests := []struct {
 		name   string
-		errors []string
-		source string
+		errors []*dwscript.Error
 	}{
 		{
 			name:   "empty errors",
-			errors: []string{},
-			source: "test",
+			errors: []*dwscript.Error{},
 		},
 		{
-			name: "simple error message",
-			errors: []string{
-				"Syntax Error: unexpected token [line 5]",
+			name: "single error",
+			errors: []*dwscript.Error{
+				{
+					Message:  "Syntax Error: unexpected token",
+					Line:     5,
+					Column:   10,
+					Length:   5,
+					Severity: dwscript.SeverityError,
+					Code:     "",
+				},
 			},
-			source: "test source",
 		},
 		{
-			name: "multiple errors",
-			errors: []string{
-				"Error at line 1, col 5: missing semicolon",
-				"Error at line 3, col 10: undefined identifier",
+			name: "multiple errors with different severities",
+			errors: []*dwscript.Error{
+				{
+					Message:  "Undefined identifier",
+					Line:     1,
+					Column:   5,
+					Length:   8,
+					Severity: dwscript.SeverityError,
+					Code:     "E_UNDEFINED_VAR",
+				},
+				{
+					Message:  "Unused variable",
+					Line:     3,
+					Column:   10,
+					Length:   4,
+					Severity: dwscript.SeverityWarning,
+					Code:     "W_UNUSED_VAR",
+				},
 			},
-			source: "test source",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diagnostics := convertCompileErrors(tt.errors, tt.source)
+			diagnostics := convertStructuredErrors(tt.errors)
 
 			if len(diagnostics) != len(tt.errors) {
 				t.Errorf("Expected %d diagnostics, got %d", len(tt.errors), len(diagnostics))
@@ -170,50 +191,55 @@ func TestConvertCompileErrors(t *testing.T) {
 				if diag.Message == "" {
 					t.Errorf("Diagnostic %d has empty message", i)
 				}
-				if diag.Severity == nil || *diag.Severity != protocol.DiagnosticSeverityError {
-					t.Errorf("Diagnostic %d should have Error severity", i)
+				if diag.Severity == nil {
+					t.Errorf("Diagnostic %d has nil severity", i)
+				}
+				if diag.Source == nil || *diag.Source != "go-dws" {
+					t.Errorf("Diagnostic %d has incorrect source", i)
 				}
 			}
 		})
 	}
 }
 
-func TestParseErrorMessage(t *testing.T) {
+func TestConvertStructuredError(t *testing.T) {
 	tests := []struct {
 		name         string
-		errorMsg     string
+		error        *dwscript.Error
 		expectedLine uint32
 		expectedCol  uint32
 	}{
 		{
-			name:         "line only format",
-			errorMsg:     "Syntax Error: unexpected token [line 5]",
+			name: "1-based to 0-based conversion",
+			error: &dwscript.Error{
+				Message:  "Test error",
+				Line:     5,
+				Column:   10,
+				Length:   5,
+				Severity: dwscript.SeverityError,
+				Code:     "",
+			},
 			expectedLine: 4, // 0-based
-			expectedCol:  0,
+			expectedCol:  9, // 0-based
 		},
 		{
-			name:         "line and column format",
-			errorMsg:     "Error at line 10, col 25: missing semicolon",
-			expectedLine: 9,  // 0-based
-			expectedCol:  24, // 0-based
-		},
-		{
-			name:         "parentheses format",
-			errorMsg:     "Type mismatch (15,8)",
-			expectedLine: 14, // 0-based
-			expectedCol:  7,  // 0-based
-		},
-		{
-			name:         "no position info",
-			errorMsg:     "General compilation error",
+			name: "warning with unused tag",
+			error: &dwscript.Error{
+				Message:  "Unused variable 'x'",
+				Line:     1,
+				Column:   5,
+				Length:   1,
+				Severity: dwscript.SeverityWarning,
+				Code:     "W_UNUSED_VAR",
+			},
 			expectedLine: 0,
-			expectedCol:  0,
+			expectedCol:  4,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diagnostic := parseErrorMessage(tt.errorMsg, "test source")
+			diagnostic := convertStructuredError(tt.error)
 
 			if diagnostic.Range.Start.Line != tt.expectedLine {
 				t.Errorf("Expected line %d, got %d", tt.expectedLine, diagnostic.Range.Start.Line)
@@ -221,97 +247,101 @@ func TestParseErrorMessage(t *testing.T) {
 			if diagnostic.Range.Start.Character != tt.expectedCol {
 				t.Errorf("Expected column %d, got %d", tt.expectedCol, diagnostic.Range.Start.Character)
 			}
-			if diagnostic.Message == "" {
-				t.Error("Diagnostic message should not be empty")
+			if diagnostic.Message != tt.error.Message {
+				t.Errorf("Expected message '%s', got '%s'", tt.error.Message, diagnostic.Message)
+			}
+
+			// Verify tags for unused variables
+			if tt.error.Code == "W_UNUSED_VAR" {
+				if len(diagnostic.Tags) == 0 {
+					t.Error("Expected Unnecessary tag for unused variable")
+				} else if diagnostic.Tags[0] != protocol.DiagnosticTagUnnecessary {
+					t.Errorf("Expected Unnecessary tag, got %v", diagnostic.Tags[0])
+				}
 			}
 		})
 	}
 }
 
-func TestCleanErrorMessage(t *testing.T) {
+func TestMapSeverity(t *testing.T) {
 	tests := []struct {
-		name     string
-		message  string
-		expected string
+		name             string
+		severity         dwscript.ErrorSeverity
+		expectedSeverity protocol.DiagnosticSeverity
 	}{
 		{
-			name:     "remove line suffix",
-			message:  "Syntax Error: unexpected token [line 5]",
-			expected: "Syntax Error: unexpected token",
+			name:             "error severity",
+			severity:         dwscript.SeverityError,
+			expectedSeverity: protocol.DiagnosticSeverityError,
 		},
 		{
-			name:     "remove line col prefix",
-			message:  "line 10, col 25: missing semicolon",
-			expected: "missing semicolon",
+			name:             "warning severity",
+			severity:         dwscript.SeverityWarning,
+			expectedSeverity: protocol.DiagnosticSeverityWarning,
 		},
 		{
-			name:     "remove parentheses position",
-			message:  "Type mismatch (15,8)",
-			expected: "Type mismatch",
+			name:             "info severity",
+			severity:         dwscript.SeverityInfo,
+			expectedSeverity: protocol.DiagnosticSeverityInformation,
 		},
 		{
-			name:     "no position info",
-			message:  "General compilation error",
-			expected: "General compilation error",
+			name:             "hint severity",
+			severity:         dwscript.SeverityHint,
+			expectedSeverity: protocol.DiagnosticSeverityHint,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleaned := cleanErrorMessage(tt.message)
-			// Trim spaces for comparison
-			cleaned = strings.TrimSpace(cleaned)
-			expected := strings.TrimSpace(tt.expected)
-
-			if cleaned != expected {
-				t.Errorf("Expected '%s', got '%s'", expected, cleaned)
+			result := mapSeverity(tt.severity)
+			if result != tt.expectedSeverity {
+				t.Errorf("Expected severity %v, got %v", tt.expectedSeverity, result)
 			}
 		})
 	}
 }
 
-func TestCreateDiagnostic(t *testing.T) {
+func TestMapDiagnosticTags(t *testing.T) {
 	tests := []struct {
-		name         string
-		line         int
-		col          int
-		length       int
-		message      string
-		expectedLine uint32
-		expectedCol  uint32
+		name        string
+		code        string
+		expectedTag *protocol.DiagnosticTag
 	}{
 		{
-			name:         "convert 1-based to 0-based",
-			line:         5,
-			col:          10,
-			length:       5,
-			message:      "Test error",
-			expectedLine: 4,
-			expectedCol:  9,
+			name:        "unused variable",
+			code:        "W_UNUSED_VAR",
+			expectedTag: func() *protocol.DiagnosticTag { t := protocol.DiagnosticTagUnnecessary; return &t }(),
 		},
 		{
-			name:         "handle zero line",
-			line:         0,
-			col:          0,
-			length:       1,
-			message:      "Test error",
-			expectedLine: 0,
-			expectedCol:  0,
+			name:        "unused parameter",
+			code:        "W_UNUSED_PARAM",
+			expectedTag: func() *protocol.DiagnosticTag { t := protocol.DiagnosticTagUnnecessary; return &t }(),
+		},
+		{
+			name:        "deprecated",
+			code:        "W_DEPRECATED",
+			expectedTag: func() *protocol.DiagnosticTag { t := protocol.DiagnosticTagDeprecated; return &t }(),
+		},
+		{
+			name:        "no tag for other codes",
+			code:        "E_UNDEFINED_VAR",
+			expectedTag: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diagnostic := createDiagnostic(tt.line, tt.col, tt.length, tt.message)
-
-			if diagnostic.Range.Start.Line != tt.expectedLine {
-				t.Errorf("Expected line %d, got %d", tt.expectedLine, diagnostic.Range.Start.Line)
-			}
-			if diagnostic.Range.Start.Character != tt.expectedCol {
-				t.Errorf("Expected column %d, got %d", tt.expectedCol, diagnostic.Range.Start.Character)
-			}
-			if diagnostic.Severity == nil {
-				t.Error("Severity should not be nil")
+			tags := mapDiagnosticTags(tt.code)
+			if tt.expectedTag == nil {
+				if len(tags) != 0 {
+					t.Errorf("Expected no tags, got %v", tags)
+				}
+			} else {
+				if len(tags) == 0 {
+					t.Error("Expected a tag, got none")
+				} else if tags[0] != *tt.expectedTag {
+					t.Errorf("Expected tag %v, got %v", *tt.expectedTag, tags[0])
+				}
 			}
 		})
 	}
@@ -347,7 +377,7 @@ end.`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diagnostics, err := ParseDocument(tt.source, "test.dws")
+			_, diagnostics, err := ParseDocument(tt.source, "test.dws")
 			if err != nil {
 				t.Fatalf("ParseDocument returned unexpected error: %v", err)
 			}
