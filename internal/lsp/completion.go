@@ -99,14 +99,39 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	log.Printf("Completion context: type=%d, parent=%s\n",
 		completionContext.Type, completionContext.ParentIdentifier)
 
-	// TODO: Task 9.4-9.6 - Handle member access completion
-	// TODO: Task 9.7+ - Collect completion items based on context
+	// Task 9.4: Handle member access completion
+	var completionList *protocol.CompletionList
 
-	// For now, return an empty completion list
-	// This will be enhanced in subsequent tasks (9.3+)
-	completionList := &protocol.CompletionList{
-		IsIncomplete: false,
-		Items:        []protocol.CompletionItem{},
+	if completionContext.Type == analysis.CompletionContextMember {
+		// Member access completion: resolve the type of the parent identifier
+		if completionContext.ParentIdentifier != "" {
+			log.Printf("Resolving type of parent identifier: %s", completionContext.ParentIdentifier)
+
+			typeInfo, err := analysis.ResolveMemberType(doc, completionContext.ParentIdentifier,
+				int(position.Line), int(position.Character))
+
+			if err != nil {
+				log.Printf("Error resolving member type: %v", err)
+			} else if typeInfo != nil {
+				log.Printf("Resolved parent type: %s (built-in: %v)", typeInfo.TypeName, typeInfo.IsBuiltIn)
+				// TODO: Task 9.5-9.6 - Get members of the resolved type
+				// For now, we just log the type
+			} else {
+				log.Printf("Could not determine type of '%s'", completionContext.ParentIdentifier)
+			}
+		}
+
+		// Return empty list for now - will be populated in tasks 9.5-9.6
+		completionList = &protocol.CompletionList{
+			IsIncomplete: false,
+			Items:        []protocol.CompletionItem{},
+		}
+	} else {
+		// TODO: Task 9.7+ - Handle general scope completion
+		completionList = &protocol.CompletionList{
+			IsIncomplete: false,
+			Items:        []protocol.CompletionItem{},
+		}
 	}
 
 	log.Printf("Returning %d completion items\n", len(completionList.Items))

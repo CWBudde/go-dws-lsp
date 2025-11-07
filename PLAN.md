@@ -702,14 +702,17 @@ The implementation is organized into the following phases:
   - [x] Set context type to MemberAccess
   - [x] Store parent identifier for type resolution
 
-- [ ] **9.4 Handle member access completion (object.): determine object type**
-  - [ ] Create `ResolveMemberType(doc *Document, identifier string, pos Position) (Type, error)`
-  - [ ] Search for identifier declaration in current scope
-  - [ ] If local variable: get type from declaration
-  - [ ] If parameter: get type from function signature
-  - [ ] If field: get type from class definition
-  - [ ] Query semantic analyzer for type information
-  - [ ] Return resolved type or error if unknown
+- [x] **9.4 Handle member access completion (object.): determine object type**
+  - [x] Create `ResolveMemberType(doc *Document, identifier string, pos Position) (Type, error)`
+  - [x] Search for identifier declaration in current scope
+  - [x] If local variable: get type from declaration
+  - [x] If parameter: get type from function signature
+  - [x] If field: get type from class definition
+  - [x] Query semantic analyzer for type information
+  - [x] Return resolved type or error if unknown
+  - **Implementation**: Created `internal/analysis/type_resolver.go` with `ResolveMemberType` function
+  - **Tests**: `internal/analysis/type_resolver_test.go` covers local variables, parameters, class fields, and user-defined types
+  - **Integration**: Updated `internal/lsp/completion.go` to call `ResolveMemberType` for member access completion
 
 - [ ] **9.5 Retrieve type information from semantic analyzer**
   - [ ] Add `GetSymbolType(symbol string, position Position) (Type, error)` to analyzer
