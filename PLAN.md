@@ -328,7 +328,7 @@ The implementation is organized into the following phases:
 
 **Goal**: Provide real-time error reporting with syntax and semantic diagnostics.
 
-**Status**: MOSTLY COMPLETE (15/19 tasks)
+**Status**: MOSTLY COMPLETE (16/19 tasks)
 
 **Prerequisites**: Phase 2 must be complete (structured errors and AST access available in go-dws) ✅
 
@@ -426,14 +426,15 @@ The implementation is organized into the following phases:
   - [x] Publish updated diagnostics
   - [x] Store new program in document
 
-- [ ] **3.12 Set up workspace indexing data structures (symbol index)** (Deferred to Phase 7)
-  - [ ] Create `internal/workspace/index.go`
-  - [ ] Define `SymbolIndex` struct with:
-    - [ ] `symbols map[string][]SymbolInfo` (name -> locations)
-    - [ ] `files map[string]*FileInfo` (uri -> file metadata)
-    - [ ] `mutex sync.RWMutex`
-  - [ ] Define `SymbolInfo` struct: Name, Kind, Location, ContainerName
-  - [ ] Implement Add, Remove, Search methods
+- [x] **3.12 Set up workspace indexing data structures (symbol index)** ✅ (Completed in Phase 5)
+  - [x] Create `internal/workspace/symbol_index.go`
+  - [x] Define `SymbolIndex` struct with:
+    - [x] `symbols map[string][]SymbolLocation` (name -> locations)
+    - [x] `files map[string]*FileInfo` (uri -> file metadata)
+    - [x] `mutex sync.RWMutex`
+  - [x] Define `SymbolLocation` struct: Name, Kind, Location, ContainerName, Detail
+  - [x] Implement Add, Remove, Search methods
+  - [x] Comprehensive test suite
 
 - [ ] **3.13 Scan workspace for .dws files on initialized notification** (Deferred to Phase 7)
   - [ ] Implement `ScanWorkspace(rootURIs []string) error`
@@ -732,16 +733,20 @@ The implementation is organized into the following phases:
   - [x] Return definition location in current file
   - [x] Return empty array if not found (will search workspace next)
 
-- [ ] **5.7 Implement workspace symbol index for cross-file lookups**
-  - [ ] Create `internal/workspace/symbol_index.go` (if not exists from Phase 3)
-  - [ ] Define `SymbolIndex` struct with:
-    - [ ] `symbols map[string][]SymbolLocation` (name → locations)
-    - [ ] `files map[string]*FileInfo` (URI → metadata)
-    - [ ] `mutex sync.RWMutex` for thread safety
-  - [ ] Implement `AddSymbol(name, kind, uri string, range Range)`
-  - [ ] Implement `FindSymbol(name string) []SymbolLocation`
-  - [ ] Implement `RemoveFile(uri string)` for file deletions
-  - [ ] Index symbols on workspace initialization
+- [x] **5.7 Implement workspace symbol index for cross-file lookups** ✅
+  - [x] Create `internal/workspace/symbol_index.go` (if not exists from Phase 3)
+  - [x] Define `SymbolIndex` struct with:
+    - [x] `symbols map[string][]SymbolLocation` (name → locations)
+    - [x] `files map[string]*FileInfo` (URI → metadata)
+    - [x] `mutex sync.RWMutex` for thread safety
+  - [x] Implement `AddSymbol(name, kind, uri string, range Range, containerName, detail)`
+  - [x] Implement `FindSymbol(name string) []SymbolLocation`
+  - [x] Implement `FindSymbolsByKind(kind)` for filtering by symbol type
+  - [x] Implement `FindSymbolsInFile(uri)` for file-specific queries
+  - [x] Implement `RemoveFile(uri string)` for file deletions
+  - [x] Implement utility methods: `Clear()`, `GetFileCount()`, `GetSymbolCount()`, `GetTotalLocationCount()`
+  - [x] Comprehensive test suite with 13 test functions covering all functionality
+  - [ ] Index symbols on workspace initialization (deferred to integration phase)
 
 - [ ] **5.8 Search workspace symbol index for cross-file definitions**
   - [ ] Implement `ResolveWorkspaceSymbol(index *SymbolIndex, name string) ([]Location, error)`
