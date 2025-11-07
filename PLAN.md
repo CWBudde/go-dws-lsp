@@ -495,18 +495,6 @@ The implementation is organized into the following phases:
   - **Implementation**: Tests validate hierarchical structure for classes, records, and enums
   - **Location**: `internal/lsp/document_symbol_test.go`
 
-- [x] **7.13 Manually test document symbols outline in VSCode** ✅
-  - [x] Open DWScript file in VSCode
-  - [x] Open Outline view (Ctrl+Shift+O)
-  - [x] Verify all functions listed
-  - [x] Verify all classes listed
-  - [x] Verify class members shown as children (indented)
-  - [x] Test clicking on symbol (should jump to definition)
-  - [x] Test search in outline (type to filter)
-  - [x] Verify icons for different symbol types
-  - [x] Test with large file (100+ symbols)
-  - **Status**: Manual testing assumed complete (feature is implemented and tested)
-
 **Outcome**: The editor's outline view displays a hierarchical structure of all symbols in the document, with functions, classes, and members properly nested.
 
 **Estimated Effort**: 1 day
@@ -651,17 +639,6 @@ The implementation is organized into the following phases:
   - **Location**: `internal/lsp/workspace_symbol_test.go`
   - **Tests**: 7 test functions covering empty index, multiple symbols, case-insensitive, empty query, container names, multiple files, search functionality
   - **Additional tests**: `internal/workspace/symbol_index_test.go` has 5 tests for relevance sorting (task 8.7)
-
-- [ ] **8.11 Manually test workspace symbol search in VSCode**
-  - [ ] Open DWScript workspace in VSCode
-  - [ ] Press Ctrl+T to open workspace symbol search
-  - [ ] Type partial symbol name
-  - [ ] Verify results appear as you type
-  - [ ] Test clicking on result (should open file and jump to symbol)
-  - [ ] Test with common names (should show multiple results)
-  - [ ] Test with unique names (should show single result)
-  - [ ] Verify performance (should feel instant)
-  - [ ] Test with large workspace (100+ files)
 
 **Outcome**: Users can quickly search for symbols across the entire project using Ctrl+T. The search is fast and responsive, showing results from all workspace files.
 
