@@ -183,21 +183,21 @@ The implementation is organized into the following phases:
   - [x] Keep `internal/ast/` as alias to `pkg/ast/` for internal use
   - [x] OR: Make `internal/ast/` types directly accessible (less preferred)
 
-- [ ] **Add AST accessor to Program type**
-  - [ ] Open `pkg/dwscript/dwscript.go`
-  - [ ] Add method: `func (p *Program) AST() *ast.Program`
-  - [ ] Return the underlying parsed AST
-  - [ ] Add documentation explaining AST structure
-  - [ ] Explain that AST is read-only, modifications won't affect execution
-  - [ ] Add example in documentation showing AST traversal
+- [x] **Add AST accessor to Program type**
+  - [x] Open `pkg/dwscript/dwscript.go`
+  - [x] Add method: `func (p *Program) AST() *ast.Program`
+  - [x] Return the underlying parsed AST
+  - [x] Add documentation explaining AST structure
+  - [x] Explain that AST is read-only, modifications won't affect execution
+  - [x] Add example in documentation showing AST traversal
 
-- [ ] **Add parse-only mode for LSP use cases**
-  - [ ] Add method to Engine: `func (e *Engine) Parse(source string) (*ast.Program, error)`
-  - [ ] Parse source code without semantic analysis
-  - [ ] Return partial AST even if syntax errors exist (best-effort)
-  - [ ] Return structured syntax errors only (no type checking errors)
-  - [ ] Document use case: "For editors/IDEs that need AST without full compilation"
-  - [ ] Optimize for speed (skip expensive semantic checks)
+- [x] **Add parse-only mode for LSP use cases**
+  - [x] Add method to Engine: `func (e *Engine) Parse(source string) (*ast.Program, error)`
+  - [x] Parse source code without semantic analysis
+  - [x] Return partial AST even if syntax errors exist (best-effort)
+  - [x] Return structured syntax errors only (no type checking errors)
+  - [x] Document use case: "For editors/IDEs that need AST without full compilation"
+  - [x] Optimize for speed (skip expensive semantic checks)
 
 - [ ] **Create visitor pattern for AST traversal**
   - [ ] Create `pkg/ast/visitor.go`
