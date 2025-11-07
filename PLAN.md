@@ -926,13 +926,13 @@ The implementation is organized into the following phases:
   - [ ] Handle shadowing (local var vs global var with same name)
   - [ ] Return filtered list
 
-- [ ] **6.9 Leverage semantic analyzer for symbol resolution**
-  - [ ] Use `program.Symbols()` to get semantic information
-  - [ ] Match symbol by definition location, not just name
-  - [ ] For each identifier, resolve to its definition
-  - [ ] Only include references that resolve to target definition
-  - [ ] This provides accurate filtering (no false positives)
-  - [ ] Handle cases where semantic info unavailable (fallback to name matching)
+- [x] **6.9 Leverage semantic analyzer for symbol resolution**
+  - [x] Use `program.Symbols()` to get semantic information
+  - [x] Match symbol by definition location, not just name
+  - [x] For each identifier, resolve to its definition
+  - [x] Only include references that resolve to target definition
+  - [x] This provides accurate filtering (no false positives)
+  - [x] Handle cases where semantic info unavailable (fallback to name matching)
 
 - [ ] **6.10 Collect list of Locations for each reference**
   - [ ] For each found reference, create `protocol.Location`
