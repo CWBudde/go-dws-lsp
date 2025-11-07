@@ -87,14 +87,11 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 			indexLocations = srv.Symbols().FindReferences(targetName, srv.Documents())
 		}
 
-		if len(indexLocations) == 0 {
-			return openLocations, nil
-		}
-
-		combined := make([]protocol.Location, 0, len(openLocations)+len(indexLocations))
-		combined = append(combined, openLocations...)
+		combined := append([]protocol.Location{}, openLocations...)
 		combined = append(combined, indexLocations...)
-		return combined, nil
+
+		filtered := analysis.FilterByScope(combined, srv.Documents(), targetName, scope)
+		return filtered, nil
 	}
 
 	// Otherwise, do a naive in-document scan for identifiers with the same name.
@@ -133,7 +130,8 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 		return true
 	})
 
-	return locations, nil
+	filtered := analysis.FilterByScope(locations, srv.Documents(), targetName, scope)
+	return filtered, nil
 }
 
 // max returns the larger of a or b.

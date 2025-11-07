@@ -5,7 +5,6 @@ import (
 	"log"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
@@ -292,11 +291,16 @@ func (sr *SymbolResolver) resolveWorkspace(symbolName string) []protocol.Locatio
 // 3. Files in other directories (alphabetically)
 func (sr *SymbolResolver) sortLocationsByRelevance(locations []protocol.Location) {
 	// Extract directory from current document URI
-	currentDir := filepath.Dir(uriToPath(sr.documentURI))
+	currentPath, err := uriToPath(sr.documentURI)
+	if err != nil {
+		log.Printf("sortLocationsByRelevance: unable to resolve current URI %s: %v", sr.documentURI, err)
+		return
+	}
+	currentDir := filepath.Dir(currentPath)
 
 	sort.Slice(locations, func(i, j int) bool {
-		pathI := uriToPath(locations[i].URI)
-		pathJ := uriToPath(locations[j].URI)
+		pathI := resolvePathOrFallback(locations[i].URI)
+		pathJ := resolvePathOrFallback(locations[j].URI)
 
 		dirI := filepath.Dir(pathI)
 		dirJ := filepath.Dir(pathJ)
@@ -317,11 +321,11 @@ func (sr *SymbolResolver) sortLocationsByRelevance(locations []protocol.Location
 	})
 }
 
-// uriToPath converts a file URI to a file path.
-// Handles both file:// URIs and plain paths.
-func uriToPath(uri string) string {
-	// Remove file:// prefix if present
-	path := strings.TrimPrefix(uri, "file://")
+func resolvePathOrFallback(uri string) string {
+	path, err := uriToPath(uri)
+	if err != nil {
+		return uri
+	}
 	return path
 }
 
@@ -515,12 +519,12 @@ func (sr *SymbolResolver) nodeToLocation(node ast.Node) *protocol.Location {
 		URI: sr.documentURI,
 		Range: protocol.Range{
 			Start: protocol.Position{
-				Line:      uint32(pos.Line - 1),    // Convert to 0-based
-				Character: uint32(pos.Column - 1),  // Convert to 0-based
+				Line:      uint32(pos.Line - 1),   // Convert to 0-based
+				Character: uint32(pos.Column - 1), // Convert to 0-based
 			},
 			End: protocol.Position{
-				Line:      uint32(end.Line - 1),    // Convert to 0-based
-				Character: uint32(end.Column - 1),  // Convert to 0-based
+				Line:      uint32(end.Line - 1),   // Convert to 0-based
+				Character: uint32(end.Column - 1), // Convert to 0-based
 			},
 		},
 	}

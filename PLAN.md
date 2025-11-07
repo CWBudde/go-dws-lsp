@@ -621,29 +621,29 @@ The implementation is organized into the following phases:
     Scope: local
     ```
 
-- [ ] **4.12 Handle hover on non-symbol locations**
-  - [ ] Return nil if FindNodeAtPosition returns nil
-  - [ ] Return nil for literal nodes (numbers, strings)
-  - [ ] Return nil for operators
-  - [ ] Return nil for keywords
-  - [ ] Return nil for comments
-  - [ ] Return nil for whitespace
-  - [ ] Log hover position for debugging (optional)
+- [x] **4.12 Handle hover on non-symbol locations** ✅
+  - [x] Return nil if FindNodeAtPosition returns nil
+  - [x] Return nil for literal nodes (numbers, strings)
+  - [x] Return nil for operators
+  - [x] Return nil for keywords
+  - [x] Return nil for comments
+  - [x] Return nil for whitespace
+  - [x] Log hover position for debugging (optional)
 
-- [ ] **4.13 Write unit tests for hover functionality**
-  - [ ] Create `internal/lsp/hover_test.go`
-  - [ ] Test hover on variable declaration
-  - [ ] Test hover on variable reference
-  - [ ] Test hover on function declaration
-  - [ ] Test hover on function call
-  - [ ] Test hover on class declaration
-  - [ ] Test hover on method declaration
-  - [ ] Test hover on property
-  - [ ] Test hover on built-in types
-  - [ ] Test hover on non-symbol locations (should return nil)
-  - [ ] Test hover with invalid positions
-  - [ ] Test hover with missing AST (document with errors)
-  - [ ] Use table-driven tests for multiple scenarios
+- [x] **4.13 Write unit tests for hover functionality** ✅
+  - [x] Create `internal/lsp/hover_test.go`
+  - [x] Test hover on variable declaration
+  - [x] Test hover on variable reference
+  - [x] Test hover on function declaration
+  - [x] Test hover on function call
+  - [x] Test hover on class declaration
+  - [x] Test hover on method declaration
+  - [x] Test hover on property
+  - [x] Test hover on built-in types
+  - [x] Test hover on non-symbol locations (should return nil)
+  - [x] Test hover with invalid positions
+  - [x] Test hover with missing AST (document with errors)
+  - [x] Use table-driven tests for multiple scenarios
 
 - [ ] **4.14 Manually test hover in VSCode**
   - [ ] Open sample DWScript file in VSCode
@@ -917,14 +917,14 @@ The implementation is organized into the following phases:
   - [x] Collect all matching positions
   - [x] Return position array
 
-- [ ] **6.8 Filter by scope to avoid false matches (same name, different context)**
-  - [ ] Implement `FilterByScope(references []Location, targetScope Scope) []Location`
-  - [ ] For each reference location:
-    - [ ] Parse enclosing scope at that location
-    - [ ] Check if scope matches target scope
-    - [ ] Exclude if in different scope (e.g., different function's local var)
-  - [ ] Handle shadowing (local var vs global var with same name)
-  - [ ] Return filtered list
+- [x] **6.8 Filter by scope to avoid false matches (same name, different context)**
+  - [x] Implement `FilterByScope(references []Location, targetScope Scope) []Location`
+  - [x] For each reference location:
+    - [x] Parse enclosing scope at that location
+    - [x] Check if scope matches target scope
+    - [x] Exclude if in different scope (e.g., different function's local var)
+  - [x] Handle shadowing (local var vs global var with same name)
+  - [x] Return filtered list
 
 - [ ] **6.9 Leverage semantic analyzer for symbol resolution**
   - [ ] Use `program.Symbols()` to get semantic information
@@ -2660,4 +2660,3 @@ The implementation is organized into the following phases:
 ## Summary
 
 This plan provides a systematic approach to building a complete LSP implementation for DWScript in Go. Each phase builds upon the previous one, ensuring steady progress with testable milestones. By following this plan, we will create a robust, idiomatic Go implementation that provides an excellent development experience for DWScript users.
-

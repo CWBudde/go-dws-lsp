@@ -104,20 +104,12 @@ func getHoverContent(node ast.Node, doc *server.Document) string {
 	case *ast.EnumDecl:
 		return getEnumHover(n)
 
-	case *ast.IntegerLiteral:
-		return fmt.Sprintf("```dwscript\n%d\n```\n(Integer literal)", n.Value)
-
-	case *ast.FloatLiteral:
-		return fmt.Sprintf("```dwscript\n%f\n```\n(Float literal)", n.Value)
-
-	case *ast.StringLiteral:
-		return fmt.Sprintf("```dwscript\n%q\n```\n(String literal)", n.Value)
-
-	case *ast.BooleanLiteral:
-		return fmt.Sprintf("```dwscript\n%t\n```\n(Boolean literal)", n.Value)
+	case *ast.IntegerLiteral, *ast.FloatLiteral, *ast.StringLiteral, *ast.BooleanLiteral:
+		// Task 4.12: Return nil for literal nodes (no hover info for literals)
+		return ""
 
 	default:
-		// No hover info for this node type
+		// No hover info for this node type (operators, keywords, etc.)
 		return ""
 	}
 }
