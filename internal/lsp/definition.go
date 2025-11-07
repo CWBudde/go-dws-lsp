@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/cwbudde/go-dws/pkg/ast"
+	"github.com/cwbudde/go-dws/pkg/token"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 
@@ -78,14 +79,28 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (inter
 		return nodeToLocation(node, uri), nil
 	}
 
-	// Find the definition location for this symbol
-	location := findDefinitionLocation(node, doc, programAST, uri)
-	if location == nil {
+	// Use the new symbol resolver for scope-based resolution (Task 5.3)
+	resolver := analysis.NewSymbolResolver(uri, programAST, token.Position{
+		Line:   astLine,
+		Column: astColumn,
+	})
+
+	log.Printf("Resolution scope: %s", resolver.GetResolutionScope())
+
+	locations := resolver.ResolveSymbol(symbolInfo.Name)
+	if len(locations) == 0 {
 		log.Printf("No definition found for symbol %s at position %d:%d\n", symbolInfo.Name, astLine, astColumn)
 		return nil, nil
 	}
 
-	return location, nil
+	// Return the first location (or all locations if we support multiple definitions)
+	if len(locations) == 1 {
+		return &locations[0], nil
+	}
+
+	// Multiple definitions found (e.g., overloaded functions)
+	log.Printf("Found %d definitions for symbol %s", len(locations), symbolInfo.Name)
+	return locations, nil // Return array of locations
 }
 
 // findDefinitionLocation finds the definition location for an AST node.
