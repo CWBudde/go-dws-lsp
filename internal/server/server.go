@@ -9,13 +9,16 @@ import (
 type Server struct {
 	// documents stores all open documents
 	documents *DocumentStore
-	
+
+	// symbolIndex caches references for workspace documents (even when not open)
+	symbolIndex *SymbolIndex
+
 	// config holds server configuration
 	config *Config
-	
+
 	// mutex protects server state
 	mu sync.RWMutex
-	
+
 	// shutting down flag
 	shuttingDown bool
 }
@@ -24,7 +27,7 @@ type Server struct {
 type Config struct {
 	// MaxProblems limits the number of diagnostics reported
 	MaxProblems int
-	
+
 	// Trace controls logging verbosity
 	Trace string
 }
@@ -32,7 +35,8 @@ type Config struct {
 // New creates a new LSP server instance.
 func New() *Server {
 	return &Server{
-		documents: NewDocumentStore(),
+		documents:   NewDocumentStore(),
+		symbolIndex: NewSymbolIndex(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -57,6 +61,11 @@ func (s *Server) SetShuttingDown() {
 // Documents returns the document store.
 func (s *Server) Documents() *DocumentStore {
 	return s.documents
+}
+
+// Symbols returns the workspace symbol index.
+func (s *Server) Symbols() *SymbolIndex {
+	return s.symbolIndex
 }
 
 // Config returns the server configuration.

@@ -58,6 +58,9 @@ func DidOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) 
 
 	// Store document in DocumentStore
 	srv.Documents().Set(uri, doc)
+	if srv.Symbols() != nil {
+		srv.Symbols().UpdateDocument(doc)
+	}
 
 	// Publish diagnostics to the client
 	PublishDiagnostics(context, uri, diagnostics)
@@ -164,6 +167,9 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 		Program:    program,
 	}
 	srv.Documents().Set(uri, updatedDoc)
+	if srv.Symbols() != nil {
+		srv.Symbols().UpdateDocument(updatedDoc)
+	}
 
 	// Publish updated diagnostics to the client
 	PublishDiagnostics(context, uri, diagnostics)

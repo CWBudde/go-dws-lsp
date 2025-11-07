@@ -858,62 +858,62 @@ The implementation is organized into the following phases:
   - [x] Return array of Locations (may be empty)
   - [x] Register handler in server initialization
 
-- [ ] **6.2 Identify symbol at references request position**
-  - [ ] Reuse `FindNodeAtPosition` from hover/definition
-  - [ ] Get AST node at position
-  - [ ] Extract symbol name and kind
-  - [ ] Determine symbol scope (local, global, class member)
-  - [ ] For member access, extract member name
-  - [ ] Return nil if not on a symbol
-  - [ ] Log symbol for debugging
+- [x] **6.2 Identify symbol at references request position**
+  - [x] Reuse `FindNodeAtPosition` from hover/definition
+  - [x] Get AST node at position
+  - [x] Extract symbol name and kind
+  - [x] Determine symbol scope (local, global, class member)
+  - [x] For member access, extract member name
+  - [x] Return nil if not on a symbol
+  - [x] Log symbol for debugging
 
-- [ ] **6.3 Determine symbol scope (local vs global)**
-  - [ ] Create `internal/analysis/scope_detector.go`
-  - [ ] Implement `DetermineScope(ast *ast.Program, symbolName string, pos Position) (ScopeType, error)`
-  - [ ] Define ScopeType enum: Local, Global, ClassMember, Parameter
-  - [ ] For local: check if within function/block
-  - [ ] For global: check if top-level declaration
-  - [ ] For class member: check if within class
-  - [ ] Return scope type and enclosing context
+- [x] **6.3 Determine symbol scope (local vs global)**
+  - [x] Create `internal/analysis/scope_detector.go`
+  - [x] Implement `DetermineScope(ast *ast.Program, symbolName string, pos Position) (ScopeType, error)`
+  - [x] Define ScopeType enum: Local, Global, ClassMember, Parameter
+  - [x] For local: check if within function/block
+  - [x] For global: check if top-level declaration
+  - [x] For class member: check if within class
+  - [x] Return scope type and enclosing context
 
-- [ ] **6.4 For local symbols: search within same function/block AST**
-  - [ ] Implement `FindLocalReferences(ast *ast.Program, symbolName string, scopeNode ast.Node) ([]Location, error)`
-  - [ ] Find enclosing function/procedure containing the symbol
-  - [ ] Traverse only that function's AST
-  - [ ] Use AST visitor to find all Identifier nodes
-  - [ ] Match identifier name with symbol name
-  - [ ] Collect positions of all matches
-  - [ ] Convert AST positions to LSP Locations
-  - [ ] Exclude matches in nested scopes with shadowing
+- [x] **6.4 For local symbols: search within same function/block AST**
+  - [x] Implement `FindLocalReferences(ast *ast.Program, symbolName string, scopeNode ast.Node) ([]Location, error)`
+  - [x] Find enclosing function/procedure containing the symbol
+  - [x] Traverse only that function's AST
+  - [x] Use AST visitor to find all Identifier nodes
+  - [x] Match identifier name with symbol name
+  - [x] Collect positions of all matches
+  - [x] Convert AST positions to LSP Locations
+  - [x] Exclude matches in nested scopes with shadowing
 
-- [ ] **6.5 For global symbols: search all open documents' ASTs**
-  - [ ] Implement `FindGlobalReferences(symbolName string, docStore *DocumentStore) ([]Location, error)`
-  - [ ] Iterate through all open documents in DocumentStore
-  - [ ] For each document with valid AST:
-    - [ ] Traverse AST with visitor pattern
-    - [ ] Find all Identifier nodes matching symbol name
-    - [ ] Check if identifier refers to global scope
-    - [ ] Collect location with document URI
-  - [ ] Return combined list from all documents
+- [x] **6.5 For global symbols: search all open documents' ASTs**
+  - [x] Implement `FindGlobalReferences(symbolName string, docStore *DocumentStore) ([]Location, error)`
+  - [x] Iterate through all open documents in DocumentStore
+  - [x] For each document with valid AST:
+    - [x] Traverse AST with visitor pattern
+    - [x] Find all Identifier nodes matching symbol name
+    - [x] Check if identifier refers to global scope
+    - [x] Collect location with document URI
+  - [x] Return combined list from all documents
 
-- [ ] **6.6 Search workspace index for references in non-open files**
-  - [ ] Extend `SymbolIndex` to track references (not just definitions)
-  - [ ] Implement `FindReferencesInIndex(symbolName string) ([]Location, error)`
-  - [ ] Query index for all files containing symbol
-  - [ ] For files not in DocumentStore:
-    - [ ] Parse file on-demand
-    - [ ] Search AST for references
-    - [ ] Cache result for performance
-  - [ ] Return all workspace references
+- [x] **6.6 Search workspace index for references in non-open files**
+  - [x] Extend `SymbolIndex` to track references (not just definitions)
+  - [x] Implement `FindReferencesInIndex(symbolName string) ([]Location, error)`
+  - [x] Query index for all files containing symbol
+  - [x] For files not in DocumentStore:
+    - [x] Parse file on-demand
+    - [x] Search AST for references
+    - [x] Cache result for performance
+  - [x] Return all workspace references
 
-- [ ] **6.7 Create helper to scan AST nodes for matching identifier names**
-  - [ ] Implement `ScanASTForIdentifier(ast *ast.Program, name string) ([]Position, error)`
-  - [ ] Use `ast.Inspect()` visitor helper
-  - [ ] Visit all nodes in AST
-  - [ ] Check if node is `*ast.Identifier`
-  - [ ] Match `identifier.Name` with target name
-  - [ ] Collect all matching positions
-  - [ ] Return position array
+- [x] **6.7 Create helper to scan AST nodes for matching identifier names**
+  - [x] Implement `ScanASTForIdentifier(ast *ast.Program, name string) ([]Position, error)`
+  - [x] Use `ast.Inspect()` visitor helper
+  - [x] Visit all nodes in AST
+  - [x] Check if node is `*ast.Identifier`
+  - [x] Match `identifier.Name` with target name
+  - [x] Collect all matching positions
+  - [x] Return position array
 
 - [ ] **6.8 Filter by scope to avoid false matches (same name, different context)**
   - [ ] Implement `FilterByScope(references []Location, targetScope Scope) []Location`
@@ -2658,3 +2658,4 @@ The implementation is organized into the following phases:
 ## Summary
 
 This plan provides a systematic approach to building a complete LSP implementation for DWScript in Go. Each phase builds upon the previous one, ensuring steady progress with testable milestones. By following this plan, we will create a robust, idiomatic Go implementation that provides an excellent development experience for DWScript users.
+
