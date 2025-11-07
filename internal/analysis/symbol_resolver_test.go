@@ -3,8 +3,10 @@ package analysis
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Helper function to parse DWScript code for testing
@@ -499,5 +501,229 @@ end;`
 	// Should find the field in grandparent class
 	if len(locations) == 0 {
 		t.Fatal("Expected to find field from grandparent class, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_NoIndex(t *testing.T) {
+	code := `
+function TestFunc(): Integer;
+begin
+  Result := 42;
+end;
+`
+	programAST := parseCode(t, code)
+
+	// Create resolver without workspace index
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   2,
+		Column: 10,
+	})
+
+	// Try to resolve a symbol that doesn't exist in current file
+	locations := resolver.ResolveSymbol("UnknownFunc")
+
+	// Should not find the symbol (doesn't exist anywhere)
+	if len(locations) != 0 {
+		t.Errorf("Expected 0 locations for non-existent symbol, got %d", len(locations))
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_WithIndex(t *testing.T) {
+	code := `
+function LocalFunc(): Integer;
+begin
+  Result := 10;
+end;
+`
+	programAST := parseCode(t, code)
+
+	// Create a workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add a symbol from another file
+	index.AddSymbol(
+		"ExternalFunc",
+		protocol.SymbolKindFunction,
+		"file:///other.dws",
+		protocol.Range{
+			Start: protocol.Position{Line: 5, Character: 9},
+			End:   protocol.Position{Line: 5, Character: 21},
+		},
+		"",
+		"function ExternalFunc(): Integer",
+	)
+
+	// Create resolver with workspace index
+	resolver := NewSymbolResolverWithIndex("file:///test.dws", programAST, token.Position{
+		Line:   2,
+		Column: 10,
+	}, index)
+
+	locations := resolver.ResolveSymbol("ExternalFunc")
+
+	// Should find the symbol from the workspace
+	if len(locations) == 0 {
+		t.Fatal("Expected to find ExternalFunc in workspace, got no results")
+	}
+
+	if len(locations) != 1 {
+		t.Errorf("Expected 1 location, got %d", len(locations))
+	}
+
+	if locations[0].URI != "file:///other.dws" {
+		t.Errorf("Expected URI 'file:///other.dws', got '%s'", locations[0].URI)
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_SkipsCurrentFile(t *testing.T) {
+	code := `
+function MyFunc(): Integer;
+begin
+  Result := 42;
+end;
+
+var x := MyFunc();
+`
+	programAST := parseCode(t, code)
+
+	// Create a workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add the same symbol from the current file (should be skipped)
+	index.AddSymbol(
+		"MyFunc",
+		protocol.SymbolKindFunction,
+		"file:///test.dws",
+		protocol.Range{
+			Start: protocol.Position{Line: 1, Character: 9},
+			End:   protocol.Position{Line: 1, Character: 15},
+		},
+		"",
+		"",
+	)
+
+	// Add the symbol from another file
+	index.AddSymbol(
+		"MyFunc",
+		protocol.SymbolKindFunction,
+		"file:///other.dws",
+		protocol.Range{
+			Start: protocol.Position{Line: 10, Character: 9},
+			End:   protocol.Position{Line: 10, Character: 15},
+		},
+		"",
+		"",
+	)
+
+	// Create resolver with workspace index
+	resolver := NewSymbolResolverWithIndex("file:///test.dws", programAST, token.Position{
+		Line:   7,
+		Column: 10,
+	}, index)
+
+	locations := resolver.ResolveSymbol("MyFunc")
+
+	// Should find the local definition first (via resolveGlobal)
+	// The workspace resolver should skip the current file's entry
+	if len(locations) == 0 {
+		t.Fatal("Expected to find MyFunc, got no results")
+	}
+
+	// First result should be from the current file (via resolveGlobal)
+	if locations[0].URI != "file:///test.dws" {
+		t.Errorf("Expected first result from current file, got '%s'", locations[0].URI)
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_MultipleFiles(t *testing.T) {
+	code := `
+function Main(): Integer;
+begin
+  Result := 0;
+end;
+`
+	programAST := parseCode(t, code)
+
+	// Create a workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add the same symbol from multiple files
+	index.AddSymbol(
+		"SharedFunc",
+		protocol.SymbolKindFunction,
+		"file:///lib/helpers.dws",
+		protocol.Range{Start: protocol.Position{Line: 1, Character: 9}, End: protocol.Position{Line: 1, Character: 19}},
+		"",
+		"",
+	)
+
+	index.AddSymbol(
+		"SharedFunc",
+		protocol.SymbolKindFunction,
+		"file:///lib/utils.dws",
+		protocol.Range{Start: protocol.Position{Line: 5, Character: 9}, End: protocol.Position{Line: 5, Character: 19}},
+		"",
+		"",
+	)
+
+	// Create resolver with workspace index
+	resolver := NewSymbolResolverWithIndex("file:///app/main.dws", programAST, token.Position{
+		Line:   2,
+		Column: 10,
+	}, index)
+
+	locations := resolver.ResolveSymbol("SharedFunc")
+
+	// Should find both definitions
+	if len(locations) != 2 {
+		t.Fatalf("Expected 2 locations, got %d", len(locations))
+	}
+
+	// Verify both files are in the results
+	foundHelpers := false
+	foundUtils := false
+
+	for _, loc := range locations {
+		if loc.URI == "file:///lib/helpers.dws" {
+			foundHelpers = true
+		}
+		if loc.URI == "file:///lib/utils.dws" {
+			foundUtils = true
+		}
+	}
+
+	if !foundHelpers || !foundUtils {
+		t.Error("Expected locations from both helpers.dws and utils.dws")
+	}
+}
+
+func TestSymbolResolver_SetWorkspaceIndex(t *testing.T) {
+	code := `var x := 1;`
+	programAST := parseCode(t, code)
+
+	// Create resolver without index
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   1,
+		Column: 5,
+	})
+
+	// Create and set index
+	index := workspace.NewSymbolIndex()
+	index.AddSymbol(
+		"TestSymbol",
+		protocol.SymbolKindFunction,
+		"file:///other.dws",
+		protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 10}},
+		"",
+		"",
+	)
+
+	resolver.SetWorkspaceIndex(index)
+
+	// Should now be able to resolve workspace symbols
+	locations := resolver.ResolveSymbol("TestSymbol")
+
+	if len(locations) == 0 {
+		t.Error("Expected to find TestSymbol after setting workspace index")
 	}
 }

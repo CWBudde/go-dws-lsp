@@ -3,7 +3,11 @@ package analysis
 
 import (
 	"log"
+	"path/filepath"
+	"sort"
+	"strings"
 
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -20,15 +24,35 @@ type SymbolResolver struct {
 
 	// position is the cursor position where resolution is requested
 	position token.Position
+
+	// workspaceIndex is the workspace-wide symbol index (may be nil)
+	workspaceIndex *workspace.SymbolIndex
 }
 
 // NewSymbolResolver creates a new symbol resolver for a document.
+// The workspace index parameter is optional (can be nil).
 func NewSymbolResolver(uri string, program *ast.Program, pos token.Position) *SymbolResolver {
 	return &SymbolResolver{
-		documentURI: uri,
-		program:     program,
-		position:    pos,
+		documentURI:    uri,
+		program:        program,
+		position:       pos,
+		workspaceIndex: nil, // Will be set via SetWorkspaceIndex if available
 	}
+}
+
+// NewSymbolResolverWithIndex creates a new symbol resolver with workspace index.
+func NewSymbolResolverWithIndex(uri string, program *ast.Program, pos token.Position, index *workspace.SymbolIndex) *SymbolResolver {
+	return &SymbolResolver{
+		documentURI:    uri,
+		program:        program,
+		position:       pos,
+		workspaceIndex: index,
+	}
+}
+
+// SetWorkspaceIndex sets the workspace index for cross-file symbol resolution.
+func (sr *SymbolResolver) SetWorkspaceIndex(index *workspace.SymbolIndex) {
+	sr.workspaceIndex = index
 }
 
 // ResolveSymbol resolves a symbol name to its definition location(s).
@@ -223,15 +247,76 @@ func (sr *SymbolResolver) resolveGlobal(symbolName string) []protocol.Location {
 }
 
 // resolveWorkspace attempts to resolve a symbol in other files in the workspace.
-// This is a placeholder for future workspace-wide symbol indexing.
+// It queries the workspace symbol index for matching symbols.
 func (sr *SymbolResolver) resolveWorkspace(symbolName string) []protocol.Location {
-	// TODO: Implement workspace-wide symbol resolution
-	// This will require:
-	// - A workspace symbol index
-	// - Cross-file import/reference tracking
-	// - Concurrent file parsing
-	// For now, return empty
-	return nil
+	// If no workspace index is available, return empty
+	if sr.workspaceIndex == nil {
+		log.Printf("No workspace index available for cross-file resolution")
+		return nil
+	}
+
+	// Query the workspace index for the symbol
+	symbolLocations := sr.workspaceIndex.FindSymbol(symbolName)
+	if len(symbolLocations) == 0 {
+		return nil
+	}
+
+	// Convert workspace.SymbolLocation to protocol.Location
+	var locations []protocol.Location
+	for _, symLoc := range symbolLocations {
+		// Skip symbols from the current file (already handled by resolveGlobal)
+		if symLoc.Location.URI == sr.documentURI {
+			continue
+		}
+		locations = append(locations, symLoc.Location)
+	}
+
+	// Sort by relevance: prefer files in the same directory
+	if len(locations) > 1 {
+		sr.sortLocationsByRelevance(locations)
+	}
+
+	return locations
+}
+
+// sortLocationsByRelevance sorts locations by relevance to the current document.
+// Relevance is determined by:
+// 1. Files in the same directory as the current document
+// 2. Files in parent directories
+// 3. Files in other directories (alphabetically)
+func (sr *SymbolResolver) sortLocationsByRelevance(locations []protocol.Location) {
+	// Extract directory from current document URI
+	currentDir := filepath.Dir(uriToPath(sr.documentURI))
+
+	sort.Slice(locations, func(i, j int) bool {
+		pathI := uriToPath(locations[i].URI)
+		pathJ := uriToPath(locations[j].URI)
+
+		dirI := filepath.Dir(pathI)
+		dirJ := filepath.Dir(pathJ)
+
+		// Same directory as current file takes precedence
+		isSameDirI := dirI == currentDir
+		isSameDirJ := dirJ == currentDir
+
+		if isSameDirI && !isSameDirJ {
+			return true
+		}
+		if !isSameDirI && isSameDirJ {
+			return false
+		}
+
+		// Both in same directory or both in different directories - sort alphabetically
+		return pathI < pathJ
+	})
+}
+
+// uriToPath converts a file URI to a file path.
+// Handles both file:// URIs and plain paths.
+func uriToPath(uri string) string {
+	// Remove file:// prefix if present
+	path := strings.TrimPrefix(uri, "file://")
+	return path
 }
 
 // findEnclosingFunction finds the function that contains the cursor position.

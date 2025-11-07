@@ -748,14 +748,17 @@ The implementation is organized into the following phases:
   - [x] Comprehensive test suite with 13 test functions covering all functionality
   - [ ] Index symbols on workspace initialization (deferred to integration phase)
 
-- [ ] **5.8 Search workspace symbol index for cross-file definitions**
-  - [ ] Implement `ResolveWorkspaceSymbol(index *SymbolIndex, name string) ([]Location, error)`
-  - [ ] Query workspace index for symbol name
-  - [ ] Handle multiple matches (e.g., same name in different files)
-  - [ ] Filter by symbol kind if needed (function vs variable)
-  - [ ] Return all matching locations
-  - [ ] Sort results by relevance (same package first)
-  - [ ] Handle index unavailable gracefully (fallback to file scan)
+- [x] **5.8 Search workspace symbol index for cross-file definitions** ✅
+  - [x] Implement `resolveWorkspace(symbolName)` method in SymbolResolver
+  - [x] Query workspace index for symbol name
+  - [x] Handle multiple matches (e.g., same name in different files)
+  - [x] Return all matching locations from workspace
+  - [x] Sort results by relevance (files in same directory first, then alphabetically)
+  - [x] Handle index unavailable gracefully (returns nil when no index)
+  - [x] Skip symbols from current file (already handled by resolveGlobal)
+  - [x] Add helper methods: `sortLocationsByRelevance()`, `uriToPath()`
+  - [x] Add constructors: `NewSymbolResolverWithIndex()`, `SetWorkspaceIndex()`
+  - [x] Comprehensive test suite (5 tests) covering all workspace resolution scenarios
 
 - [ ] **5.9 Handle unit imports (parse referenced unit files on-demand)**
   - [ ] Implement `ParseImportedUnit(unitName string, workspaceRoot string) (*Document, error)`
