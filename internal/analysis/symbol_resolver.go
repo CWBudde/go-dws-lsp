@@ -344,6 +344,31 @@ func (sr *SymbolResolver) checkStatementForSymbol(stmt ast.Statement, symbolName
 				return sr.nodeToLocation(s) // Return enum declaration location
 			}
 		}
+
+	case *ast.RecordDecl:
+		if s.Name != nil && s.Name.Value == symbolName {
+			return sr.nodeToLocation(s.Name)
+		}
+
+	case *ast.InterfaceDecl:
+		if s.Name != nil && s.Name.Value == symbolName {
+			return sr.nodeToLocation(s.Name)
+		}
+
+	case *ast.ArrayDecl:
+		if s.Name != nil && s.Name.Value == symbolName {
+			return sr.nodeToLocation(s.Name)
+		}
+
+	case *ast.SetDecl:
+		if s.Name != nil && s.Name.Value == symbolName {
+			return sr.nodeToLocation(s.Name)
+		}
+
+	case *ast.HelperDecl:
+		if s.Name != nil && s.Name.Value == symbolName {
+			return sr.nodeToLocation(s.Name)
+		}
 	}
 
 	return nil

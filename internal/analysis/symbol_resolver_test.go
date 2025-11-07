@@ -214,6 +214,34 @@ var x := PI;
 	}
 }
 
+func TestSymbolResolver_ResolveGlobal_Record(t *testing.T) {
+	code := `
+type TPoint = record
+  X: Integer;
+  Y: Integer;
+end;
+
+var p: TPoint;
+`
+	programAST := parseCode(t, code)
+
+	// Cursor position on TPoint reference
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   6,
+		Column: 10, // On "TPoint"
+	})
+
+	locations := resolver.ResolveSymbol("TPoint")
+
+	if len(locations) == 0 {
+		t.Fatal("Expected to find record type, got no results")
+	}
+
+	if len(locations) != 1 {
+		t.Errorf("Expected 1 location, got %d", len(locations))
+	}
+}
+
 func TestSymbolResolver_NotFound(t *testing.T) {
 	code := `
 var x: Integer;

@@ -721,15 +721,16 @@ The implementation is organized into the following phases:
   - [x] Handle inherited members (search parent classes)
   - [x] Return definition location with class URI
 
-- [ ] **5.6 Handle global functions/variables (search current file first)**
-  - [ ] Implement `ResolveGlobalSymbol(doc *Document, name string) (*Location, error)`
-  - [ ] Get document AST
-  - [ ] Search top-level function declarations
-  - [ ] Search global variable declarations
-  - [ ] Search constant declarations
-  - [ ] Search type/class declarations
-  - [ ] Return definition location in current file
-  - [ ] Return nil if not found (will search workspace next)
+- [x] **5.6 Handle global functions/variables (search current file first)** ✅
+  - [x] Implement `ResolveGlobalSymbol(doc *Document, name string) (*Location, error)`
+  - [x] Get document AST
+  - [x] Search top-level function declarations
+  - [x] Search global variable declarations
+  - [x] Search constant declarations
+  - [x] Search type/class declarations (ClassDecl, RecordDecl, InterfaceDecl, ArrayDecl, SetDecl, HelperDecl)
+  - [x] Search enum declarations and values
+  - [x] Return definition location in current file
+  - [x] Return empty array if not found (will search workspace next)
 
 - [ ] **5.7 Implement workspace symbol index for cross-file lookups**
   - [ ] Create `internal/workspace/symbol_index.go` (if not exists from Phase 3)
