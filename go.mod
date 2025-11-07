@@ -29,8 +29,8 @@ require (
 	golang.org/x/term v0.23.0 // indirect
 )
 
-// Use local go-dws repository
-replace github.com/cwbudde/go-dws => /tmp/go-dws
+// Use local go-dws repository (commented out for now)
+// replace github.com/cwbudde/go-dws => /tmp/go-dws
 
 // Workaround for Windows termenv issue in kutil v0.3.11
 replace github.com/tliron/kutil => github.com/tliron/kutil v0.3.25
