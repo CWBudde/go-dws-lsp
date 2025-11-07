@@ -306,14 +306,17 @@ The implementation is organized into the following phases:
   - **Tests**: TestGlobalReferences_GlobalFunction (3 refs found), TestGlobalReferences_AcrossMultipleFunctions (5 refs across 3 functions), TestGlobalReferences_ClassName (skipped), TestGlobalReferences_VerifySorting (validates sorting)
   - **Validation**: All active tests pass, demonstrating global reference finding works correctly
 
-- [ ] **6.14 Write unit tests for scope isolation (no spurious references)**
-  - [ ] Create test with multiple symbols with same name
-  - [ ] Local variable `x` in function A
-  - [ ] Local variable `x` in function B
-  - [ ] Find references for `x` in A should not include `x` in B
-  - [ ] Test class field vs local variable with same name
-  - [ ] Test parameter vs global variable with same name
-  - [ ] Verify filtering works correctly
+- [x] **6.14 Write unit tests for scope isolation (no spurious references)**
+  - [x] Create test with multiple symbols with same name
+  - [x] Local variable `x` in function A
+  - [x] Local variable `x` in function B
+  - [x] Find references for `x` in A should not include `x` in B
+  - [~] Test class field vs local variable with same name - deferred (classes not fully supported)
+  - [~] Test parameter vs global variable with same name - covered by existing FindLocalReferences tests in internal/analysis
+  - [x] Verify filtering works correctly
+  - **Implementation**: Already covered by TestLocalReferences_WithinSameFunction
+  - **Validation**: Test verifies that references for `x` in FuncA (lines 0-5) do not include references from FuncB (lines 7-11)
+  - **Note**: Scope isolation is also tested at the unit level in internal/analysis/local_references_test.go
 
 - [ ] **6.15 Manually test find references in VSCode**
   - [ ] Open sample DWScript project
