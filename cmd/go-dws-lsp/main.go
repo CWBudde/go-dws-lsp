@@ -88,6 +88,12 @@ func main() {
 		// Text document requests (Phase 5: Go-to Definition)
 		TextDocumentDefinition: lsp.Definition,
 
+		// Text document requests (Phase 6: Find References)
+		TextDocumentReferences: lsp.References,
+
+		// Text document requests (Phase 7: Document Symbols)
+		TextDocumentDocumentSymbol: lsp.DocumentSymbol,
+
 		// Text document requests (Phase 9: Code Completion)
 		TextDocumentCompletion: lsp.Completion,
 	}

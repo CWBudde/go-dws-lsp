@@ -343,15 +343,21 @@ The implementation is organized into the following phases:
 
 ### Tasks (13)
 
-- [ ] **7.1 Implement textDocument/documentSymbol request handler**
-  - [ ] Create `internal/lsp/document_symbol.go`
-  - [ ] Define handler: `func DocumentSymbol(context *glsp.Context, params *protocol.DocumentSymbolParams) ([]interface{}, error)`
-  - [ ] Extract document URI from params
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document has valid AST
-  - [ ] Call helper to collect symbols
-  - [ ] Return array of DocumentSymbol or SymbolInformation
-  - [ ] Register handler in server initialization
+- [x] **7.1 Implement textDocument/documentSymbol request handler** ✅
+  - [x] Create `internal/lsp/document_symbol.go`
+  - [x] Define handler: `func DocumentSymbol(context *glsp.Context, params *protocol.DocumentSymbolParams) (any, error)`
+  - [x] Extract document URI from params
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document has valid AST
+  - [x] Call helper to collect symbols
+  - [x] Return array of DocumentSymbol
+  - [x] Register handler in server initialization
+  - **Implementation**: Created comprehensive handler that traverses AST and collects symbols
+  - **Symbols supported**: Functions, variables, constants, classes (with fields/methods/properties), records, enums
+  - **Location**: `internal/lsp/document_symbol.go` (646 lines)
+  - **Registered in**: `cmd/go-dws-lsp/main.go:95` (TextDocumentDocumentSymbol)
+  - **Tests**: 9 comprehensive tests covering all symbol types, mixed documents, empty documents, error handling
+  - **Test results**: All 9 tests passing, validates hierarchical structure for classes/records/enums
 
 - [ ] **7.2 Traverse document AST to collect top-level symbols**
   - [ ] Implement `CollectDocumentSymbols(ast *ast.Program) ([]protocol.DocumentSymbol, error)`
