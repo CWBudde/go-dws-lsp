@@ -258,20 +258,27 @@ The implementation is organized into the following phases:
   - [x] This provides accurate filtering (no false positives)
   - [x] Handle cases where semantic info unavailable (fallback to name matching)
 
-- [ ] **6.10 Collect list of Locations for each reference**
-  - [ ] For each found reference, create `protocol.Location`
-  - [ ] Set URI to document containing reference
-  - [ ] Set Range to cover identifier span
-  - [ ] Convert AST Position (1-based) to LSP Range (0-based)
-  - [ ] Add to results array
-  - [ ] Sort by file then position
+- [x] **6.10 Collect list of Locations for each reference**
+  - [x] For each found reference, create `protocol.Location`
+  - [x] Set URI to document containing reference
+  - [x] Set Range to cover identifier span
+  - [x] Convert AST Position (1-based) to LSP Range (0-based)
+  - [x] Add to results array
+  - [x] Sort by file then position
+  - **Implementation**: Added `sortLocationsByFileAndPosition()` helper to sort results by URI (file), then line, then character
+  - **Location**: `internal/lsp/references.go:167-182`, called before all return statements
+  - **Tests**: Comprehensive sorting test with 6 scenarios covering single file, multiple files, edge cases
 
-- [ ] **6.11 Include/exclude definition based on context flag**
-  - [ ] Check `params.Context.IncludeDeclaration` flag
-  - [ ] If true: include definition location in results
-  - [ ] If false: exclude definition, only show references
-  - [ ] Find definition using go-to-definition logic
-  - [ ] Insert definition at beginning of results array (conventional)
+- [x] **6.11 Include/exclude definition based on context flag**
+  - [x] Check `params.Context.IncludeDeclaration` flag
+  - [x] If true: include definition location in results
+  - [x] If false: exclude definition, only show references
+  - [x] Find definition using go-to-definition logic
+  - [x] Insert definition at beginning of results array (conventional)
+  - **Implementation**: Added `resolveSymbolDefinition()` to find definition using symbol resolver
+  - **Implementation**: Added `applyIncludeDeclaration()` to add/remove definition based on flag
+  - **Location**: `internal/lsp/references.go:206-263`, integrated into all return paths
+  - **Tests**: 8 test scenarios covering include/exclude with various definition positions
 
 - [ ] **6.12 Write unit tests for local symbol references**
   - [ ] Create `internal/lsp/references_test.go`
