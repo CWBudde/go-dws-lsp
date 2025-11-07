@@ -8,6 +8,7 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 )
 
 // WorkspaceSymbol handles the workspace/symbol request.
@@ -31,10 +32,28 @@ func WorkspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolPara
 		return nil, nil
 	}
 
-	// Search for symbols matching the query
 	// Limit to 500 results to avoid overwhelming the client
 	const maxResults = 500
-	symbolLocations := index.Search(query, maxResults)
+
+	// Check if index has any symbols
+	var symbolLocations []workspace.SymbolLocation
+	if index.GetSymbolCount() == 0 {
+		// Index is empty, use fallback search
+		log.Println("Index is empty, using fallback search")
+
+		// Get workspace folders
+		workspaceFolders := srv.GetWorkspaceFolders()
+		if len(workspaceFolders) == 0 {
+			log.Println("No workspace folders available for fallback search")
+			return []protocol.SymbolInformation{}, nil
+		}
+
+		// Perform fallback search
+		symbolLocations = workspace.FallbackSearch(workspaceFolders, query, maxResults)
+	} else {
+		// Use the index for searching
+		symbolLocations = index.Search(query, maxResults)
+	}
 
 	log.Printf("Found %d workspace symbols matching query %q\n", len(symbolLocations), query)
 

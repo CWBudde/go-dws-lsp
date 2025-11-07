@@ -570,5 +570,297 @@ func IndexWorkspaceAsync(index *SymbolIndex, workspaceFolders []protocol.Workspa
 	}()
 }
 
+// FallbackSearch performs on-demand symbol search when the index is not available.
+// It walks through workspace folders, parses .dws files, and searches for symbols matching the query.
+// This provides basic functionality while the index is being built.
+func FallbackSearch(workspaceFolders []string, query string, maxResults int) []SymbolLocation {
+	log.Printf("Warning: Symbol index not ready, using fallback search for query %q\n", query)
+
+	if maxResults <= 0 {
+		maxResults = 100 // Default limit
+	}
+
+	queryLower := strings.ToLower(query)
+	var results []SymbolLocation
+	filesSearched := 0
+	maxFilesToSearch := 50 // Limit files to avoid blocking too long
+
+	// Search each workspace folder
+	for _, folder := range workspaceFolders {
+		if len(results) >= maxResults {
+			break
+		}
+
+		// Walk through the folder
+		err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return nil // Skip errors
+			}
+
+			// Skip directories
+			if info.IsDir() {
+				// Skip hidden directories and common build directories
+				name := filepath.Base(path)
+				if strings.HasPrefix(name, ".") {
+					return filepath.SkipDir
+				}
+				switch name {
+				case "node_modules", "vendor", "bin", "obj", "dist", "build", "out", "__pycache__":
+					return filepath.SkipDir
+				}
+				return nil
+			}
+
+			// Only process .dws files
+			if !strings.HasSuffix(strings.ToLower(path), ".dws") {
+				return nil
+			}
+
+			// Check limits
+			if filesSearched >= maxFilesToSearch {
+				return filepath.SkipAll
+			}
+
+			if len(results) >= maxResults {
+				return filepath.SkipAll
+			}
+
+			filesSearched++
+
+			// Parse file and search for symbols
+			fileResults := searchFileForSymbols(path, queryLower)
+			results = append(results, fileResults...)
+
+			return nil
+		})
+
+		if err != nil {
+			log.Printf("Warning: Error walking workspace folder %s: %v\n", folder, err)
+		}
+	}
+
+	log.Printf("Fallback search found %d results from %d files\n", len(results), filesSearched)
+
+	// Limit results
+	if len(results) > maxResults {
+		results = results[:maxResults]
+	}
+
+	return results
+}
+
+// searchFileForSymbols parses a single file and returns symbols matching the query.
+func searchFileForSymbols(filePath string, queryLower string) []SymbolLocation {
+	// Read file contents
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil
+	}
+
+	// Parse the file
+	engine, err := dwscript.New()
+	if err != nil {
+		return nil
+	}
+
+	prog, err := engine.Compile(string(content))
+	if err != nil {
+		return nil
+	}
+
+	if prog == nil || prog.AST() == nil {
+		return nil
+	}
+
+	// Convert file path to URI
+	uri := pathToURI(filePath)
+
+	// Extract all symbols from the file
+	var allSymbols []SymbolLocation
+	extractSymbolsForSearch(uri, prog.AST(), &allSymbols)
+
+	// Filter symbols by query
+	var matchingSymbols []SymbolLocation
+	for _, sym := range allSymbols {
+		nameLower := strings.ToLower(sym.Name)
+
+		// Check if symbol matches query
+		if queryLower == "" || strings.Contains(nameLower, queryLower) {
+			matchingSymbols = append(matchingSymbols, sym)
+		}
+	}
+
+	return matchingSymbols
+}
+
+// extractSymbolsForSearch extracts symbols from AST for fallback search.
+// This is a simplified version that doesn't use the full indexer machinery.
+func extractSymbolsForSearch(uri string, programAST *ast.Program, results *[]SymbolLocation) {
+	if programAST == nil {
+		return
+	}
+
+	// Traverse top-level statements
+	for _, stmt := range programAST.Statements {
+		if stmt == nil {
+			continue
+		}
+
+		switch node := stmt.(type) {
+		case *ast.FunctionDecl:
+			if node.Name != nil {
+				start := node.Pos()
+				end := node.End()
+				*results = append(*results, SymbolLocation{
+					Name: node.Name.Value,
+					Kind: protocol.SymbolKindFunction,
+					Location: protocol.Location{
+						URI: uri,
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      uint32(max(0, start.Line-1)),
+								Character: uint32(max(0, start.Column-1)),
+							},
+							End: protocol.Position{
+								Line:      uint32(max(0, end.Line-1)),
+								Character: uint32(max(0, end.Column-1)),
+							},
+						},
+					},
+					ContainerName: "",
+					Detail:        "",
+				})
+			}
+
+		case *ast.VarDeclStatement:
+			for _, name := range node.Names {
+				if name != nil {
+					start := node.Pos()
+					end := node.End()
+					*results = append(*results, SymbolLocation{
+						Name: name.Value,
+						Kind: protocol.SymbolKindVariable,
+						Location: protocol.Location{
+							URI: uri,
+							Range: protocol.Range{
+								Start: protocol.Position{
+									Line:      uint32(max(0, start.Line-1)),
+									Character: uint32(max(0, start.Column-1)),
+								},
+								End: protocol.Position{
+									Line:      uint32(max(0, end.Line-1)),
+									Character: uint32(max(0, end.Column-1)),
+								},
+							},
+						},
+						ContainerName: "",
+						Detail:        "",
+					})
+				}
+			}
+
+		case *ast.ConstDecl:
+			if node.Name != nil {
+				start := node.Pos()
+				end := node.End()
+				*results = append(*results, SymbolLocation{
+					Name: node.Name.Value,
+					Kind: protocol.SymbolKindConstant,
+					Location: protocol.Location{
+						URI: uri,
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      uint32(max(0, start.Line-1)),
+								Character: uint32(max(0, start.Column-1)),
+							},
+							End: protocol.Position{
+								Line:      uint32(max(0, end.Line-1)),
+								Character: uint32(max(0, end.Column-1)),
+							},
+						},
+					},
+					ContainerName: "",
+					Detail:        "",
+				})
+			}
+
+		case *ast.ClassDecl:
+			if node.Name != nil {
+				start := node.Pos()
+				end := node.End()
+				*results = append(*results, SymbolLocation{
+					Name: node.Name.Value,
+					Kind: protocol.SymbolKindClass,
+					Location: protocol.Location{
+						URI: uri,
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      uint32(max(0, start.Line-1)),
+								Character: uint32(max(0, start.Column-1)),
+							},
+							End: protocol.Position{
+								Line:      uint32(max(0, end.Line-1)),
+								Character: uint32(max(0, end.Column-1)),
+							},
+						},
+					},
+					ContainerName: "",
+					Detail:        "",
+				})
+			}
+
+		case *ast.RecordDecl:
+			if node.Name != nil {
+				start := node.Pos()
+				end := node.End()
+				*results = append(*results, SymbolLocation{
+					Name: node.Name.Value,
+					Kind: protocol.SymbolKindStruct,
+					Location: protocol.Location{
+						URI: uri,
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      uint32(max(0, start.Line-1)),
+								Character: uint32(max(0, start.Column-1)),
+							},
+							End: protocol.Position{
+								Line:      uint32(max(0, end.Line-1)),
+								Character: uint32(max(0, end.Column-1)),
+							},
+						},
+					},
+					ContainerName: "",
+					Detail:        "",
+				})
+			}
+
+		case *ast.EnumDecl:
+			if node.Name != nil {
+				start := node.Pos()
+				end := node.End()
+				*results = append(*results, SymbolLocation{
+					Name: node.Name.Value,
+					Kind: protocol.SymbolKindEnum,
+					Location: protocol.Location{
+						URI: uri,
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      uint32(max(0, start.Line-1)),
+								Character: uint32(max(0, start.Column-1)),
+							},
+							End: protocol.Position{
+								Line:      uint32(max(0, end.Line-1)),
+								Character: uint32(max(0, end.Column-1)),
+							},
+						},
+					},
+					ContainerName: "",
+					Detail:        "",
+				})
+			}
+		}
+	}
+}
+
 // Compile-time check to ensure io.Reader is implemented if needed
 var _ io.Reader

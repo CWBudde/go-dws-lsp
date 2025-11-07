@@ -609,14 +609,19 @@ The implementation is organized into the following phases:
   - **Match Types**: Exact match (highest priority), prefix match (medium), substring match (lowest)
   - **Tests**: 5 comprehensive tests covering basic matching, relevance sorting, max results, case-insensitive, prefix vs substring
 
-- [ ] **8.8 Implement fallback: parse non-open files on-demand if index not available**
-  - [ ] If symbol index not built yet:
-    - [ ] Fall back to on-demand search
-    - [ ] Use `filepath.Walk` to find .dws files
-    - [ ] Parse each file and search AST
-    - [ ] Return first N matches
-  - [ ] This provides basic functionality while index builds
-  - [ ] Log warning that index is not ready
+- [x] **8.8 Implement fallback: parse non-open files on-demand if index not available** ✅
+  - [x] If symbol index not built yet:
+    - [x] Fall back to on-demand search
+    - [x] Use `filepath.Walk` to find .dws files
+    - [x] Parse each file and search AST
+    - [x] Return first N matches
+  - [x] This provides basic functionality while index builds
+  - [x] Log warning that index is not ready
+  - **Implementation**: Created `FallbackSearch()` function that performs on-demand symbol search
+  - **Location**: `internal/workspace/indexer.go:576`
+  - **Features**: Limits to 50 files and 100 results, skips build/hidden directories, logs warnings
+  - **Handler integration**: `internal/lsp/workspace_symbol.go:40` checks if index is empty and uses fallback
+  - **Extraction**: Simplified `extractSymbolsForSearch()` extracts functions, variables, constants, classes, records, enums
 
 - [ ] **8.9 Optimize workspace symbol search performance**
   - [ ] Use map for O(1) lookup by name
