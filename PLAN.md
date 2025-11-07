@@ -592,7 +592,7 @@ The implementation is organized into the following phases:
 
 ### Tasks (27)
 
-- [ ] **Implement textDocument/completion request handler**
+- [ ] **9.1 Implement textDocument/completion request handler**
   - [ ] Create `internal/lsp/completion.go`
   - [ ] Define handler: `func Completion(context *glsp.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)`
   - [ ] Extract document URI and position from params
@@ -602,7 +602,7 @@ The implementation is organized into the following phases:
   - [ ] Collect completion items based on context
   - [ ] Return CompletionList with items
 
-- [ ] **Determine completion context from cursor position**
+- [ ] **9.2 Determine completion context from cursor position**
   - [ ] Create `internal/analysis/completion_context.go`
   - [ ] Implement `DetermineContext(doc *Document, pos Position) (*CompletionContext, error)`
   - [ ] Analyze text before cursor position
@@ -612,14 +612,14 @@ The implementation is organized into the following phases:
   - [ ] Determine current scope from AST
   - [ ] Return context struct with: Type (general/member/keyword), Scope, ParentType
 
-- [ ] **Detect trigger characters (dot for member access)**
+- [ ] **9.3 Detect trigger characters (dot for member access)**
   - [ ] Check `params.Context.TriggerKind == CompletionTriggerKindTriggerCharacter`
   - [ ] Check `params.Context.TriggerCharacter == "."`
   - [ ] Extract identifier before the dot
   - [ ] Set context type to MemberAccess
   - [ ] Store parent identifier for type resolution
 
-- [ ] **Handle member access completion (object.): determine object type**
+- [ ] **9.4 Handle member access completion (object.): determine object type**
   - [ ] Create `ResolveMemberType(doc *Document, identifier string, pos Position) (Type, error)`
   - [ ] Search for identifier declaration in current scope
   - [ ] If local variable: get type from declaration
@@ -628,14 +628,14 @@ The implementation is organized into the following phases:
   - [ ] Query semantic analyzer for type information
   - [ ] Return resolved type or error if unknown
 
-- [ ] **Retrieve type information from semantic analyzer**
+- [ ] **9.5 Retrieve type information from semantic analyzer**
   - [ ] Add `GetSymbolType(symbol string, position Position) (Type, error)` to analyzer
   - [ ] Use analyzer's symbol table to lookup type
   - [ ] Handle built-in types (Integer, String, Float, Boolean, etc.)
   - [ ] Handle user-defined types (classes, records)
   - [ ] Return type structure with methods and fields
 
-- [ ] **List members (fields/methods) of determined type/class**
+- [ ] **9.6 List members (fields/methods) of determined type/class**
   - [ ] Create `GetTypeMembers(typeName string) ([]CompletionItem, error)`
   - [ ] Search AST for class/record definition
   - [ ] Extract all fields and their types
@@ -648,7 +648,7 @@ The implementation is organized into the following phases:
   - [ ] Sort members alphabetically
   - [ ] Return member list
 
-- [ ] **Handle general scope completion (no dot): provide keywords, variables, globals**
+- [ ] **9.7 Handle general scope completion (no dot): provide keywords, variables, globals**
   - [ ] Create `CollectScopeCompletions(doc *Document, pos Position) ([]CompletionItem, error)`
   - [ ] Initialize empty items slice
   - [ ] Add keywords (if at statement start)
@@ -658,7 +658,7 @@ The implementation is organized into the following phases:
   - [ ] Filter by prefix if user has typed partial identifier
   - [ ] Return combined list
 
-- [ ] **Include language keywords in completion suggestions**
+- [ ] **9.8 Include language keywords in completion suggestions**
   - [ ] Define keyword list: begin, end, if, then, else, while, for, do, var, const, function, procedure, class, etc.
   - [ ] Create CompletionItems for each keyword:
     - [ ] kind = Keyword
@@ -667,7 +667,7 @@ The implementation is organized into the following phases:
   - [ ] Only include if at appropriate position (e.g., statement start)
   - [ ] Optionally provide snippets for complex keywords (if-then-else, for-do)
 
-- [ ] **List local variables and parameters in current scope**
+- [ ] **9.9 List local variables and parameters in current scope**
   - [ ] Implement `FindEnclosingScope(ast *ast.Program, pos Position) (*ast.Scope, error)`
   - [ ] Traverse AST to find the function/block containing position
   - [ ] Extract variable declarations from that scope
@@ -678,7 +678,7 @@ The implementation is organized into the following phases:
     - [ ] detail = type (if available)
   - [ ] Return list of items
 
-- [ ] **Determine current scope from cursor position in AST**
+- [ ] **9.10 Determine current scope from cursor position in AST**
   - [ ] Create `FindNodeAtPosition(ast *ast.Program, pos Position) (ast.Node, error)`
   - [ ] Traverse AST recursively
   - [ ] Check if position is within node's range
@@ -686,7 +686,7 @@ The implementation is organized into the following phases:
   - [ ] From node, determine enclosing function, class, or global scope
   - [ ] Build scope chain (nested scopes)
 
-- [ ] **Include global functions, types, and constants**
+- [ ] **9.11 Include global functions, types, and constants**
   - [ ] Extract top-level function declarations from AST
   - [ ] Extract global variable/constant declarations
   - [ ] Extract type/class definitions
@@ -696,7 +696,7 @@ The implementation is organized into the following phases:
     - [ ] Types: kind = Class/Interface/Struct
   - [ ] Include symbols from workspace index (other files)
 
-- [ ] **Include built-in functions and types from DWScript**
+- [ ] **9.12 Include built-in functions and types from DWScript**
   - [ ] Create `internal/builtins/builtins.go`
   - [ ] Define list of built-in functions:
     - [ ] PrintLn, Print, Length, Copy, Pos, IntToStr, StrToInt, etc.
@@ -708,7 +708,7 @@ The implementation is organized into the following phases:
     - [ ] documentation = usage info (MarkupContent)
   - [ ] Return built-in items
 
-- [ ] **Construct CompletionItem list with label, kind, detail**
+- [ ] **9.13 Construct CompletionItem list with label, kind, detail**
   - [ ] Create CompletionItem struct for each suggestion
   - [ ] Set required fields:
     - [ ] label = display name
@@ -720,7 +720,7 @@ The implementation is organized into the following phases:
     - [ ] filterText = for filtering (usually same as label)
   - [ ] Add all items to CompletionList
 
-- [ ] **For functions: provide snippet-style insert text with parameters**
+- [ ] **9.14 For functions: provide snippet-style insert text with parameters**
   - [ ] Parse function signature to extract parameters
   - [ ] Build snippet string: `FunctionName($1:param1, $2:param2)$0`
   - [ ] Use LSP snippet syntax with tabstops
@@ -728,20 +728,20 @@ The implementation is organized into the following phases:
   - [ ] Set `insertText = snippet string`
   - [ ] Example: `"WriteLine(${1:text})$0"`
 
-- [ ] **Set insertTextFormat to Snippet where appropriate**
+- [ ] **9.15 Set insertTextFormat to Snippet where appropriate**
   - [ ] For functions with parameters: use Snippet
   - [ ] For control structures (if-then, for-do): use Snippet
   - [ ] For simple identifiers: use PlainText
   - [ ] Ensure editor supports snippets (check client capabilities)
 
-- [ ] **Optionally implement completionItem/resolve for lazy resolution**
+- [ ] **9.16 Optionally implement completionItem/resolve for lazy resolution**
   - [ ] Mark `CompletionProvider.ResolveProvider = true` in capabilities
   - [ ] Implement resolve handler: `func CompletionResolve(context *glsp.Context, item *protocol.CompletionItem) (*protocol.CompletionItem, error)`
   - [ ] Use item.Data to store deferred resolution info
   - [ ] In resolve, add documentation, additional edits, etc.
   - [ ] This improves performance by deferring expensive computation
 
-- [ ] **Cache global symbol suggestions for performance**
+- [ ] **9.17 Cache global symbol suggestions for performance**
   - [ ] Create `CompletionCache` struct with:
     - [ ] `globalSymbols []CompletionItem`
     - [ ] `builtins []CompletionItem`
@@ -751,7 +751,7 @@ The implementation is organized into the following phases:
   - [ ] Use cached items for quick response
   - [ ] Invalidate cache on file changes
 
-- [ ] **Optimize completion generation for fast response**
+- [ ] **9.18 Optimize completion generation for fast response**
   - [ ] Target <100ms response time
   - [ ] Use cached data where possible
   - [ ] Limit completion list size (e.g., max 100 items)
@@ -759,7 +759,7 @@ The implementation is organized into the following phases:
   - [ ] Implement prefix filtering early to reduce processing
   - [ ] Profile and optimize hot paths
 
-- [ ] **Write unit tests for variable name completion**
+- [ ] **9.19 Write unit tests for variable name completion**
   - [ ] Create `internal/lsp/completion_test.go`
   - [ ] Test case: typing partial variable name
     - [ ] Setup: code with variables `alpha`, `beta`, `alphabet`
@@ -769,7 +769,7 @@ The implementation is organized into the following phases:
   - [ ] Test case: parameter completion in function
   - [ ] Test case: local variable shadowing global
 
-- [ ] **Write unit tests for member access completion**
+- [ ] **9.20 Write unit tests for member access completion**
   - [ ] Test case: member access on class instance
     - [ ] Setup: class with fields `Name`, `Age`, method `GetInfo()`
     - [ ] Input: `person.` (cursor after dot)
@@ -778,7 +778,7 @@ The implementation is organized into the following phases:
   - [ ] Test case: member access on built-in type
   - [ ] Verify completion includes correct kinds (Field, Method)
 
-- [ ] **Write unit tests for keyword and built-in completion**
+- [ ] **9.21 Write unit tests for keyword and built-in completion**
   - [ ] Test case: keyword completion at statement start
     - [ ] Input: cursor at beginning of line in function
     - [ ] Expected: `if`, `while`, `for`, `var`, etc. in results
@@ -786,7 +786,7 @@ The implementation is organized into the following phases:
     - [ ] Expected: `PrintLn`, `IntToStr`, `Length`, etc.
   - [ ] Verify keywords not suggested in inappropriate contexts
 
-- [ ] **Manually test completion in VSCode during typing**
+- [ ] **9.22 Manually test completion in VSCode during typing**
   - [ ] Open DWScript file in VSCode with LSP active
   - [ ] Test auto-trigger (typing identifier prefix)
   - [ ] Test manual trigger (Ctrl+Space)
