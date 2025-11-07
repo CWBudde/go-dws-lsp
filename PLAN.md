@@ -72,116 +72,116 @@ The implementation is organized into the following phases:
 
 ### Tasks (42)
 
-- [ ] **Create structured error types in pkg/dwscript**
-  - [ ] Create `pkg/dwscript/error.go` file
-  - [ ] Define `Error` struct with fields:
-    - [ ] `Message string` - The error message
-    - [ ] `Line int` - 1-based line number
-    - [ ] `Column int` - 1-based column number
-    - [ ] `Length int` - Length of the error span in characters
-    - [ ] `Severity string` - Either "error" or "warning"
-    - [ ] `Code string` - Optional error code (e.g., "E001", "W002")
-  - [ ] Implement `Error() string` method to satisfy error interface
-  - [ ] Add documentation explaining 1-based indexing
+- [x] **Create structured error types in pkg/dwscript**
+  - [x] Create `pkg/dwscript/error.go` file
+  - [x] Define `Error` struct with fields:
+    - [x] `Message string` - The error message
+    - [x] `Line int` - 1-based line number
+    - [x] `Column int` - 1-based column number
+    - [x] `Length int` - Length of the error span in characters
+    - [x] `Severity string` - Either "error" or "warning"
+    - [x] `Code string` - Optional error code (e.g., "E001", "W002")
+  - [x] Implement `Error() string` method to satisfy error interface
+  - [x] Add documentation explaining 1-based indexing
 
-- [ ] **Update CompileError to use structured errors**
-  - [ ] Change `CompileError.Errors` from `[]string` to `[]Error`
-  - [ ] Update `CompileError.Error()` method to format structured errors
-  - [ ] Ensure backwards compatibility or document breaking change
-  - [ ] Update all internal code that creates CompileError instances
+- [x] **Update CompileError to use structured errors**
+  - [x] Change `CompileError.Errors` from `[]string` to `[]Error`
+  - [x] Update `CompileError.Error()` method to format structured errors
+  - [x] Ensure backwards compatibility or document breaking change
+  - [x] Update all internal code that creates CompileError instances
 
-- [ ] **Update internal lexer to capture position metadata**
-  - [ ] Verify `internal/lexer/token.go` includes position information
-  - [ ] Ensure Token struct has `Line`, `Column`, `Offset` fields
-  - [ ] If missing, add position tracking to tokenization
-  - [ ] Add `Length` calculation for tokens (end - start)
+- [x] **Update internal lexer to capture position metadata**
+  - [x] Verify `internal/lexer/token.go` includes position information
+  - [x] Ensure Token struct has `Line`, `Column`, `Offset` fields
+  - [x] If missing, add position tracking to tokenization
+  - [x] Add `Length` calculation for tokens (end - start)
 
-- [ ] **Update internal parser to capture error positions**
-  - [ ] Modify parser error generation to include line/column
-  - [ ] Change from `fmt.Sprintf()` strings to structured Error objects
-  - [ ] Extract position from current token when error occurs
-  - [ ] Calculate error span length where possible
-  - [ ] Update all parser error sites (syntax errors)
+- [x] **Update internal parser to capture error positions**
+  - [x] Modify parser error generation to include line/column
+  - [x] Change from `fmt.Sprintf()` strings to structured Error objects
+  - [x] Extract position from current token when error occurs
+  - [x] Calculate error span length where possible
+  - [x] Update all parser error sites (syntax errors)
 
-- [ ] **Update internal semantic analyzer to capture error positions**
-  - [ ] Modify semantic analysis error generation
-  - [ ] Include position from AST node being analyzed
-  - [ ] Set appropriate severity (error vs warning)
-  - [ ] Add error codes for common semantic errors:
-    - [ ] "E_UNDEFINED_VAR" - Undefined variable
-    - [ ] "E_TYPE_MISMATCH" - Type mismatch
-    - [ ] "E_WRONG_ARG_COUNT" - Wrong argument count
-    - [ ] "W_UNUSED_VAR" - Unused variable (warning)
-    - [ ] "W_UNUSED_PARAM" - Unused parameter (warning)
+- [x] **Update internal semantic analyzer to capture error positions**
+  - [x] Modify semantic analysis error generation
+  - [x] Include position from AST node being analyzed
+  - [x] Set appropriate severity (error vs warning)
+  - [x] Add error codes for common semantic errors:
+    - [x] "E_UNDEFINED_VAR" - Undefined variable
+    - [x] "E_TYPE_MISMATCH" - Type mismatch
+    - [x] "E_WRONG_ARG_COUNT" - Wrong argument count
+    - [x] "W_UNUSED_VAR" - Unused variable (warning)
+    - [x] "W_UNUSED_PARAM" - Unused parameter (warning)
 
-- [ ] **Add position metadata to AST node types**
-  - [ ] Open `internal/ast/ast.go`
-  - [ ] Define `Position` struct:
-    - [ ] `Line int` - 1-based line number
-    - [ ] `Column int` - 1-based column number
-    - [ ] `Offset int` - Byte offset from start of file
-  - [ ] Define `Node` interface with position methods:
-    - [ ] `Pos() Position` - Returns start position
-    - [ ] `End() Position` - Returns end position
-  - [ ] Document that all AST node types must implement Node interface
+- [x] **Add position metadata to AST node types**
+  - [x] Open `internal/ast/ast.go`
+  - [x] Define `Position` struct:
+    - [x] `Line int` - 1-based line number
+    - [x] `Column int` - 1-based column number
+    - [x] `Offset int` - Byte offset from start of file
+  - [x] Define `Node` interface with position methods:
+    - [x] `Pos() Position` - Returns start position
+    - [x] `End() Position` - Returns end position
+  - [x] Document that all AST node types must implement Node interface
 
-- [ ] **Add position fields to statement AST nodes**
-  - [ ] Add `StartPos Position` and `EndPos Position` fields to:
-    - [ ] `Program`
-    - [ ] `BlockStatement`
-    - [ ] `ExpressionStatement`
-    - [ ] `AssignmentStatement`
-    - [ ] `IfStatement`
-    - [ ] `WhileStatement`
-    - [ ] `ForStatement`
-    - [ ] `ReturnStatement`
-    - [ ] `BreakStatement`
-    - [ ] `ContinueStatement`
-  - [ ] Implement `Pos()` and `End()` methods for each
+- [x] **Add position fields to statement AST nodes**
+  - [x] Add `StartPos Position` and `EndPos Position` fields to:
+    - [x] `Program`
+    - [x] `BlockStatement`
+    - [x] `ExpressionStatement`
+    - [x] `AssignmentStatement`
+    - [x] `IfStatement`
+    - [x] `WhileStatement`
+    - [x] `ForStatement`
+    - [x] `ReturnStatement`
+    - [x] `BreakStatement`
+    - [x] `ContinueStatement`
+  - [x] Implement `Pos()` and `End()` methods for each
 
-- [ ] **Add position fields to expression AST nodes**
-  - [ ] Add `StartPos Position` and `EndPos Position` fields to:
-    - [ ] `Identifier`
-    - [ ] `IntegerLiteral`
-    - [ ] `FloatLiteral`
-    - [ ] `StringLiteral`
-    - [ ] `BooleanLiteral`
-    - [ ] `BinaryExpression`
-    - [ ] `UnaryExpression`
-    - [ ] `CallExpression`
-    - [ ] `IndexExpression`
-    - [ ] `MemberExpression`
-  - [ ] Implement `Pos()` and `End()` methods for each
+- [x] **Add position fields to expression AST nodes**
+  - [x] Add `StartPos Position` and `EndPos Position` fields to:
+    - [x] `Identifier`
+    - [x] `IntegerLiteral`
+    - [x] `FloatLiteral`
+    - [x] `StringLiteral`
+    - [x] `BooleanLiteral`
+    - [x] `BinaryExpression`
+    - [x] `UnaryExpression`
+    - [x] `CallExpression`
+    - [x] `IndexExpression`
+    - [x] `MemberExpression`
+  - [x] Implement `Pos()` and `End()` methods for each
 
-- [ ] **Add position fields to declaration AST nodes**
-  - [ ] Add `StartPos Position` and `EndPos Position` fields to:
-    - [ ] `FunctionDeclaration`
-    - [ ] `ProcedureDeclaration`
-    - [ ] `VariableDeclaration`
-    - [ ] `ConstantDeclaration`
-    - [ ] `TypeDeclaration`
-    - [ ] `ClassDeclaration`
-    - [ ] `FieldDeclaration`
-    - [ ] `MethodDeclaration`
-    - [ ] `PropertyDeclaration`
-  - [ ] Implement `Pos()` and `End()` methods for each
+- [x] **Add position fields to declaration AST nodes**
+  - [x] Add `StartPos Position` and `EndPos Position` fields to:
+    - [x] `FunctionDeclaration`
+    - [x] `ProcedureDeclaration`
+    - [x] `VariableDeclaration`
+    - [x] `ConstantDeclaration`
+    - [x] `TypeDeclaration`
+    - [x] `ClassDeclaration`
+    - [x] `FieldDeclaration`
+    - [x] `MethodDeclaration`
+    - [x] `PropertyDeclaration`
+  - [x] Implement `Pos()` and `End()` methods for each
 
-- [ ] **Update parser to populate position information**
-  - [ ] Modify parser to capture start position before parsing node
-  - [ ] Capture end position after parsing node
-  - [ ] Set `StartPos` from first token of construct
-  - [ ] Set `EndPos` from last token of construct
-  - [ ] Handle multi-line constructs correctly
-  - [ ] Test position accuracy with sample programs
+- [x] **Update parser to populate position information**
+  - [x] Modify parser to capture start position before parsing node
+  - [x] Capture end position after parsing node
+  - [x] Set `StartPos` from first token of construct
+  - [x] Set `EndPos` from last token of construct
+  - [x] Handle multi-line constructs correctly
+  - [x] Test position accuracy with sample programs
 
-- [ ] **Export AST types as public API**
-  - [ ] Create `pkg/ast/` directory
-  - [ ] Copy AST types from `internal/ast/` to `pkg/ast/`
-  - [ ] Update package declaration to `package ast`
-  - [ ] Add comprehensive package documentation
-  - [ ] Export all node types (capitalize struct names if needed)
-  - [ ] Keep `internal/ast/` as alias to `pkg/ast/` for internal use
-  - [ ] OR: Make `internal/ast/` types directly accessible (less preferred)
+- [x] **Export AST types as public API**
+  - [x] Create `pkg/ast/` directory
+  - [x] Copy AST types from `internal/ast/` to `pkg/ast/`
+  - [x] Update package declaration to `package ast`
+  - [x] Add comprehensive package documentation
+  - [x] Export all node types (capitalize struct names if needed)
+  - [x] Keep `internal/ast/` as alias to `pkg/ast/` for internal use
+  - [x] OR: Make `internal/ast/` types directly accessible (less preferred)
 
 - [ ] **Add AST accessor to Program type**
   - [ ] Open `pkg/dwscript/dwscript.go`
@@ -329,42 +329,42 @@ The implementation is organized into the following phases:
 
 ### Tasks (27)
 
-- [x] **Integrate go-dws engine for parsing and compilation** ✅
+- [x] **3.1 Integrate go-dws engine for parsing and compilation** ✅
   - [x] Import `github.com/cwbudde/go-dws/pkg/dwscript` package ✅
   - [x] Update `internal/analysis/parse.go` ✅
   - [x] Implement `ParseDocument(text string, filename string) ([]Diagnostic, error)` ✅
   - [x] Create engine instance: `engine, err := dwscript.New()` ✅
   - [x] Handle engine creation errors ✅
 
-- [ ] **Update ParseDocument to use Phase 2 structured errors** (After Phase 2)
+- [ ] **3.2 Update ParseDocument to use Phase 2 structured errors** (After Phase 2)
   - [ ] Replace string-based error parsing with structured `dwscript.Error` types
   - [ ] Access `CompileError.Errors []Error` directly
   - [ ] Use `Error.Line`, `Error.Column`, `Error.Length` for position
   - [ ] Map `Error.Severity` to LSP DiagnosticSeverity
   - [ ] Use `Error.Code` for diagnostic codes if available
 
-- [ ] **Update Document struct to store compiled Program** (After Phase 2)
+- [ ] **3.3 Update Document struct to store compiled Program** (After Phase 2)
   - [ ] Add `Program *dwscript.Program` field to Document struct in `internal/server/document_store.go`
   - [ ] Store compiled program after successful compilation
   - [ ] Access AST via `program.AST()` method (from Phase 2)
   - [ ] Keep previous program if compilation fails (for error recovery)
   - [ ] Clear program on document close
 
-- [x] **Convert compile errors to LSP Diagnostic objects** ✅
+- [x] **3.4 Convert compile errors to LSP Diagnostic objects** ✅
   - [x] Extract errors from `CompileError` ✅
   - [x] Parse error messages to extract line/column info (temporary) ✅
   - [x] Create Diagnostic with appropriate fields ✅
   - [x] Convert 1-based to 0-based line/column ✅
   - [x] Set severity and source ✅
 
-- [ ] **Simplify error conversion after Phase 2** (After Phase 2)
+- [ ] **3.5 Simplify error conversion after Phase 2** (After Phase 2)
   - [ ] Remove regex-based position extraction
   - [ ] Directly use structured error fields
   - [ ] No need for `parseErrorMessage()` function
   - [ ] No need for `cleanErrorMessage()` function
   - [ ] Simplified, more reliable code
 
-- [ ] **Leverage semantic analysis from compilation** (After Phase 2)
+- [ ] **3.6 Leverage semantic analysis from compilation** (After Phase 2)
   - [ ] Note: `engine.Compile()` already performs semantic analysis
   - [ ] Both syntax and semantic errors are in `CompileError.Errors`
   - [ ] Use `Error.Code` to distinguish error types (if available)
@@ -374,7 +374,7 @@ The implementation is organized into the following phases:
     - [ ] Wrong argument counts (already included)
     - [ ] Unused variables as warnings (if available)
 
-- [ ] **Add support for warnings** (After Phase 2)
+- [ ] **3.7 Add support for warnings** (After Phase 2)
   - [ ] Check if `Error.Severity == "warning"`
   - [ ] Set `DiagnosticSeverity = Warning` for warnings
   - [ ] Add diagnostic tags where appropriate:
@@ -382,32 +382,32 @@ The implementation is organized into the following phases:
     - [ ] `DiagnosticTag.Deprecated` for deprecated constructs
   - [ ] Make warning level configurable via workspace settings
 
-- [ ] **Implement textDocument/publishDiagnostics notification**
+- [ ] **3.8 Implement textDocument/publishDiagnostics notification**
   - [ ] Create `PublishDiagnostics(ctx *glsp.Context, uri string, diagnostics []protocol.Diagnostic) error`
   - [ ] Build PublishDiagnosticsParams struct
   - [ ] Call `ctx.Notify(protocol.ServerNotificationTextDocumentPublishDiagnostics, params)`
   - [ ] Handle notification errors
   - [ ] Log diagnostics being published
 
-- [ ] **Send PublishDiagnosticsParams with URI and diagnostics list to client**
+- [ ] **3.9 Send PublishDiagnosticsParams with URI and diagnostics list to client**
   - [ ] Ensure URI is properly formatted (file:// scheme)
   - [ ] Include version if available
   - [ ] Sort diagnostics by position (line, then column)
   - [ ] Limit diagnostics count if configured (e.g., max 100)
 
-- [ ] **Trigger diagnostics publishing on document open**
+- [ ] **3.10 Trigger diagnostics publishing on document open**
   - [ ] Call ParseDocument in didOpen handler
   - [ ] Collect all diagnostics (syntax + semantic)
   - [ ] Call PublishDiagnostics with results
   - [ ] Handle errors without crashing
 
-- [ ] **Trigger diagnostics publishing on document change**
+- [ ] **3.11 Trigger diagnostics publishing on document change**
   - [ ] Call ParseDocument in didChange handler after text update
   - [ ] Re-run full analysis on each change
   - [ ] Publish updated diagnostics
   - [ ] Consider caching previous diagnostics
 
-- [ ] **Set up workspace indexing data structures (symbol index)**
+- [ ] **3.12 Set up workspace indexing data structures (symbol index)**
   - [ ] Create `internal/workspace/index.go`
   - [ ] Define `SymbolIndex` struct with:
     - [ ] `symbols map[string][]SymbolInfo` (name -> locations)
@@ -416,14 +416,14 @@ The implementation is organized into the following phases:
   - [ ] Define `SymbolInfo` struct: Name, Kind, Location, ContainerName
   - [ ] Implement Add, Remove, Search methods
 
-- [ ] **Scan workspace for .dws files on initialized notification**
+- [ ] **3.13 Scan workspace for .dws files on initialized notification**
   - [ ] Implement `ScanWorkspace(rootURIs []string) error`
   - [ ] Use filepath.Walk to traverse directories
   - [ ] Filter files by .dws extension
   - [ ] Limit initial scan depth to avoid performance issues
   - [ ] Log progress during scan
 
-- [ ] **Parse workspace files and build symbol index (name to definition map)**
+- [ ] **3.14 Parse workspace files and build symbol index (name to definition map)**
   - [ ] Parse each .dws file found in workspace
   - [ ] Extract top-level symbols from AST:
     - [ ] Functions/procedures
@@ -434,7 +434,7 @@ The implementation is organized into the following phases:
   - [ ] Handle parse errors gracefully (skip file, log error)
   - [ ] Run indexing in background goroutine
 
-- [ ] **Write unit tests for diagnostic generation with known error snippets**
+- [ ] **3.15 Write unit tests for diagnostic generation with known error snippets**
   - [ ] Create `internal/analysis/diagnostics_test.go`
   - [ ] Test syntax errors:
     - [ ] Missing semicolon
@@ -447,14 +447,14 @@ The implementation is organized into the following phases:
   - [ ] Verify diagnostic positions are correct
   - [ ] Verify diagnostic messages are clear
 
-- [ ] **Validate diagnostics using go-dws testdata scripts (zero false positives)**
+- [ ] **3.16 Validate diagnostics using go-dws testdata scripts (zero false positives)**
   - [ ] Load test files from go-dws repository testdata/
   - [ ] Parse each valid test file
   - [ ] Assert zero diagnostics for valid code
   - [ ] Run all existing go-dws tests
   - [ ] Report any false positives found
 
-- [ ] **Test that valid code produces no diagnostics**
+- [ ] **3.17 Test that valid code produces no diagnostics**
   - [ ] Create suite of valid DWScript programs
   - [ ] Include:
     - [ ] Simple variable declarations
@@ -463,7 +463,7 @@ The implementation is organized into the following phases:
     - [ ] Control flow statements
   - [ ] Assert diagnostics array is empty for each
 
-- [ ] **Test that erroneous code produces expected diagnostics**
+- [ ] **3.18 Test that erroneous code produces expected diagnostics**
   - [ ] Create suite of invalid programs with known errors
   - [ ] For each error type, verify:
     - [ ] Diagnostic is generated
@@ -472,7 +472,7 @@ The implementation is organized into the following phases:
     - [ ] Meaningful message
   - [ ] Test multiple errors in one file
 
-- [ ] **Consider debouncing rapid didChange events to avoid diagnostic floods**
+- [ ] **3.19 Consider debouncing rapid didChange events to avoid diagnostic floods**
   - [ ] Implement debounce timer (e.g., 300ms delay)
   - [ ] Cancel previous timer on new didChange
   - [ ] Only run diagnostics after typing pause
