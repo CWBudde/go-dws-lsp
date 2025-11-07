@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/cwbudde/go-dws/pkg/ast"
+	"github.com/cwbudde/go-dws/pkg/token"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 
@@ -62,6 +63,26 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 	}
 	targetName := sym.Name
 	log.Printf("References target symbol: %s (kind=%s)", sym.Name, sym.Kind)
+
+	// Try to use semantic analyzer for accurate symbol resolution (Task 6.9)
+	// Convert LSP position to token.Position (1-based)
+	tokenPos := token.Position{Line: astLine, Column: astColumn}
+
+	// Try to find references using semantic analysis (matching by definition location)
+	ranges := analysis.FindSemanticReferences(doc.Program, targetName, tokenPos, uri)
+
+	if len(ranges) > 0 {
+		// Semantic analysis succeeded
+		log.Printf("Using semantic analysis for references: found %d references", len(ranges))
+		locations := make([]protocol.Location, 0, len(ranges))
+		for _, r := range ranges {
+			locations = append(locations, protocol.Location{URI: uri, Range: r})
+		}
+		return locations, nil
+	}
+
+	// Fallback: semantic info not available, use name-based matching with scope filtering
+	log.Printf("Semantic info unavailable, falling back to name-based matching")
 
 	// Determine basic scope context for logging and future filtering
 	scope := analysis.DetermineScope(programAST, sym.Name, analysis.Position{Line: astLine, Column: astColumn})
