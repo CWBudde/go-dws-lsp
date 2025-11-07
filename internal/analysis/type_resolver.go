@@ -3,6 +3,7 @@ package analysis
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
@@ -366,15 +367,11 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		kind := protocol.CompletionItemKindMethod
 		sortText := "1method~" + method.Name.Value
 
-		item := protocol.CompletionItem{
-			Label:    method.Name.Value,
-			Kind:     &kind,
-			SortText: &sortText,
-		}
-
 		// Build method signature
 		signature := buildMethodSignature(method)
-		item.Detail = &signature
+
+		// Build snippet for method with parameters
+		insertText, insertTextFormat := buildMethodSnippet(method)
 
 		// Add documentation with MarkupContent
 		docValue := "**Method**"
@@ -386,7 +383,16 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 			Kind:  protocol.MarkupKindMarkdown,
 			Value: docValue,
 		}
-		item.Documentation = doc
+
+		item := protocol.CompletionItem{
+			Label:            method.Name.Value,
+			Kind:             &kind,
+			SortText:         &sortText,
+			Detail:           &signature,
+			Documentation:    doc,
+			InsertText:       &insertText,
+			InsertTextFormat: &insertTextFormat,
+		}
 
 		items = append(items, item)
 	}
@@ -541,6 +547,42 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 	}
 
 	return signature
+}
+
+// buildMethodSnippet builds an LSP snippet string for method insertion.
+// Returns the snippet string and insertTextFormat.
+// Example: "MyMethod(${1:param1}, ${2:param2})$0"
+func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFormat) {
+	if method.Name == nil {
+		return "", protocol.InsertTextFormatPlainText
+	}
+
+	// If method has no parameters, use plain text
+	if len(method.Parameters) == 0 {
+		return method.Name.Value + "()", protocol.InsertTextFormatPlainText
+	}
+
+	snippet := method.Name.Value + "("
+
+	for i, param := range method.Parameters {
+		if i > 0 {
+			snippet += ", "
+		}
+
+		// Add tabstop with parameter name as placeholder
+		tabstopNum := i + 1
+		paramName := "param"
+		if param.Name != nil {
+			paramName = param.Name.Value
+		}
+
+		// Build tabstop: ${1:paramName}
+		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+	}
+
+	snippet += ")$0" // $0 is the final cursor position
+
+	return snippet, protocol.InsertTextFormatSnippet
 }
 
 // sortCompletionItems sorts completion items alphabetically by label.

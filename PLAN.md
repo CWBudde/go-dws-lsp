@@ -818,13 +818,19 @@ The implementation is organized into the following phases:
     - Enhanced documentation using MarkupContent with markdown formatting and code blocks
     - Applied consistent structure across all completion types (scope, member, built-in)
 
-- [ ] **9.14 For functions: provide snippet-style insert text with parameters**
-  - [ ] Parse function signature to extract parameters
-  - [ ] Build snippet string: `FunctionName($1:param1, $2:param2)$0`
-  - [ ] Use LSP snippet syntax with tabstops
-  - [ ] Set `insertTextFormat = InsertTextFormat.Snippet`
-  - [ ] Set `insertText = snippet string`
-  - [ ] Example: `"WriteLine(${1:text})$0"`
+- [x] **9.14 For functions: provide snippet-style insert text with parameters**
+  - [x] Parse function signature to extract parameters
+  - [x] Build snippet string: `FunctionName($1:param1, $2:param2)$0`
+  - [x] Use LSP snippet syntax with tabstops
+  - [x] Set `insertTextFormat = InsertTextFormat.Snippet`
+  - [x] Set `insertText = snippet string`
+  - [x] Example: `"WriteLine(${1:text})$0"`
+  - **Implementation**:
+    - Added `buildFunctionSnippet()` for AST-based functions (global functions, methods)
+    - Added `buildSnippetFromSignature()` for signature-based functions (built-ins)
+    - Applied snippets to global functions, built-in functions, and class methods
+    - Functions with parameters use Snippet format, no-parameter functions use PlainText
+    - Snippet syntax: `FunctionName(${1:param1}, ${2:param2})$0` with proper tabstops
 
 - [ ] **9.15 Set insertTextFormat to Snippet where appropriate**
   - [ ] For functions with parameters: use Snippet
