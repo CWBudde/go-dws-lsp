@@ -671,45 +671,45 @@ The implementation is organized into the following phases:
 
 ### Tasks (15)
 
-- [ ] **5.1 Implement textDocument/definition request handler**
-  - [ ] Create `internal/lsp/definition.go`
-  - [ ] Define handler: `func Definition(context *glsp.Context, params *protocol.DefinitionParams) (interface{}, error)`
-  - [ ] Extract document URI and position from params
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document and AST are available
-  - [ ] Convert LSP position (UTF-16) to document position (UTF-8)
-  - [ ] Call helper function to find definition location
-  - [ ] Return Location, []Location, or nil based on results
-  - [ ] Register handler in server initialization
+- [x] **5.1 Implement textDocument/definition request handler** ✅
+  - [x] Create `internal/lsp/definition.go`
+  - [x] Define handler: `func Definition(context *glsp.Context, params *protocol.DefinitionParams) (interface{}, error)`
+  - [x] Extract document URI and position from params
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document and AST are available
+  - [x] Convert LSP position (UTF-16) to document position (UTF-8)
+  - [x] Call helper function to find definition location
+  - [x] Return Location, []Location, or nil based on results
+  - [x] Register handler in server initialization
 
-- [ ] **5.2 Identify symbol at definition request position**
-  - [ ] Reuse `FindNodeAtPosition` utility from hover implementation
-  - [ ] Get AST node at the requested position
-  - [ ] Check if node is an identifier or declaration
-  - [ ] Extract symbol name from node
-  - [ ] Determine symbol kind (variable, function, class, etc.)
-  - [ ] Handle member expressions (extract member name)
-  - [ ] Return nil if position is not on a symbol
-  - [ ] Log symbol identification for debugging
+- [x] **5.2 Identify symbol at definition request position** ✅
+  - [x] Reuse `FindNodeAtPosition` utility from hover implementation
+  - [x] Get AST node at the requested position
+  - [x] Check if node is an identifier or declaration
+  - [x] Extract symbol name from node
+  - [x] Determine symbol kind (variable, function, class, etc.)
+  - [x] Handle member expressions (extract member name)
+  - [x] Return nil if position is not on a symbol
+  - [x] Log symbol identification for debugging
 
-- [ ] **5.3 Create symbol resolution framework**
-  - [ ] Create `internal/analysis/symbol_resolver.go`
-  - [ ] Define `SymbolResolver` struct with document store reference
-  - [ ] Implement `ResolveSymbol(doc *Document, symbolName string, pos Position) ([]Location, error)`
-  - [ ] Define resolution strategy: local → class → global → workspace
-  - [ ] Return empty array if symbol not found
-  - [ ] Support multiple definitions (overloaded functions)
-  - [ ] Cache resolution results for performance (optional)
+- [x] **5.3 Create symbol resolution framework** ✅
+  - [x] Create `internal/analysis/symbol_resolver.go`
+  - [x] Define `SymbolResolver` struct with document store reference
+  - [x] Implement `ResolveSymbol(doc *Document, symbolName string, pos Position) ([]Location, error)`
+  - [x] Define resolution strategy: local → class → global → workspace
+  - [x] Return empty array if symbol not found
+  - [x] Support multiple definitions (overloaded functions)
+  - [x] Cache resolution results for performance (optional)
 
-- [ ] **5.4 Handle local variables/parameters (find in current file AST)**
-  - [ ] Implement `ResolveLocalSymbol(ast *ast.Program, name string, pos Position) (*Location, error)`
-  - [ ] Find enclosing function or block at position
-  - [ ] Search function parameters for matching name
-  - [ ] Search local variable declarations in function body
-  - [ ] Check scope hierarchy (inner to outer blocks)
-  - [ ] Stop at first match (shadowing)
-  - [ ] Convert AST position to LSP Location
-  - [ ] Return nil if not found locally
+- [x] **5.4 Handle local variables/parameters (find in current file AST)** ✅
+  - [x] Implement `ResolveLocalSymbol(ast *ast.Program, name string, pos Position) (*Location, error)`
+  - [x] Find enclosing function or block at position
+  - [x] Search function parameters for matching name
+  - [x] Search local variable declarations in function body
+  - [x] Check scope hierarchy (inner to outer blocks)
+  - [x] Stop at first match (shadowing)
+  - [x] Convert AST position to LSP Location
+  - [x] Return nil if not found locally
 
 - [ ] **5.5 Handle class fields/methods (search class definition in AST)**
   - [ ] Implement `ResolveClassMember(ast *ast.Program, className, memberName string) (*Location, error)`
