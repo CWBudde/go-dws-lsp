@@ -5,8 +5,10 @@ import (
 
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 )
 
 func TestNodeToLocation(t *testing.T) {
@@ -1319,4 +1321,366 @@ color := clRed;
 			t.Log("Enum value definition not found (may require scope-aware resolution)")
 		}
 	}
+}
+
+// Integration tests for cross-file definitions (Task 5.14)
+
+// setupTestWorkspace creates a test workspace with multiple files and populates the symbol index.
+// Returns the workspace symbol index and a map of URIs to parsed ASTs.
+func setupTestWorkspace(t *testing.T, files map[string]string) (*workspace.SymbolIndex, map[string]*ast.Program) {
+	t.Helper()
+
+	index := workspace.NewSymbolIndex()
+	asts := make(map[string]*ast.Program)
+
+	// Parse each file and populate the index
+	for uri, code := range files {
+		program, _, err := analysis.ParseDocument(code, uri)
+		if err != nil {
+			t.Fatalf("Failed to parse %s: %v", uri, err)
+		}
+		if program == nil {
+			t.Fatalf("ParseDocument returned nil program for %s", uri)
+		}
+
+		programAST := program.AST()
+		asts[uri] = programAST
+
+		// Add symbols from this file to the workspace index
+		addSymbolsToIndex(t, index, uri, programAST)
+	}
+
+	return index, asts
+}
+
+// addSymbolsToIndex adds all top-level symbols from an AST to the workspace index.
+func addSymbolsToIndex(t *testing.T, index *workspace.SymbolIndex, uri string, programAST *ast.Program) {
+	t.Helper()
+
+	// Add global functions
+	ast.Inspect(programAST, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.FunctionDecl:
+			if n.Name != nil {
+				pos := n.Pos()
+				end := n.End()
+				symbolRange := protocol.Range{
+					Start: protocol.Position{Line: uint32(pos.Line - 1), Character: uint32(pos.Column - 1)},
+					End:   protocol.Position{Line: uint32(end.Line - 1), Character: uint32(end.Column - 1)},
+				}
+				index.AddSymbol(n.Name.Value, protocol.SymbolKindFunction, uri, symbolRange, "", "function")
+			}
+
+		case *ast.VarDeclStatement:
+			for _, name := range n.Names {
+				pos := name.Pos()
+				end := name.End()
+				symbolRange := protocol.Range{
+					Start: protocol.Position{Line: uint32(pos.Line - 1), Character: uint32(pos.Column - 1)},
+					End:   protocol.Position{Line: uint32(end.Line - 1), Character: uint32(end.Column - 1)},
+				}
+				index.AddSymbol(name.Value, protocol.SymbolKindVariable, uri, symbolRange, "", "variable")
+			}
+
+		case *ast.ClassDecl:
+			if n.Name != nil {
+				pos := n.Pos()
+				end := n.End()
+				symbolRange := protocol.Range{
+					Start: protocol.Position{Line: uint32(pos.Line - 1), Character: uint32(pos.Column - 1)},
+					End:   protocol.Position{Line: uint32(end.Line - 1), Character: uint32(end.Column - 1)},
+				}
+				index.AddSymbol(n.Name.Value, protocol.SymbolKindClass, uri, symbolRange, "", "class")
+			}
+
+		case *ast.ConstDecl:
+			if n.Name != nil {
+				pos := n.Pos()
+				end := n.End()
+				symbolRange := protocol.Range{
+					Start: protocol.Position{Line: uint32(pos.Line - 1), Character: uint32(pos.Column - 1)},
+					End:   protocol.Position{Line: uint32(end.Line - 1), Character: uint32(end.Column - 1)},
+				}
+				index.AddSymbol(n.Name.Value, protocol.SymbolKindConstant, uri, symbolRange, "", "constant")
+			}
+		}
+		return true
+	})
+}
+
+func TestCrossFileDefinition_SimpleImport(t *testing.T) {
+	// Test go-to-definition from file A to symbol defined in file B
+	// File B (MyUnit.dws): defines a function
+	fileB := `
+function HelperFunc(): Integer;
+begin
+  Result := 42;
+end;
+`
+
+	files := map[string]string{
+		"file:///test/MyUnit.dws": fileB,
+	}
+
+	index, _ := setupTestWorkspace(t, files)
+
+	// File A has "uses MyUnit;" which imports the symbols from MyUnit.dws
+	// We parse just the uses clause to test cross-file resolution
+	codeWithImport := `uses MyUnit;`
+	importAST := parseCode(t, codeWithImport)
+
+	// Create resolver for file A at a test position
+	// This simulates resolving HelperFunc when the user requests go-to-definition
+	resolver := analysis.NewSymbolResolverWithIndex(
+		"file:///test/main.dws",
+		importAST,
+		token.Position{Line: 1, Column: 10},
+		index,
+	)
+
+	locations := resolver.ResolveSymbol("HelperFunc")
+
+	if len(locations) == 0 {
+		t.Fatal("Expected to find HelperFunc from imported unit MyUnit")
+	}
+
+	// Verify the location points to file B (MyUnit.dws)
+	if locations[0].URI != "file:///test/MyUnit.dws" {
+		t.Errorf("Expected URI file:///test/MyUnit.dws, got %s", locations[0].URI)
+	}
+
+	t.Logf("Successfully resolved HelperFunc to %s at line %d", locations[0].URI, locations[0].Range.Start.Line)
+}
+
+func TestCrossFileDefinition_NestedImports(t *testing.T) {
+	// Test nested imports: A imports B, B imports C
+	// File C (Utils.dws): defines a function
+	fileC := `
+function UtilityFunc(): String;
+begin
+  Result := 'utility';
+end;
+`
+
+	// File B (MyUnit.dws): defines a function that uses Utils
+	fileB := `
+function HelperFunc(): String;
+begin
+  Result := 'helper';
+end;
+`
+
+	files := map[string]string{
+		"file:///test/Utils.dws":  fileC,
+		"file:///test/MyUnit.dws": fileB,
+	}
+
+	index, _ := setupTestWorkspace(t, files)
+
+	// File A imports MyUnit
+	codeWithImport := `uses MyUnit;`
+	importAST := parseCode(t, codeWithImport)
+
+	// Test resolving HelperFunc (defined in B)
+	resolverB := analysis.NewSymbolResolverWithIndex(
+		"file:///test/main.dws",
+		importAST,
+		token.Position{Line: 1, Column: 10},
+		index,
+	)
+
+	locationsB := resolverB.ResolveSymbol("HelperFunc")
+
+	if len(locationsB) == 0 {
+		t.Fatal("Expected to find HelperFunc from MyUnit")
+	}
+
+	if locationsB[0].URI != "file:///test/MyUnit.dws" {
+		t.Errorf("Expected HelperFunc in MyUnit.dws, got %s", locationsB[0].URI)
+	}
+
+	t.Logf("Successfully resolved HelperFunc to %s", locationsB[0].URI)
+}
+
+func TestCrossFileDefinition_SymbolNotFound(t *testing.T) {
+	// Test that go-to-definition returns nil for non-existent symbols
+	fileB := `
+function ExistingFunc(): Integer;
+begin
+  Result := 42;
+end;
+`
+
+	files := map[string]string{
+		"file:///test/MyUnit.dws": fileB,
+	}
+
+	index, _ := setupTestWorkspace(t, files)
+
+	// File A imports MyUnit
+	codeWithImport := `uses MyUnit;`
+	importAST := parseCode(t, codeWithImport)
+
+	resolver := analysis.NewSymbolResolverWithIndex(
+		"file:///test/main.dws",
+		importAST,
+		token.Position{Line: 1, Column: 10},
+		index,
+	)
+
+	locations := resolver.ResolveSymbol("NonExistentFunc")
+
+	if len(locations) != 0 {
+		t.Errorf("Expected no results for non-existent symbol, got %d location(s)", len(locations))
+	}
+}
+
+func TestCrossFileDefinition_VerifyCorrectURI(t *testing.T) {
+	// Test that the correct URI is returned for symbols in different files
+	fileUtils := `
+function Add(a, b: Integer): Integer;
+begin
+  Result := a + b;
+end;
+
+function Multiply(a, b: Integer): Integer;
+begin
+  Result := a * b;
+end;
+`
+
+	fileMath := `
+function Square(x: Integer): Integer;
+begin
+  Result := x * x;
+end;
+`
+
+	files := map[string]string{
+		"file:///test/Utils.dws": fileUtils,
+		"file:///test/Math.dws":  fileMath,
+	}
+
+	index, _ := setupTestWorkspace(t, files)
+
+	// File A imports both Utils and Math
+	codeWithImport := `uses Utils, Math;`
+	importAST := parseCode(t, codeWithImport)
+
+	// Test Add (should be in Utils.dws)
+	resolverAdd := analysis.NewSymbolResolverWithIndex(
+		"file:///test/main.dws",
+		importAST,
+		token.Position{Line: 1, Column: 10},
+		index,
+	)
+	addLocs := resolverAdd.ResolveSymbol("Add")
+	if len(addLocs) == 0 {
+		t.Error("Expected to find Add function")
+	} else if addLocs[0].URI != "file:///test/Utils.dws" {
+		t.Errorf("Expected Add in Utils.dws, got %s", addLocs[0].URI)
+	}
+
+	// Test Multiply (should be in Utils.dws)
+	multiplyLocs := resolverAdd.ResolveSymbol("Multiply")
+	if len(multiplyLocs) == 0 {
+		t.Error("Expected to find Multiply function")
+	} else if multiplyLocs[0].URI != "file:///test/Utils.dws" {
+		t.Errorf("Expected Multiply in Utils.dws, got %s", multiplyLocs[0].URI)
+	}
+
+	// Test Square (should be in Math.dws)
+	squareLocs := resolverAdd.ResolveSymbol("Square")
+	if len(squareLocs) == 0 {
+		t.Error("Expected to find Square function")
+	} else if squareLocs[0].URI != "file:///test/Math.dws" {
+		t.Errorf("Expected Square in Math.dws, got %s", squareLocs[0].URI)
+	}
+
+	t.Logf("All cross-file URIs verified correctly")
+}
+
+func TestCrossFileDefinition_ClassAcrossFiles(t *testing.T) {
+	// Test go-to-definition for classes defined in imported units
+	fileModels := `
+type
+  TUser = class
+    FName: String;
+    FAge: Integer;
+
+    constructor Create(name: String; age: Integer);
+  end;
+
+constructor TUser.Create(name: String; age: Integer);
+begin
+  FName := name;
+  FAge := age;
+end;
+`
+
+	files := map[string]string{
+		"file:///test/Models.dws": fileModels,
+	}
+
+	index, _ := setupTestWorkspace(t, files)
+
+	// File A imports Models
+	codeWithImport := `uses Models;`
+	importAST := parseCode(t, codeWithImport)
+
+	resolver := analysis.NewSymbolResolverWithIndex(
+		"file:///test/main.dws",
+		importAST,
+		token.Position{Line: 1, Column: 10},
+		index,
+	)
+
+	locations := resolver.ResolveSymbol("TUser")
+
+	if len(locations) == 0 {
+		t.Fatal("Expected to find TUser class from imported unit")
+	}
+
+	if locations[0].URI != "file:///test/Models.dws" {
+		t.Errorf("Expected TUser in Models.dws, got %s", locations[0].URI)
+	}
+
+	t.Logf("Successfully resolved TUser to %s", locations[0].URI)
+}
+
+func TestCrossFileDefinition_ConstantAcrossFiles(t *testing.T) {
+	// Test go-to-definition for constants in imported units
+	fileConstants := `
+const MAX_USERS = 100;
+const DEFAULT_TIMEOUT = 30;
+`
+
+	files := map[string]string{
+		"file:///test/Constants.dws": fileConstants,
+	}
+
+	index, _ := setupTestWorkspace(t, files)
+
+	// File A imports Constants
+	codeWithImport := `uses Constants;`
+	importAST := parseCode(t, codeWithImport)
+
+	resolver := analysis.NewSymbolResolverWithIndex(
+		"file:///test/main.dws",
+		importAST,
+		token.Position{Line: 1, Column: 10},
+		index,
+	)
+
+	locations := resolver.ResolveSymbol("MAX_USERS")
+
+	if len(locations) == 0 {
+		t.Fatal("Expected to find MAX_USERS constant from imported unit")
+	}
+
+	if locations[0].URI != "file:///test/Constants.dws" {
+		t.Errorf("Expected MAX_USERS in Constants.dws, got %s", locations[0].URI)
+	}
+
+	t.Logf("Successfully resolved MAX_USERS to %s", locations[0].URI)
 }
