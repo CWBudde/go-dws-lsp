@@ -3,18 +3,26 @@ package analysis
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Helper function to parse DWScript code for testing
 func parseCode(t *testing.T, code string) *ast.Program {
 	t.Helper()
-	program, _, err := ParseDocument(code, "test.dws")
+	program, compileMsgs, err := ParseDocument(code, "test.dws")
 	if err != nil {
 		t.Fatalf("Failed to parse test code: %v", err)
 	}
 	if program == nil {
+		if compileMsgs != nil && len(compileMsgs) > 0 {
+			t.Logf("Compilation errors:")
+			for _, msg := range compileMsgs {
+				t.Logf("  - %s", msg.Message)
+			}
+		}
 		t.Fatal("ParseDocument returned nil program")
 	}
 	return program.AST()
@@ -208,6 +216,34 @@ var x := PI;
 	}
 }
 
+func TestSymbolResolver_ResolveGlobal_Record(t *testing.T) {
+	code := `
+type TPoint = record
+  X: Integer;
+  Y: Integer;
+end;
+
+var p: TPoint;
+`
+	programAST := parseCode(t, code)
+
+	// Cursor position on TPoint reference
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   6,
+		Column: 10, // On "TPoint"
+	})
+
+	locations := resolver.ResolveSymbol("TPoint")
+
+	if len(locations) == 0 {
+		t.Fatal("Expected to find record type, got no results")
+	}
+
+	if len(locations) != 1 {
+		t.Errorf("Expected 1 location, got %d", len(locations))
+	}
+}
+
 func TestSymbolResolver_NotFound(t *testing.T) {
 	code := `
 var x: Integer;
@@ -304,5 +340,643 @@ func TestSymbolResolver_NilProgram(t *testing.T) {
 
 	if locations != nil {
 		t.Errorf("Expected nil for nil program, got %v", locations)
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_Property(t *testing.T) {
+	code := `type
+  TMyClass = class
+  private
+    FValue: Integer;
+  public
+    property Value: Integer read FValue write FValue;
+    function DoSomething: Integer;
+  end;
+
+function TMyClass.DoSomething: Integer;
+begin
+  Result := Value;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the method, on "Value"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   12,
+		Column: 13, // On "Value" property reference
+	})
+
+	locations := resolver.ResolveSymbol("Value")
+
+	// Should find the property declaration
+	if len(locations) == 0 {
+		t.Fatal("Expected to find property, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_InheritedField(t *testing.T) {
+	code := `type TBaseClass = class
+    FBaseField: Integer;
+  end;
+
+type TDerivedClass = class(TBaseClass)
+    FDerivedField: String;
+    function GetBaseField: Integer;
+  end;
+
+function TDerivedClass.GetBaseField: Integer;
+begin
+  Result := FBaseField;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the derived class method, on "FBaseField"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   12,
+		Column: 13, // On "FBaseField" reference
+	})
+
+	locations := resolver.ResolveSymbol("FBaseField")
+
+	// Should find the field in parent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find inherited field, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_InheritedMethod(t *testing.T) {
+	code := `type TBaseClass = class
+    function BaseMethod: Integer;
+  end;
+
+type TDerivedClass = class(TBaseClass)
+    function DerivedMethod: String;
+  end;
+
+function TBaseClass.BaseMethod: Integer;
+begin
+  Result := 42;
+end;
+
+function TDerivedClass.DerivedMethod: String;
+begin
+  var x := BaseMethod();
+  Result := IntToStr(x);
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the derived class method, on "BaseMethod"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   16,
+		Column: 12, // On "BaseMethod" call
+	})
+
+	locations := resolver.ResolveSymbol("BaseMethod")
+
+	// Should find the method in parent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find inherited method, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_InheritedProperty(t *testing.T) {
+	code := `type TBaseClass = class
+  private
+    FValue: Integer;
+  public
+    property Value: Integer read FValue write FValue;
+  end;
+
+type TDerivedClass = class(TBaseClass)
+    function GetValue: Integer;
+  end;
+
+function TDerivedClass.GetValue: Integer;
+begin
+  Result := Value;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the derived class method, on "Value"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   14,
+		Column: 13, // On "Value" property reference
+	})
+
+	locations := resolver.ResolveSymbol("Value")
+
+	// Should find the property in parent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find inherited property, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_MultiLevelInheritance(t *testing.T) {
+	code := `type TGrandparent = class
+    FGrandField: Integer;
+  end;
+
+type TParent = class(TGrandparent)
+    FParentField: String;
+  end;
+
+type TChild = class(TParent)
+    FChildField: Boolean;
+    function GetGrandField: Integer;
+  end;
+
+function TChild.GetGrandField: Integer;
+begin
+  Result := FGrandField;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the child class method, on "FGrandField"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   16,
+		Column: 13, // On "FGrandField" reference
+	})
+
+	locations := resolver.ResolveSymbol("FGrandField")
+
+	// Should find the field in grandparent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find field from grandparent class, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_NoIndex(t *testing.T) {
+	code := `
+function TestFunc(): Integer;
+begin
+  Result := 42;
+end;
+`
+	programAST := parseCode(t, code)
+
+	// Create resolver without workspace index
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   2,
+		Column: 10,
+	})
+
+	// Try to resolve a symbol that doesn't exist in current file
+	locations := resolver.ResolveSymbol("UnknownFunc")
+
+	// Should not find the symbol (doesn't exist anywhere)
+	if len(locations) != 0 {
+		t.Errorf("Expected 0 locations for non-existent symbol, got %d", len(locations))
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_WithIndex(t *testing.T) {
+	code := `
+function LocalFunc(): Integer;
+begin
+  Result := 10;
+end;
+`
+	programAST := parseCode(t, code)
+
+	// Create a workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add a symbol from another file
+	index.AddSymbol(
+		"ExternalFunc",
+		protocol.SymbolKindFunction,
+		"file:///other.dws",
+		protocol.Range{
+			Start: protocol.Position{Line: 5, Character: 9},
+			End:   protocol.Position{Line: 5, Character: 21},
+		},
+		"",
+		"function ExternalFunc(): Integer",
+	)
+
+	// Create resolver with workspace index
+	resolver := NewSymbolResolverWithIndex("file:///test.dws", programAST, token.Position{
+		Line:   2,
+		Column: 10,
+	}, index)
+
+	locations := resolver.ResolveSymbol("ExternalFunc")
+
+	// Should find the symbol from the workspace
+	if len(locations) == 0 {
+		t.Fatal("Expected to find ExternalFunc in workspace, got no results")
+	}
+
+	if len(locations) != 1 {
+		t.Errorf("Expected 1 location, got %d", len(locations))
+	}
+
+	if locations[0].URI != "file:///other.dws" {
+		t.Errorf("Expected URI 'file:///other.dws', got '%s'", locations[0].URI)
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_SkipsCurrentFile(t *testing.T) {
+	code := `
+function MyFunc(): Integer;
+begin
+  Result := 42;
+end;
+
+var x := MyFunc();
+`
+	programAST := parseCode(t, code)
+
+	// Create a workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add the same symbol from the current file (should be skipped)
+	index.AddSymbol(
+		"MyFunc",
+		protocol.SymbolKindFunction,
+		"file:///test.dws",
+		protocol.Range{
+			Start: protocol.Position{Line: 1, Character: 9},
+			End:   protocol.Position{Line: 1, Character: 15},
+		},
+		"",
+		"",
+	)
+
+	// Add the symbol from another file
+	index.AddSymbol(
+		"MyFunc",
+		protocol.SymbolKindFunction,
+		"file:///other.dws",
+		protocol.Range{
+			Start: protocol.Position{Line: 10, Character: 9},
+			End:   protocol.Position{Line: 10, Character: 15},
+		},
+		"",
+		"",
+	)
+
+	// Create resolver with workspace index
+	resolver := NewSymbolResolverWithIndex("file:///test.dws", programAST, token.Position{
+		Line:   7,
+		Column: 10,
+	}, index)
+
+	locations := resolver.ResolveSymbol("MyFunc")
+
+	// Should find the local definition first (via resolveGlobal)
+	// The workspace resolver should skip the current file's entry
+	if len(locations) == 0 {
+		t.Fatal("Expected to find MyFunc, got no results")
+	}
+
+	// First result should be from the current file (via resolveGlobal)
+	if locations[0].URI != "file:///test.dws" {
+		t.Errorf("Expected first result from current file, got '%s'", locations[0].URI)
+	}
+}
+
+func TestSymbolResolver_ResolveWorkspace_MultipleFiles(t *testing.T) {
+	code := `
+function Main(): Integer;
+begin
+  Result := 0;
+end;
+`
+	programAST := parseCode(t, code)
+
+	// Create a workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add the same symbol from multiple files
+	index.AddSymbol(
+		"SharedFunc",
+		protocol.SymbolKindFunction,
+		"file:///lib/helpers.dws",
+		protocol.Range{Start: protocol.Position{Line: 1, Character: 9}, End: protocol.Position{Line: 1, Character: 19}},
+		"",
+		"",
+	)
+
+	index.AddSymbol(
+		"SharedFunc",
+		protocol.SymbolKindFunction,
+		"file:///lib/utils.dws",
+		protocol.Range{Start: protocol.Position{Line: 5, Character: 9}, End: protocol.Position{Line: 5, Character: 19}},
+		"",
+		"",
+	)
+
+	// Create resolver with workspace index
+	resolver := NewSymbolResolverWithIndex("file:///app/main.dws", programAST, token.Position{
+		Line:   2,
+		Column: 10,
+	}, index)
+
+	locations := resolver.ResolveSymbol("SharedFunc")
+
+	// Should find both definitions
+	if len(locations) != 2 {
+		t.Fatalf("Expected 2 locations, got %d", len(locations))
+	}
+
+	// Verify both files are in the results
+	foundHelpers := false
+	foundUtils := false
+
+	for _, loc := range locations {
+		if loc.URI == "file:///lib/helpers.dws" {
+			foundHelpers = true
+		}
+		if loc.URI == "file:///lib/utils.dws" {
+			foundUtils = true
+		}
+	}
+
+	if !foundHelpers || !foundUtils {
+		t.Error("Expected locations from both helpers.dws and utils.dws")
+	}
+}
+
+func TestSymbolResolver_SetWorkspaceIndex(t *testing.T) {
+	code := `var x := 1;`
+	programAST := parseCode(t, code)
+
+	// Create resolver without index
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   1,
+		Column: 5,
+	})
+
+	// Create and set index
+	index := workspace.NewSymbolIndex()
+	index.AddSymbol(
+		"TestSymbol",
+		protocol.SymbolKindFunction,
+		"file:///other.dws",
+		protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 10}},
+		"",
+		"",
+	)
+
+	resolver.SetWorkspaceIndex(index)
+
+	// Should now be able to resolve workspace symbols
+	locations := resolver.ResolveSymbol("TestSymbol")
+
+	if len(locations) == 0 {
+		t.Error("Expected to find TestSymbol after setting workspace index")
+	}
+}
+
+// TestSymbolResolver_ExtractUsesClause tests extraction of imported unit names.
+func TestSymbolResolver_ExtractUsesClause(t *testing.T) {
+	code := `
+uses System, Utils, MyUnit;
+
+function Test(): Integer;
+begin
+	Result := 1;
+end;
+`
+	programAST := parseCode(t, code)
+
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   1,
+		Column: 1,
+	})
+
+	unitNames := resolver.extractUsesClause()
+
+	expectedUnits := []string{"System", "Utils", "MyUnit"}
+	if len(unitNames) != len(expectedUnits) {
+		t.Errorf("Expected %d units, got %d", len(expectedUnits), len(unitNames))
+	}
+
+	// Check all expected units are present
+	unitMap := make(map[string]bool)
+	for _, name := range unitNames {
+		unitMap[name] = true
+	}
+
+	for _, expected := range expectedUnits {
+		if !unitMap[expected] {
+			t.Errorf("Expected unit '%s' not found in extracted units", expected)
+		}
+	}
+}
+
+// TestSymbolResolver_ExtractUsesClause_NoImports tests files without imports.
+func TestSymbolResolver_ExtractUsesClause_NoImports(t *testing.T) {
+	code := `
+function Test(): Integer;
+begin
+	Result := 1;
+end;
+`
+	programAST := parseCode(t, code)
+
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   1,
+		Column: 1,
+	})
+
+	unitNames := resolver.extractUsesClause()
+
+	if len(unitNames) != 0 {
+		t.Errorf("Expected 0 units for file without imports, got %d", len(unitNames))
+	}
+}
+
+// TestSymbolResolver_ResolveInImportedUnits tests resolving symbols from imported units.
+func TestSymbolResolver_ResolveInImportedUnits(t *testing.T) {
+	// Code that imports MyUnit (without calling the function to avoid compilation errors)
+	code := `
+uses MyUnit;
+
+function Test(): Integer;
+begin
+	Result := 1;
+end;
+`
+	programAST := parseCode(t, code)
+
+	resolver := NewSymbolResolverWithIndex(
+		"file:///test.dws",
+		programAST,
+		token.Position{Line: 5, Column: 12}, // Position at HelperFunc
+		nil,
+	)
+
+	// Create workspace index with symbols from different files
+	index := workspace.NewSymbolIndex()
+
+	// Add MyUnit symbol (to help identify the unit file)
+	index.AddSymbol(
+		"MyUnit",
+		protocol.SymbolKindModule,
+		"file:///MyUnit.dws",
+		protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 6}},
+		"",
+		"unit MyUnit",
+	)
+
+	// Add HelperFunc from MyUnit (the symbol we're looking for)
+	index.AddSymbol(
+		"HelperFunc",
+		protocol.SymbolKindFunction,
+		"file:///MyUnit.dws",
+		protocol.Range{Start: protocol.Position{Line: 2, Character: 0}, End: protocol.Position{Line: 2, Character: 10}},
+		"",
+		"function HelperFunc(): Integer",
+	)
+
+	// Add another symbol from a non-imported unit
+	index.AddSymbol(
+		"OtherFunc",
+		protocol.SymbolKindFunction,
+		"file:///OtherUnit.dws",
+		protocol.Range{Start: protocol.Position{Line: 1, Character: 0}, End: protocol.Position{Line: 1, Character: 9}},
+		"",
+		"function OtherFunc(): String",
+	)
+
+	resolver.SetWorkspaceIndex(index)
+
+	// Resolve HelperFunc - should find it in imported MyUnit
+	locations := resolver.ResolveSymbol("HelperFunc")
+
+	if len(locations) == 0 {
+		t.Fatal("Expected to find HelperFunc from imported unit")
+	}
+
+	if locations[0].URI != "file:///MyUnit.dws" {
+		t.Errorf("Expected HelperFunc to be from MyUnit.dws, got %s", locations[0].URI)
+	}
+}
+
+// TestSymbolResolver_ResolveInImportedUnits_OnlyImportedVisible tests that only
+// symbols from imported units are returned (before workspace fallback).
+func TestSymbolResolver_ResolveInImportedUnits_OnlyImportedVisible(t *testing.T) {
+	// Code that imports only MyUnit
+	code := `
+uses MyUnit;
+
+function Test(): Integer;
+begin
+	Result := 1;
+end;
+`
+	programAST := parseCode(t, code)
+
+	resolver := NewSymbolResolverWithIndex(
+		"file:///test.dws",
+		programAST,
+		token.Position{Line: 1, Column: 1},
+		nil,
+	)
+
+	// Create workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add MyUnit
+	index.AddSymbol(
+		"MyUnit",
+		protocol.SymbolKindModule,
+		"file:///MyUnit.dws",
+		protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 6}},
+		"",
+		"unit MyUnit",
+	)
+
+	// Add VisibleFunc from MyUnit (imported, should be visible)
+	index.AddSymbol(
+		"VisibleFunc",
+		protocol.SymbolKindFunction,
+		"file:///MyUnit.dws",
+		protocol.Range{Start: protocol.Position{Line: 2, Character: 0}, End: protocol.Position{Line: 2, Character: 11}},
+		"",
+		"function VisibleFunc(): Integer",
+	)
+
+	// Add HiddenFunc from OtherUnit (not imported, should not be visible via imports)
+	index.AddSymbol(
+		"HiddenFunc",
+		protocol.SymbolKindFunction,
+		"file:///OtherUnit.dws",
+		protocol.Range{Start: protocol.Position{Line: 1, Character: 0}, End: protocol.Position{Line: 1, Character: 10}},
+		"",
+		"function HiddenFunc(): String",
+	)
+
+	resolver.SetWorkspaceIndex(index)
+
+	// Resolve VisibleFunc - should find it
+	visibleLocs := resolver.ResolveSymbol("VisibleFunc")
+	if len(visibleLocs) == 0 {
+		t.Error("Expected to find VisibleFunc from imported MyUnit")
+	}
+
+	// Resolve HiddenFunc - should eventually find it via workspace fallback
+	// (imported units check returns empty, so it falls back to workspace search)
+	hiddenLocs := resolver.ResolveSymbol("HiddenFunc")
+	if len(hiddenLocs) == 0 {
+		t.Error("Expected to find HiddenFunc via workspace fallback")
+	}
+	// Note: HiddenFunc is found via workspace fallback (step 5), not imported units (step 4)
+}
+
+// TestSymbolResolver_ResolveInImportedUnits_MultipleImports tests multiple imported units.
+func TestSymbolResolver_ResolveInImportedUnits_MultipleImports(t *testing.T) {
+	code := `
+uses UnitA, UnitB;
+
+function Test(): Integer;
+begin
+	Result := 1;
+end;
+`
+	programAST := parseCode(t, code)
+
+	resolver := NewSymbolResolverWithIndex(
+		"file:///test.dws",
+		programAST,
+		token.Position{Line: 1, Column: 1},
+		nil,
+	)
+
+	// Create workspace index
+	index := workspace.NewSymbolIndex()
+
+	// Add UnitA
+	index.AddSymbol("UnitA", protocol.SymbolKindModule, "file:///UnitA.dws",
+		protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 5}},
+		"", "unit UnitA")
+
+	// Add FuncA from UnitA
+	index.AddSymbol("FuncA", protocol.SymbolKindFunction, "file:///UnitA.dws",
+		protocol.Range{Start: protocol.Position{Line: 2, Character: 0}, End: protocol.Position{Line: 2, Character: 5}},
+		"", "function FuncA(): Integer")
+
+	// Add UnitB
+	index.AddSymbol("UnitB", protocol.SymbolKindModule, "file:///UnitB.dws",
+		protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 5}},
+		"", "unit UnitB")
+
+	// Add FuncB from UnitB
+	index.AddSymbol("FuncB", protocol.SymbolKindFunction, "file:///UnitB.dws",
+		protocol.Range{Start: protocol.Position{Line: 2, Character: 0}, End: protocol.Position{Line: 2, Character: 5}},
+		"", "function FuncB(): String")
+
+	resolver.SetWorkspaceIndex(index)
+
+	// Should be able to resolve symbols from both imported units
+	locsA := resolver.ResolveSymbol("FuncA")
+	if len(locsA) == 0 {
+		t.Error("Expected to find FuncA from UnitA")
+	}
+
+	locsB := resolver.ResolveSymbol("FuncB")
+	if len(locsB) == 0 {
+		t.Error("Expected to find FuncB from UnitB")
 	}
 }
