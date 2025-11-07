@@ -81,6 +81,9 @@ func main() {
 		TextDocumentDidOpen:   lsp.DidOpen,
 		TextDocumentDidClose:  lsp.DidClose,
 		TextDocumentDidChange: lsp.DidChange,
+
+		// Text document requests (Phase 4: Hover Support)
+		TextDocumentHover: lsp.Hover,
 	}
 
 	// Create GLSP server
