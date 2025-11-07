@@ -222,8 +222,24 @@ func (si *SymbolIndex) Clear() {
 	log.Println("Symbol index cleared")
 }
 
+// matchType represents the type of match for sorting by relevance.
+type matchType int
+
+const (
+	matchExact matchType = iota // Exact match (highest priority)
+	matchPrefix                 // Prefix match (medium priority)
+	matchSubstring              // Substring match (lowest priority)
+)
+
+// searchResult holds a symbol location with its match type for sorting.
+type searchResult struct {
+	location  SymbolLocation
+	matchType matchType
+}
+
 // Search searches for symbols matching the query string.
 // Returns symbols whose names contain the query string (case-insensitive).
+// Results are sorted by relevance: exact matches first, then prefix matches, then substring matches.
 // If query is empty, returns all symbols (up to a reasonable limit).
 func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 	si.mutex.RLock()
@@ -247,16 +263,52 @@ func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 		return results
 	}
 
-	// Search for symbols containing the query
+	// Collect all matching symbols with their match types
+	var searchResults []searchResult
+
 	for symbolName, locations := range si.symbols {
 		nameLower := strings.ToLower(symbolName)
-		if strings.Contains(nameLower, queryLower) {
-			for _, loc := range locations {
-				results = append(results, loc)
-				if maxResults > 0 && len(results) >= maxResults {
-					return results
-				}
+
+		// Determine match type
+		var mType matchType
+		if nameLower == queryLower {
+			mType = matchExact
+		} else if strings.HasPrefix(nameLower, queryLower) {
+			mType = matchPrefix
+		} else if strings.Contains(nameLower, queryLower) {
+			mType = matchSubstring
+		} else {
+			continue // No match
+		}
+
+		// Add all locations for this symbol
+		for _, loc := range locations {
+			searchResults = append(searchResults, searchResult{
+				location:  loc,
+				matchType: mType,
+			})
+		}
+	}
+
+	// Sort by match type (exact first, then prefix, then substring)
+	// Within each match type, maintain stable order
+	sortedResults := make([]searchResult, len(searchResults))
+	copy(sortedResults, searchResults)
+
+	// Simple bubble sort by match type (sufficient for small result sets)
+	for i := 0; i < len(sortedResults); i++ {
+		for j := i + 1; j < len(sortedResults); j++ {
+			if sortedResults[i].matchType > sortedResults[j].matchType {
+				sortedResults[i], sortedResults[j] = sortedResults[j], sortedResults[i]
 			}
+		}
+	}
+
+	// Extract locations and apply limit
+	for _, sr := range sortedResults {
+		results = append(results, sr.location)
+		if maxResults > 0 && len(results) >= maxResults {
+			break
 		}
 	}
 
