@@ -125,7 +125,7 @@ The implementation is organized into the following phases:
     - [x] `End() Position` - Returns end position
   - [x] Document that all AST node types must implement Node interface
 
-- [x] **Add position fields to statement AST nodes**
+- [x] **2.7 Add position fields to statement AST nodes**
   - [x] Add `StartPos Position` and `EndPos Position` fields to:
     - [x] `Program`
     - [x] `BlockStatement`
@@ -139,7 +139,7 @@ The implementation is organized into the following phases:
     - [x] `ContinueStatement`
   - [x] Implement `Pos()` and `End()` methods for each
 
-- [x] **Add position fields to expression AST nodes**
+- [x] **2.8 Add position fields to expression AST nodes**
   - [x] Add `StartPos Position` and `EndPos Position` fields to:
     - [x] `Identifier`
     - [x] `IntegerLiteral`
@@ -153,7 +153,7 @@ The implementation is organized into the following phases:
     - [x] `MemberExpression`
   - [x] Implement `Pos()` and `End()` methods for each
 
-- [x] **Add position fields to declaration AST nodes**
+- [x] **2.9 Add position fields to declaration AST nodes**
   - [x] Add `StartPos Position` and `EndPos Position` fields to:
     - [x] `FunctionDeclaration`
     - [x] `ProcedureDeclaration`
@@ -166,7 +166,7 @@ The implementation is organized into the following phases:
     - [x] `PropertyDeclaration`
   - [x] Implement `Pos()` and `End()` methods for each
 
-- [x] **Update parser to populate position information**
+- [x] **2.10 Update parser to populate position information**
   - [x] Modify parser to capture start position before parsing node
   - [x] Capture end position after parsing node
   - [x] Set `StartPos` from first token of construct
@@ -174,7 +174,7 @@ The implementation is organized into the following phases:
   - [x] Handle multi-line constructs correctly
   - [x] Test position accuracy with sample programs
 
-- [x] **Export AST types as public API**
+- [x] **2.11 Export AST types as public API**
   - [x] Create `pkg/ast/` directory
   - [x] Copy AST types from `internal/ast/` to `pkg/ast/`
   - [x] Update package declaration to `package ast`
@@ -183,7 +183,7 @@ The implementation is organized into the following phases:
   - [x] Keep `internal/ast/` as alias to `pkg/ast/` for internal use
   - [x] OR: Make `internal/ast/` types directly accessible (less preferred)
 
-- [x] **Add AST accessor to Program type**
+- [x] **2.12 Add AST accessor to Program type**
   - [x] Open `pkg/dwscript/dwscript.go`
   - [x] Add method: `func (p *Program) AST() *ast.Program`
   - [x] Return the underlying parsed AST
@@ -191,7 +191,7 @@ The implementation is organized into the following phases:
   - [x] Explain that AST is read-only, modifications won't affect execution
   - [x] Add example in documentation showing AST traversal
 
-- [x] **Add parse-only mode for LSP use cases**
+- [x] **2.13 Add parse-only mode for LSP use cases**
   - [x] Add method to Engine: `func (e *Engine) Parse(source string) (*ast.Program, error)`
   - [x] Parse source code without semantic analysis
   - [x] Return partial AST even if syntax errors exist (best-effort)
@@ -199,7 +199,7 @@ The implementation is organized into the following phases:
   - [x] Document use case: "For editors/IDEs that need AST without full compilation"
   - [x] Optimize for speed (skip expensive semantic checks)
 
-- [ ] **Create visitor pattern for AST traversal**
+- [ ] **2.14 Create visitor pattern for AST traversal**
   - [ ] Create `pkg/ast/visitor.go`
   - [ ] Define `Visitor` interface:
     - [ ] `Visit(node Node) (w Visitor)` - Standard Go AST walker pattern
@@ -208,7 +208,7 @@ The implementation is organized into the following phases:
   - [ ] Add documentation with examples
   - [ ] Add `Inspect(node Node, f func(Node) bool)` helper
 
-- [ ] **Add symbol table access for semantic information**
+- [ ] **2.15 Add symbol table access for semantic information**
   - [ ] Create `pkg/dwscript/symbols.go`
   - [ ] Define `Symbol` struct:
     - [ ] `Name string`
@@ -220,7 +220,7 @@ The implementation is organized into the following phases:
   - [ ] Extract symbols from semantic analyzer's symbol table
   - [ ] Include all declarations with their positions
 
-- [ ] **Add type information access**
+- [ ] **2.16 Add type information access**
   - [ ] Add method: `func (p *Program) TypeAt(pos Position) (string, bool)`
   - [ ] Return type of expression at given position
   - [ ] Use semantic analyzer's type information
@@ -228,14 +228,14 @@ The implementation is organized into the following phases:
   - [ ] Add method: `func (p *Program) DefinitionAt(pos Position) (*Position, bool)`
   - [ ] Return definition location for identifier at position
 
-- [ ] **Update error formatting for better IDE integration**
+- [ ] **2.17 Update error formatting for better IDE integration**
   - [ ] Ensure error messages are clear and concise
   - [ ] Remove redundant position info from message text
   - [ ] Use consistent error message format
   - [ ] Add suggested fixes where applicable (future enhancement)
   - [ ] Document error message format
 
-- [ ] **Write unit tests for structured errors**
+- [ ] **2.18 Write unit tests for structured errors**
   - [ ] Create `pkg/dwscript/error_test.go`
   - [ ] Test Error struct creation and formatting
   - [ ] Test CompileError with multiple structured errors
@@ -243,7 +243,7 @@ The implementation is organized into the following phases:
   - [ ] Test severity levels (error vs warning)
   - [ ] Test error codes if implemented
 
-- [ ] **Write unit tests for AST position metadata**
+- [ ] **2.19 Write unit tests for AST position metadata**
   - [ ] Create `pkg/ast/position_test.go`
   - [ ] Test position on simple statements
   - [ ] Test position on nested expressions
@@ -252,7 +252,7 @@ The implementation is organized into the following phases:
   - [ ] Verify 1-based line numbering
   - [ ] Test with Unicode/multi-byte characters
 
-- [ ] **Write unit tests for AST export**
+- [ ] **2.20 Write unit tests for AST export**
   - [ ] Create `pkg/ast/ast_test.go`
   - [ ] Test that Program.AST() returns valid AST
   - [ ] Test AST traversal with visitor pattern
@@ -260,7 +260,7 @@ The implementation is organized into the following phases:
   - [ ] Test that AST nodes have correct types
   - [ ] Test accessing child nodes
 
-- [ ] **Write unit tests for Parse() mode**
+- [ ] **2.21 Write unit tests for Parse() mode**
   - [ ] Test parsing valid code
   - [ ] Test parsing code with syntax errors
   - [ ] Verify partial AST is returned on error
@@ -268,7 +268,7 @@ The implementation is organized into the following phases:
   - [ ] Compare Parse() vs Compile() behavior
   - [ ] Measure performance difference
 
-- [ ] **Write integration tests**
+- [ ] **2.22 Write integration tests**
   - [ ] Create `pkg/dwscript/integration_test.go`
   - [ ] Test complete workflow: Parse → AST → Symbols
   - [ ] Test error recovery scenarios
@@ -276,7 +276,7 @@ The implementation is organized into the following phases:
   - [ ] Use real DWScript code samples from testdata/
   - [ ] Verify no regressions in existing functionality
 
-- [ ] **Update package documentation**
+- [ ] **2.23 Update package documentation**
   - [ ] Update `pkg/dwscript/doc.go` with new API
   - [ ] Add examples for accessing AST
   - [ ] Add examples for structured errors
@@ -284,7 +284,7 @@ The implementation is organized into the following phases:
   - [ ] Add migration guide if breaking changes
   - [ ] Document LSP use case
 
-- [ ] **Update README with new capabilities**
+- [ ] **2.24 Update README with new capabilities**
   - [ ] Add section on LSP/IDE integration
   - [ ] Show example of using structured errors
   - [ ] Show example of AST traversal
@@ -292,7 +292,7 @@ The implementation is organized into the following phases:
   - [ ] Link to pkg.go.dev documentation
   - [ ] Note minimum Go version if changed
 
-- [ ] **Verify backwards compatibility or version bump**
+- [ ] **2.25 Verify backwards compatibility or version bump**
   - [ ] Run all existing tests
   - [ ] Check if API changes are backwards compatible
   - [ ] If breaking: plan major version bump (v2.0.0)
@@ -300,7 +300,7 @@ The implementation is organized into the following phases:
   - [ ] Update go.mod version if needed
   - [ ] Document breaking changes in CHANGELOG
 
-- [ ] **Performance testing**
+- [ ] **2.26 Performance testing**
   - [ ] Benchmark parsing with position tracking
   - [ ] Ensure position metadata doesn't significantly slow parsing
   - [ ] Target: <10% performance impact
@@ -308,7 +308,7 @@ The implementation is organized into the following phases:
   - [ ] Profile memory usage with AST export
   - [ ] Optimize if needed
 
-- [ ] **Tag release and publish**
+- [ ] **2.27 Tag release and publish**
   - [ ] Create git tag for new version
   - [ ] Push tag to trigger pkg.go.dev update
   - [ ] Write release notes
