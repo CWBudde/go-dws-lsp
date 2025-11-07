@@ -72,7 +72,7 @@ The implementation is organized into the following phases:
 
 ### Tasks (42)
 
-- [x] **Create structured error types in pkg/dwscript**
+- [x] **2.1 Create structured error types in pkg/dwscript**
   - [x] Create `pkg/dwscript/error.go` file
   - [x] Define `Error` struct with fields:
     - [x] `Message string` - The error message
@@ -84,26 +84,26 @@ The implementation is organized into the following phases:
   - [x] Implement `Error() string` method to satisfy error interface
   - [x] Add documentation explaining 1-based indexing
 
-- [x] **Update CompileError to use structured errors**
+- [x] **2.2 Update CompileError to use structured errors**
   - [x] Change `CompileError.Errors` from `[]string` to `[]Error`
   - [x] Update `CompileError.Error()` method to format structured errors
   - [x] Ensure backwards compatibility or document breaking change
   - [x] Update all internal code that creates CompileError instances
 
-- [x] **Update internal lexer to capture position metadata**
+- [x] **2.3 Update internal lexer to capture position metadata**
   - [x] Verify `internal/lexer/token.go` includes position information
   - [x] Ensure Token struct has `Line`, `Column`, `Offset` fields
   - [x] If missing, add position tracking to tokenization
   - [x] Add `Length` calculation for tokens (end - start)
 
-- [x] **Update internal parser to capture error positions**
+- [x] **2.4 Update internal parser to capture error positions**
   - [x] Modify parser error generation to include line/column
   - [x] Change from `fmt.Sprintf()` strings to structured Error objects
   - [x] Extract position from current token when error occurs
   - [x] Calculate error span length where possible
   - [x] Update all parser error sites (syntax errors)
 
-- [x] **Update internal semantic analyzer to capture error positions**
+- [x] **2.5 Update internal semantic analyzer to capture error positions**
   - [x] Modify semantic analysis error generation
   - [x] Include position from AST node being analyzed
   - [x] Set appropriate severity (error vs warning)
@@ -114,7 +114,7 @@ The implementation is organized into the following phases:
     - [x] "W_UNUSED_VAR" - Unused variable (warning)
     - [x] "W_UNUSED_PARAM" - Unused parameter (warning)
 
-- [x] **Add position metadata to AST node types**
+- [x] **2.6 Add position metadata to AST node types**
   - [x] Open `internal/ast/ast.go`
   - [x] Define `Position` struct:
     - [x] `Line int` - 1-based line number
@@ -484,7 +484,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 3: Hover Support
+## Phase 4: Hover Support
 
 **Goal**: Provide type and symbol information on mouse hover.
 
@@ -509,7 +509,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 4: Go-to Definition
+## Phase 5: Go-to Definition
 
 **Goal**: Enable navigation to symbol definitions across files.
 
@@ -534,7 +534,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 5: Find References
+## Phase 6: Find References
 
 **Goal**: Find all usages of a symbol across the workspace.
 
@@ -560,7 +560,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 6: Document Symbols
+## Phase 7: Document Symbols
 
 **Goal**: Provide outline view of document structure.
 
@@ -584,7 +584,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 7: Workspace Symbols
+## Phase 8: Workspace Symbols
 
 **Goal**: Enable global symbol search across the entire workspace.
 
@@ -604,7 +604,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 8: Code Completion
+## Phase 9: Code Completion
 
 **Goal**: Provide intelligent code completion suggestions.
 
@@ -818,7 +818,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 9: Signature Help
+## Phase 10: Signature Help
 
 **Goal**: Show function signatures and parameters during function calls.
 
@@ -846,7 +846,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 10: Rename Support
+## Phase 11: Rename Support
 
 **Goal**: Enable symbol renaming across the codebase.
 
@@ -871,7 +871,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 11: Semantic Tokens
+## Phase 12: Semantic Tokens
 
 **Goal**: Provide semantic syntax highlighting information.
 
@@ -907,7 +907,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 12: Code Actions
+## Phase 13: Code Actions
 
 **Goal**: Provide quick fixes and refactoring actions.
 
@@ -941,7 +941,7 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 13: Testing, Quality, and Finalization
+## Phase 14: Testing, Quality, and Finalization
 
 **Goal**: Ensure robustness, performance, and code quality before release.
 
