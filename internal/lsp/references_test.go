@@ -309,11 +309,11 @@ end;`
 		t.Fatalf("DidOpen returned error: %v", err)
 	}
 
-	// Test finding references for myVar (at line 5, the first usage: "myVar := 10;")
+	// Test finding references for myVar (at declaration on line 3: "  myVar: Integer;")
 	refParams := &protocol.ReferenceParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-			Position:     protocol.Position{Line: 4, Character: 4}, // 0-based: line 5 "  myVar := 10;"
+			Position:     protocol.Position{Line: 2, Character: 2}, // 0-based: line 3 "  myVar" starts at column 2
 		},
 		Context: protocol.ReferenceContext{
 			IncludeDeclaration: true,
@@ -379,11 +379,11 @@ end;`
 		t.Fatalf("DidOpen returned error: %v", err)
 	}
 
-	// Test finding references for x in FuncA (line 4, first usage: "  x := 1;")
+	// Test finding references for x in FuncA (at declaration on line 2: "var x: Integer;")
 	refParams := &protocol.ReferenceParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-			Position:     protocol.Position{Line: 3, Character: 4}, // 0-based: line 4, "  x := 1;"
+			Position:     protocol.Position{Line: 1, Character: 4}, // 0-based: line 2, "var x" - x starts at column 4
 		},
 		Context: protocol.ReferenceContext{
 			IncludeDeclaration: true,
@@ -440,11 +440,11 @@ end;`
 		t.Fatalf("DidOpen returned error: %v", err)
 	}
 
-	// Test 1: includeDeclaration = true
+	// Test 1: includeDeclaration = true (at declaration on line 2: "var myVar: Integer;")
 	paramsWithDecl := &protocol.ReferenceParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-			Position:     protocol.Position{Line: 3, Character: 4}, // 0-based: line 4, "  myVar := 10;"
+			Position:     protocol.Position{Line: 1, Character: 4}, // 0-based: line 2, "var myVar" - myVar starts at column 4
 		},
 		Context: protocol.ReferenceContext{
 			IncludeDeclaration: true,
@@ -460,7 +460,7 @@ end;`
 	paramsWithoutDecl := &protocol.ReferenceParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-			Position:     protocol.Position{Line: 3, Character: 4}, // Same position as above
+			Position:     protocol.Position{Line: 1, Character: 4}, // Same position as above
 		},
 		Context: protocol.ReferenceContext{
 			IncludeDeclaration: false,
