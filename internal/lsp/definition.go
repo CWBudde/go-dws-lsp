@@ -62,10 +62,26 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (inter
 		return nil, nil
 	}
 
-	// Find the definition location for this node
+	// Identify what symbol we're on (Task 5.2)
+	symbolInfo := IdentifySymbolAtPosition(node)
+	if symbolInfo == nil {
+		log.Printf("Position %d:%d is not on a symbol\n", astLine, astColumn)
+		return nil, nil
+	}
+
+	log.Printf("Symbol at position: %s (kind: %s)", symbolInfo.Name, symbolInfo.Kind)
+
+	// Check if we're already on a declaration
+	if IsDeclaration(node) {
+		log.Printf("Already on declaration of %s, returning its location", symbolInfo.Name)
+		// Return the declaration's own location
+		return nodeToLocation(node, uri), nil
+	}
+
+	// Find the definition location for this symbol
 	location := findDefinitionLocation(node, doc, programAST, uri)
 	if location == nil {
-		log.Printf("No definition found for node at position %d:%d\n", astLine, astColumn)
+		log.Printf("No definition found for symbol %s at position %d:%d\n", symbolInfo.Name, astLine, astColumn)
 		return nil, nil
 	}
 
