@@ -137,10 +137,20 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 			Items:        items,
 		}
 	} else {
-		// TODO: Task 9.7+ - Handle general scope completion
+		// Task 9.7+: Handle general scope completion
+		log.Println("General scope completion requested")
+
+		items, err := analysis.CollectScopeCompletions(doc, int(position.Line), int(position.Character))
+		if err != nil {
+			log.Printf("Error collecting scope completions: %v", err)
+			items = []protocol.CompletionItem{}
+		}
+
+		log.Printf("Found %d scope completion items", len(items))
+
 		completionList = &protocol.CompletionList{
 			IsIncomplete: false,
-			Items:        []protocol.CompletionItem{},
+			Items:        items,
 		}
 	}
 
