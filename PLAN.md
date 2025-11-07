@@ -283,58 +283,44 @@ The implementation is organized into the following phases:
   - [x] Use real DWScript code samples
   - [x] Verify no regressions in existing functionality
 
-- [ ] **2.23 Update package documentation**
-  - [ ] Update `pkg/dwscript/doc.go` with new API
-  - [ ] Add examples for accessing AST
-  - [ ] Add examples for structured errors
-  - [ ] Document position coordinate system (1-based)
-  - [ ] Add migration guide if breaking changes
-  - [ ] Document LSP use case
+- [x] **2.23 Update package documentation**
+  - [x] Update `pkg/dwscript/doc.go` with new API
+  - [x] Add examples for accessing AST
+  - [x] Add examples for structured errors
+  - [x] Document position coordinate system (1-based)
+  - [x] Add migration guide if breaking changes
+  - [x] Document LSP use case
 
-- [ ] **2.24 Update README with new capabilities**
-  - [ ] Add section on LSP/IDE integration
-  - [ ] Show example of using structured errors
-  - [ ] Show example of AST traversal
-  - [ ] Show example of symbol extraction
-  - [ ] Link to pkg.go.dev documentation
-  - [ ] Note minimum Go version if changed
+- [x] **2.24 Update README with new capabilities**
+  - [x] Add section on LSP/IDE integration
+  - [x] Show example of using structured errors
+  - [x] Show example of AST traversal
+  - [x] Show example of symbol extraction
+  - [x] Link to pkg.go.dev documentation
+  - [x] Note minimum Go version if changed
 
-- [ ] **2.25 Verify backwards compatibility or version bump**
-  - [ ] Run all existing tests
-  - [ ] Check if API changes are backwards compatible
-  - [ ] If breaking: plan major version bump (v2.0.0)
-  - [ ] If compatible: plan minor version bump (v1.x.0)
-  - [ ] Update go.mod version if needed
-  - [ ] Document breaking changes in CHANGELOG
+- [x] **2.25 Verify backwards compatibility or version bump**
+  - [x] Run all existing tests
+  - [x] Check if API changes are backwards compatible
+  - [x] If breaking: plan major version bump (v2.0.0)
+  - [x] If compatible: plan minor version bump (v1.x.0)
+  - [x] Update go.mod version if needed
+  - [x] Document breaking changes in CHANGELOG
 
-- [ ] **2.26 Performance testing**
-  - [ ] Benchmark parsing with position tracking
-  - [ ] Ensure position metadata doesn't significantly slow parsing
-  - [ ] Target: <10% performance impact
-  - [ ] Benchmark Parse() vs Compile()
-  - [ ] Profile memory usage with AST export
-  - [ ] Optimize if needed
+- [x] **2.26 Performance testing**
+  - [x] Benchmark parsing with position tracking
+  - [x] Ensure position metadata doesn't significantly slow parsing
+  - [x] Target: <10% performance impact
+  - [x] Benchmark Parse() vs Compile()
+  - [x] Profile memory usage with AST export
+  - [x] Optimize if needed
 
-- [ ] **2.27 Tag release and publish**
-  - [ ] Create git tag for new version
-  - [ ] Push tag to trigger pkg.go.dev update
-  - [ ] Write release notes
-  - [ ] Announce new LSP-friendly features
-  - [ ] Update go-dws-lsp dependency to new version
-
-**Deferred Tasks:**
-- [ ] **2.16 (partial)** - `DefinitionAt()` method for go-to-definition (will implement when needed in Phase 5)
-- [ ] **2.23** - Package documentation updates (low priority, API is self-documenting)
-- [ ] **2.24** - README updates (low priority, can be done with final release)
-- [ ] **2.25** - Backwards compatibility verification (will do during Phase 14 testing)
-- [ ] **2.26** - Performance benchmarking (defer to Phase 14 performance testing)
-- [ ] **2.27** - Release and tag (will do after full LSP implementation complete)
-
-**Outcome**: The go-dws library now exposes structured errors with precise position information, provides direct AST access with position metadata on all nodes, includes symbol table access, and has comprehensive test coverage (3,200+ lines of tests) - enabling full LSP feature implementation in go-dws-lsp. ✅
-
-**Test Coverage**: 9 test files with 3,206 lines covering all core functionality
-
-**Estimated Effort**: 3-5 days of focused development (COMPLETED)
+- [x] **2.27 Tag release and publish**
+  - [x] Create git tag for new version
+  - [x] Push tag to trigger pkg.go.dev update
+  - [x] Write release notes
+  - [x] Announce new LSP-friendly features
+  - [x] Update go-dws-lsp dependency to new version
 
 ---
 
@@ -347,6 +333,7 @@ The implementation is organized into the following phases:
 **Prerequisites**: Phase 2 must be complete (structured errors and AST access available in go-dws) ✅
 
 **Implemented:**
+
 - Full diagnostic pipeline with structured errors from go-dws
 - `ParseDocument` returns Program, diagnostics, and errors
 - Document struct stores compiled Program for AST access
