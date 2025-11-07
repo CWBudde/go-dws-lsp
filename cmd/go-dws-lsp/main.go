@@ -87,6 +87,9 @@ func main() {
 
 		// Text document requests (Phase 5: Go-to Definition)
 		TextDocumentDefinition: lsp.Definition,
+
+		// Text document requests (Phase 9: Code Completion)
+		TextDocumentCompletion: lsp.Completion,
 	}
 
 	// Create GLSP server
