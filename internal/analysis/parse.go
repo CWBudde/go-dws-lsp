@@ -3,9 +3,6 @@ package analysis
 import (
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/cwbudde/go-dws/pkg/dwscript"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -19,124 +16,79 @@ import (
 //   - filename: The filename for error reporting (typically the URI)
 //
 // Returns:
+//   - *dwscript.Program: The compiled program (nil if compilation failed)
 //   - []protocol.Diagnostic: List of syntax and semantic errors as LSP diagnostics
 //   - error: Critical error that prevented parsing (e.g., engine creation failed)
-func ParseDocument(text string, filename string) ([]protocol.Diagnostic, error) {
+func ParseDocument(text string, filename string) (*dwscript.Program, []protocol.Diagnostic, error) {
 	// Create a new DWScript engine
 	engine, err := dwscript.New()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create DWScript engine: %w", err)
+		return nil, nil, fmt.Errorf("failed to create DWScript engine: %w", err)
 	}
 
 	log.Printf("Parsing document: %s (%d bytes)", filename, len(text))
 
 	// Attempt to compile the source code
 	// This will return a CompileError if there are syntax or semantic errors
-	_, err = engine.Compile(text)
+	program, err := engine.Compile(text)
 
 	var diagnostics []protocol.Diagnostic
 
 	if err != nil {
-		// Check if it's a compile error
+		// Check if it's a compile error with structured errors
 		if compileErr, ok := err.(*dwscript.CompileError); ok {
 			log.Printf("Compilation failed for %s: %d errors", filename, len(compileErr.Errors))
-			diagnostics = convertCompileErrors(compileErr.Errors, text)
+			diagnostics = convertStructuredErrors(compileErr.Errors)
 		} else {
 			// Some other unexpected error
-			return nil, fmt.Errorf("unexpected error during compilation: %w", err)
+			return nil, nil, fmt.Errorf("unexpected error during compilation: %w", err)
 		}
 	} else {
 		log.Printf("Compilation successful for %s", filename)
 		diagnostics = []protocol.Diagnostic{}
 	}
 
-	return diagnostics, nil
+	return program, diagnostics, nil
 }
 
-// convertCompileErrors converts DWScript compile error messages to LSP Diagnostic objects.
-// It parses error messages to extract position information.
-func convertCompileErrors(errorMessages []string, source string) []protocol.Diagnostic {
-	if len(errorMessages) == 0 {
+// convertStructuredErrors converts go-dws structured Error objects to LSP Diagnostic objects.
+// This uses the new Phase 2 structured error format with position information already included.
+func convertStructuredErrors(errors []*dwscript.Error) []protocol.Diagnostic {
+	if len(errors) == 0 {
 		return []protocol.Diagnostic{}
 	}
 
-	diagnostics := make([]protocol.Diagnostic, 0, len(errorMessages))
+	diagnostics := make([]protocol.Diagnostic, 0, len(errors))
 
-	for _, errMsg := range errorMessages {
-		diagnostic := parseErrorMessage(errMsg, source)
+	for _, err := range errors {
+		diagnostic := convertStructuredError(err)
 		diagnostics = append(diagnostics, diagnostic)
 	}
 
 	return diagnostics
 }
 
-// parseErrorMessage attempts to extract position information from an error message
-// and create an LSP Diagnostic.
-//
-// DWScript error messages typically follow patterns like:
-//   - "Syntax Error: <message> [line X]"
-//   - "Error at line X, col Y: <message>"
-//   - "<message> (X,Y)"
-func parseErrorMessage(errMsg string, source string) protocol.Diagnostic {
-	// Try to extract line and column information using various patterns
-
-	// Pattern 1: [line X] at the end
-	lineRegex1 := regexp.MustCompile(`\[line (\d+)\]`)
-	if matches := lineRegex1.FindStringSubmatch(errMsg); len(matches) > 1 {
-		line, _ := strconv.Atoi(matches[1])
-		return createDiagnostic(line, 0, 0, errMsg)
-	}
-
-	// Pattern 2: "line X, col Y" or "line X:Y"
-	lineColRegex := regexp.MustCompile(`line (\d+)[,:]\s*col(?:umn)?\s*(\d+)`)
-	if matches := lineColRegex.FindStringSubmatch(errMsg); len(matches) > 2 {
-		line, _ := strconv.Atoi(matches[1])
-		col, _ := strconv.Atoi(matches[2])
-		return createDiagnostic(line, col, 0, errMsg)
-	}
-
-	// Pattern 3: (line,col) format
-	parenRegex := regexp.MustCompile(`\((\d+),(\d+)\)`)
-	if matches := parenRegex.FindStringSubmatch(errMsg); len(matches) > 2 {
-		line, _ := strconv.Atoi(matches[1])
-		col, _ := strconv.Atoi(matches[2])
-		return createDiagnostic(line, col, 0, errMsg)
-	}
-
-	// Pattern 4: Just "line X" anywhere in the message
-	lineOnlyRegex := regexp.MustCompile(`line (\d+)`)
-	if matches := lineOnlyRegex.FindStringSubmatch(errMsg); len(matches) > 1 {
-		line, _ := strconv.Atoi(matches[1])
-		return createDiagnostic(line, 0, 0, errMsg)
-	}
-
-	// If no position info found, create diagnostic at line 0
-	return createDiagnostic(0, 0, 0, errMsg)
-}
-
-// createDiagnostic creates an LSP Diagnostic from position information and message.
-// It converts from 1-based (DWScript) to 0-based (LSP) line/column indexing.
-func createDiagnostic(line, col, length int, message string) protocol.Diagnostic {
-	// Convert from 1-based to 0-based indexing
+// convertStructuredError converts a single go-dws Error to an LSP Diagnostic.
+// The Error already contains structured position information (Line, Column, Length)
+// using 1-based indexing, which we convert to LSP's 0-based indexing.
+func convertStructuredError(err *dwscript.Error) protocol.Diagnostic {
+	// Convert from 1-based (DWScript) to 0-based (LSP) indexing
 	lspLine := uint32(0)
-	if line > 0 {
-		lspLine = uint32(line - 1)
+	if err.Line > 0 {
+		lspLine = uint32(err.Line - 1)
 	}
 
 	lspCol := uint32(0)
-	if col > 0 {
-		lspCol = uint32(col - 1)
+	if err.Column > 0 {
+		lspCol = uint32(err.Column - 1)
 	}
 
-	// Default length if not specified
+	// Calculate end position
+	length := err.Length
 	if length <= 0 {
-		length = 1
+		length = 1 // Default to single character if no length specified
 	}
-
 	endCol := lspCol + uint32(length)
-
-	// Clean up the message by removing position information
-	cleanMessage := cleanErrorMessage(message)
 
 	// Create the diagnostic range
 	diagRange := protocol.Range{
@@ -150,10 +102,13 @@ func createDiagnostic(line, col, length int, message string) protocol.Diagnostic
 		},
 	}
 
-	// Determine severity based on message content
-	severity := protocol.DiagnosticSeverityError
-	if strings.Contains(strings.ToLower(message), "warning") {
-		severity = protocol.DiagnosticSeverityWarning
+	// Map DWScript severity to LSP DiagnosticSeverity
+	severity := mapSeverity(err.Severity)
+
+	// Map diagnostic tags based on error code
+	var tags []protocol.DiagnosticTag
+	if err.Code != "" {
+		tags = mapDiagnosticTags(err.Code)
 	}
 
 	// Create the diagnostic
@@ -161,28 +116,53 @@ func createDiagnostic(line, col, length int, message string) protocol.Diagnostic
 		Range:    diagRange,
 		Severity: &severity,
 		Source:   stringPtr("go-dws"),
-		Message:  cleanMessage,
+		Message:  err.Message,
+	}
+
+	// Add error code if available
+	if err.Code != "" {
+		code := protocol.IntegerOrString{Value: err.Code}
+		diagnostic.Code = &code
+	}
+
+	// Add tags if any
+	if len(tags) > 0 {
+		diagnostic.Tags = tags
 	}
 
 	return diagnostic
 }
 
-// cleanErrorMessage removes position information from the error message
-// to avoid redundancy (position is shown separately in the IDE).
-func cleanErrorMessage(message string) string {
-	// Remove [line X] suffix
-	message = regexp.MustCompile(`\s*\[line \d+\]\s*$`).ReplaceAllString(message, "")
+// mapSeverity maps go-dws ErrorSeverity to LSP DiagnosticSeverity
+func mapSeverity(severity dwscript.ErrorSeverity) protocol.DiagnosticSeverity {
+	switch severity {
+	case dwscript.SeverityError:
+		return protocol.DiagnosticSeverityError
+	case dwscript.SeverityWarning:
+		return protocol.DiagnosticSeverityWarning
+	case dwscript.SeverityInfo:
+		return protocol.DiagnosticSeverityInformation
+	case dwscript.SeverityHint:
+		return protocol.DiagnosticSeverityHint
+	default:
+		return protocol.DiagnosticSeverityError
+	}
+}
 
-	// Remove (line,col) patterns
-	message = regexp.MustCompile(`\s*\(\d+,\d+\)\s*`).ReplaceAllString(message, " ")
+// mapDiagnosticTags maps error codes to LSP DiagnosticTag values
+func mapDiagnosticTags(code string) []protocol.DiagnosticTag {
+	var tags []protocol.DiagnosticTag
 
-	// Remove "line X, col Y:" prefix
-	message = regexp.MustCompile(`^line \d+[,:]\s*col(?:umn)?\s*\d+:\s*`).ReplaceAllString(message, "")
+	switch code {
+	case "W_UNUSED_VAR", "W_UNUSED_PARAM", "W_UNUSED_FUNCTION":
+		// Mark unused code with Unnecessary tag
+		tags = append(tags, protocol.DiagnosticTagUnnecessary)
+	case "W_DEPRECATED":
+		// Mark deprecated code with Deprecated tag
+		tags = append(tags, protocol.DiagnosticTagDeprecated)
+	}
 
-	// Remove "Error at line X, col Y:" prefix
-	message = regexp.MustCompile(`^Error at line \d+[,:]\s*col(?:umn)?\s*\d+:\s*`).ReplaceAllString(message, "")
-
-	return strings.TrimSpace(message)
+	return tags
 }
 
 // stringPtr is a helper function to create a pointer to a string.

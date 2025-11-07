@@ -7,6 +7,7 @@ import (
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/document"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
@@ -27,22 +28,39 @@ func DidOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) 
 	languageID := params.TextDocument.LanguageID
 	version := int(params.TextDocument.Version)
 
-	// Create document struct
+	log.Printf("Document opened: %s (version %d, language %s, %d bytes)\n",
+		uri, version, languageID, len(text))
+
+	// Parse document and get diagnostics
+	program, diagnostics, err := analysis.ParseDocument(text, uri)
+	if err != nil {
+		log.Printf("Error parsing document %s: %v", uri, err)
+		// Still store the document even if parsing failed
+		doc := &server.Document{
+			URI:        uri,
+			Text:       text,
+			Version:    version,
+			LanguageID: languageID,
+			Program:    nil,
+		}
+		srv.Documents().Set(uri, doc)
+		return nil
+	}
+
+	// Create document struct with compiled program
 	doc := &server.Document{
 		URI:        uri,
 		Text:       text,
 		Version:    version,
 		LanguageID: languageID,
+		Program:    program,
 	}
 
 	// Store document in DocumentStore
 	srv.Documents().Set(uri, doc)
 
-	log.Printf("Document opened: %s (version %d, language %s, %d bytes)\n",
-		uri, version, languageID, len(text))
-
-	// TODO Phase 2: Parse document and publish diagnostics
-	// For now, we just store the document content
+	// Publish diagnostics to the client
+	PublishDiagnostics(context, uri, diagnostics)
 
 	return nil
 }
@@ -129,16 +147,26 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 		}
 	}
 
-	// Update document in store
+	// Parse the updated document and get diagnostics
+	program, diagnostics, err := analysis.ParseDocument(newText, uri)
+	if err != nil {
+		log.Printf("Error parsing document %s after change: %v", uri, err)
+		// Still update the document even if parsing failed
+		program = nil
+	}
+
+	// Update document in store with new text and program
 	updatedDoc := &server.Document{
 		URI:        uri,
 		Text:       newText,
 		Version:    version,
 		LanguageID: doc.LanguageID,
+		Program:    program,
 	}
 	srv.Documents().Set(uri, updatedDoc)
 
-	// TODO Phase 2: Re-parse document and publish diagnostics
+	// Publish updated diagnostics to the client
+	PublishDiagnostics(context, uri, diagnostics)
 
 	return nil
 }

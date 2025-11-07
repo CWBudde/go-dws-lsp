@@ -2,6 +2,8 @@ package server
 
 import (
 	"sync"
+
+	"github.com/cwbudde/go-dws/pkg/dwscript"
 )
 
 // Document represents an open document in the workspace.
@@ -10,8 +12,10 @@ type Document struct {
 	Text       string
 	Version    int
 	LanguageID string
-	// AST will be added when we integrate go-dws parser
-	// AST        *ast.Program
+
+	// Program is the compiled DWScript program (nil if compilation failed).
+	// This is stored after successful compilation and provides access to the AST.
+	Program *dwscript.Program
 }
 
 // DocumentStore manages all open documents.
