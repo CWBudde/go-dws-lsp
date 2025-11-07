@@ -18,6 +18,9 @@ type Server struct {
 	// workspaceIndex stores workspace-wide symbol definitions for global symbol search
 	workspaceIndex *workspace.SymbolIndex
 
+	// workspaceFolders stores the workspace folders from the client
+	workspaceFolders []string
+
 	// config holds server configuration
 	config *Config
 
@@ -92,4 +95,18 @@ func (s *Server) UpdateConfig(update func(*Config)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	update(s.config)
+}
+
+// SetWorkspaceFolders sets the workspace folders.
+func (s *Server) SetWorkspaceFolders(folders []string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.workspaceFolders = folders
+}
+
+// GetWorkspaceFolders returns the workspace folders.
+func (s *Server) GetWorkspaceFolders() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.workspaceFolders
 }

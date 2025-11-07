@@ -543,45 +543,57 @@ The implementation is organized into the following phases:
   - **Location**: `internal/lsp/initialize.go:58`
   - **Test**: `internal/lsp/initialize_test.go:101-103`
 
-- [ ] **8.3 Ensure workspace symbol index is built during initialization**
-  - [ ] In initialized notification handler:
-    - [ ] Get workspace folders from client
-    - [ ] Call `BuildWorkspaceIndex(workspaceFolders)` in background
-    - [ ] Use goroutine to avoid blocking initialization
-    - [ ] Send progress notifications (optional)
-  - [ ] Handle workspace with no folders (no-op)
-  - [ ] Handle workspace changes (rebuild index)
+- [x] **8.3 Ensure workspace symbol index is built during initialization** ✅
+  - [x] In initialized notification handler:
+    - [x] Get workspace folders from client
+    - [x] Call `BuildWorkspaceIndex(workspaceFolders)` in background
+    - [x] Use goroutine to avoid blocking initialization
+    - [x] Send progress notifications (optional)
+  - [x] Handle workspace with no folders (no-op)
+  - [x] Handle workspace changes (rebuild index)
+  - **Implementation**: Updated Initialized handler to get workspace folders and start background indexing
+  - **Location**: `internal/lsp/initialize.go:159`
+  - **Functions**: `Initialized()`, `uriToPath()`, `pathToURI()`
 
-- [ ] **8.4 Implement workspace indexing: scan for .dws files**
-  - [ ] Implement `BuildWorkspaceIndex(roots []string) error`
-  - [ ] For each workspace root:
-    - [ ] Use `filepath.Walk` to traverse directories
-    - [ ] Filter files by `.dws` extension
-    - [ ] Skip hidden directories (`.git`, `node_modules`)
-    - [ ] Collect file paths
-  - [ ] Limit depth to avoid scanning too deep
-  - [ ] Return list of .dws files to index
+- [x] **8.4 Implement workspace indexing: scan for .dws files** ✅
+  - [x] Implement `BuildWorkspaceIndex(roots []string) error`
+  - [x] For each workspace root:
+    - [x] Use `filepath.Walk` to traverse directories
+    - [x] Filter files by `.dws` extension
+    - [x] Skip hidden directories (`.git`, `node_modules`)
+    - [x] Collect file paths
+  - [x] Limit depth to avoid scanning too deep
+  - [x] Return list of .dws files to index
+  - **Implementation**: Created Indexer with BuildWorkspaceIndex, indexDirectory, indexFile methods
+  - **Location**: `internal/workspace/indexer.go`
+  - **Features**: Depth limit (10), file limit (10000), skips hidden dirs and common build dirs
 
-- [ ] **8.5 Parse workspace files and extract symbols**
-  - [ ] For each .dws file in workspace:
-    - [ ] Read file contents
-    - [ ] Use `engine.Parse()` to get AST
-    - [ ] Handle parse errors gracefully (log and skip file)
-    - [ ] Extract top-level symbols from AST:
-      - [ ] Functions/procedures
-      - [ ] Classes/types
-      - [ ] Global variables/constants
-    - [ ] Add each symbol to index with location
+- [x] **8.5 Parse workspace files and extract symbols** ✅
+  - [x] For each .dws file in workspace:
+    - [x] Read file contents
+    - [x] Use `engine.Parse()` to get AST
+    - [x] Handle parse errors gracefully (log and skip file)
+    - [x] Extract top-level symbols from AST:
+      - [x] Functions/procedures
+      - [x] Classes/types
+      - [x] Global variables/constants
+    - [x] Add each symbol to index with location
+  - **Implementation**: Created extractSymbols and individual add* methods for each symbol type
+  - **Location**: `internal/workspace/indexer.go:148-554`
+  - **Symbols**: Functions, variables, constants, classes (with fields/methods/properties), records, enums
 
-- [ ] **8.6 Add symbols to index with name, kind, location, containerName**
-  - [ ] For each extracted symbol:
-    - [ ] Create `SymbolInformation` struct
-    - [ ] Set Name to symbol identifier
-    - [ ] Set Kind to appropriate SymbolKind
-    - [ ] Set Location with file URI and range
-    - [ ] Set ContainerName (e.g., class name for methods, file name for globals)
-  - [ ] Call `symbolIndex.AddSymbol(symbolInfo)`
-  - [ ] Update index statistics (total symbols)
+- [x] **8.6 Add symbols to index with name, kind, location, containerName** ✅
+  - [x] For each extracted symbol:
+    - [x] Create `SymbolInformation` struct
+    - [x] Set Name to symbol identifier
+    - [x] Set Kind to appropriate SymbolKind
+    - [x] Set Location with file URI and range
+    - [x] Set ContainerName (e.g., class name for methods, file name for globals)
+  - [x] Call `symbolIndex.AddSymbol(symbolInfo)`
+  - [x] Update index statistics (total symbols)
+  - **Implementation**: All add* methods properly call index.AddSymbol() with correct parameters
+  - **Location**: `internal/workspace/indexer.go` (various add* methods)
+  - **Container names**: Class/record/enum names for members, empty for top-level symbols
 
 - [ ] **8.7 Search symbol index for query string matches (substring or prefix)**
   - [ ] Implement `SearchIndex(query string) ([]SymbolInformation, error)`
