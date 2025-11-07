@@ -3,6 +3,8 @@ package server
 
 import (
 	"sync"
+
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 )
 
 // Server holds the state of the LSP server.
@@ -12,6 +14,12 @@ type Server struct {
 
 	// symbolIndex caches references for workspace documents (even when not open)
 	symbolIndex *SymbolIndex
+
+	// workspaceIndex stores workspace-wide symbol definitions for global symbol search
+	workspaceIndex *workspace.SymbolIndex
+
+	// workspaceFolders stores the workspace folders from the client
+	workspaceFolders []string
 
 	// config holds server configuration
 	config *Config
@@ -35,8 +43,9 @@ type Config struct {
 // New creates a new LSP server instance.
 func New() *Server {
 	return &Server{
-		documents:   NewDocumentStore(),
-		symbolIndex: NewSymbolIndex(),
+		documents:      NewDocumentStore(),
+		symbolIndex:    NewSymbolIndex(),
+		workspaceIndex: workspace.NewSymbolIndex(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -68,6 +77,11 @@ func (s *Server) Symbols() *SymbolIndex {
 	return s.symbolIndex
 }
 
+// WorkspaceIndex returns the workspace-wide symbol index.
+func (s *Server) WorkspaceIndex() *workspace.SymbolIndex {
+	return s.workspaceIndex
+}
+
 // Config returns the server configuration.
 func (s *Server) Config() *Config {
 	s.mu.RLock()
@@ -81,4 +95,18 @@ func (s *Server) UpdateConfig(update func(*Config)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	update(s.config)
+}
+
+// SetWorkspaceFolders sets the workspace folders.
+func (s *Server) SetWorkspaceFolders(folders []string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.workspaceFolders = folders
+}
+
+// GetWorkspaceFolders returns the workspace folders.
+func (s *Server) GetWorkspaceFolders() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.workspaceFolders
 }

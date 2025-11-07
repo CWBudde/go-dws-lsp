@@ -3,6 +3,7 @@ package workspace
 
 import (
 	"log"
+	"strings"
 	"sync"
 
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -219,4 +220,45 @@ func (si *SymbolIndex) Clear() {
 	si.files = make(map[string]*FileInfo)
 
 	log.Println("Symbol index cleared")
+}
+
+// Search searches for symbols matching the query string.
+// Returns symbols whose names contain the query string (case-insensitive).
+// If query is empty, returns all symbols (up to a reasonable limit).
+func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
+	si.mutex.RLock()
+	defer si.mutex.RUnlock()
+
+	// Normalize query for case-insensitive search
+	queryLower := strings.ToLower(query)
+
+	var results []SymbolLocation
+
+	// If query is empty, return all symbols (up to limit)
+	if query == "" {
+		for _, locations := range si.symbols {
+			for _, loc := range locations {
+				results = append(results, loc)
+				if maxResults > 0 && len(results) >= maxResults {
+					return results
+				}
+			}
+		}
+		return results
+	}
+
+	// Search for symbols containing the query
+	for symbolName, locations := range si.symbols {
+		nameLower := strings.ToLower(symbolName)
+		if strings.Contains(nameLower, queryLower) {
+			for _, loc := range locations {
+				results = append(results, loc)
+				if maxResults > 0 && len(results) >= maxResults {
+					return results
+				}
+			}
+		}
+	}
+
+	return results
 }
