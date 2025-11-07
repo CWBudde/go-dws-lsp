@@ -8,17 +8,17 @@ run:
 
 linters:
   enable:
-    - errcheck      # Check for unchecked errors
-    - gosimple      # Simplify code
-    - govet         # Reports suspicious constructs
-    - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Advanced static analysis
-    - unused        # Check for unused code
-    - gofmt         # Check code formatting
-    - goimports     # Check import formatting
-    - misspell      # Find misspelled words
-    - gocritic      # Comprehensive Go linter
-    - revive        # Fast, extensible, flexible linter
+    - errcheck # Check for unchecked errors
+    - gosimple # Simplify code
+    - govet # Reports suspicious constructs
+    - ineffassign # Detect ineffectual assignments
+    - staticcheck # Advanced static analysis
+    - unused # Check for unused code
+    - gofmt # Check code formatting
+    - goimports # Check import formatting
+    - misspell # Find misspelled words
+    - gocritic # Comprehensive Go linter
+    - revive # Fast, extensible, flexible linter
 
 linters-settings:
   errcheck:

@@ -31,6 +31,7 @@ The implementation is organized into the following phases:
 **Status**: COMPLETE (21/21 tasks)
 
 **Implemented:**
+
 - Go module structure with `cmd/go-dws-lsp/` and `internal/` packages
 - GLSP library integration for LSP protocol handling
 - Initialize/Shutdown request handlers with full server capabilities advertised
@@ -40,6 +41,7 @@ The implementation is organized into the following phases:
 - Comprehensive initialize tests in `internal/lsp/initialize_test.go`
 
 **Deferred:**
+
 - [ ] **SymbolIndex implementation** (Phase 3) - Workspace symbol tracking
 - [ ] **Shutdown cleanup** (Phase 14) - Resource cleanup and shutdown flag (low priority, server exits cleanly)
 
@@ -50,6 +52,7 @@ The implementation is organized into the following phases:
 **Status**: COMPLETE (15/15 tasks)
 
 **Implemented:**
+
 - `textDocument/didOpen`, `didClose`, `didChange` handlers in `internal/lsp/text_document.go`
 - Full and incremental sync modes with version tracking
 - UTF-16 to UTF-8 position conversion utilities in `internal/document/text_edit.go`
@@ -58,6 +61,7 @@ The implementation is organized into the following phases:
 - 27 comprehensive tests (10 handler tests + 17 text editing tests) - all passing
 
 **Deferred:**
+
 - [ ] **Trigger diagnostics on open/change** (Phase 3) - Parse and publish diagnostics when documents open or change
 
 ---
@@ -447,7 +451,7 @@ The implementation is organized into the following phases:
     - [x] Constant → SymbolKind.Constant
     - [x] Field → SymbolKind.Field
     - [x] Property → SymbolKind.Property
-  - **Implementation**: Mapping done implicitly in each create* function
+  - **Implementation**: Mapping done implicitly in each create\* function
   - **Location**: `internal/lsp/document_symbol.go` (various functions)
 
 - [x] **7.9 Return hierarchical DocumentSymbol objects (preferred over flat)** ✅
@@ -457,7 +461,7 @@ The implementation is organized into the following phases:
   - [x] Build tree structure with parent-child relationships
   - [x] Alternative: support flat SymbolInformation for older clients
   - [x] Check client capabilities to choose format
-  - **Implementation**: All create* functions return hierarchical protocol.DocumentSymbol objects with Children field
+  - **Implementation**: All create\* functions return hierarchical protocol.DocumentSymbol objects with Children field
   - **Location**: `internal/lsp/document_symbol.go` (various functions)
 
 - [x] **7.10 Include symbol names, kinds, ranges, and selection ranges** ✅
@@ -470,7 +474,7 @@ The implementation is organized into the following phases:
     - [x] Children: nested symbols (optional)
   - [x] Ensure ranges are 0-based (LSP format)
   - [x] Ensure ranges are valid (end >= start)
-  - **Implementation**: All create* functions properly set Name, Kind, Range, SelectionRange, Detail, and Children
+  - **Implementation**: All create\* functions properly set Name, Kind, Range, SelectionRange, Detail, and Children
   - **Location**: `internal/lsp/document_symbol.go` (various functions)
 
 - [x] **7.11 Write unit tests for document symbols with functions and classes** ✅
@@ -566,7 +570,7 @@ The implementation is organized into the following phases:
       - [x] Classes/types
       - [x] Global variables/constants
     - [x] Add each symbol to index with location
-  - **Implementation**: Created extractSymbols and individual add* methods for each symbol type
+  - **Implementation**: Created extractSymbols and individual add\* methods for each symbol type
   - **Location**: `internal/workspace/indexer.go:148-554`
   - **Symbols**: Functions, variables, constants, classes (with fields/methods/properties), records, enums
 
@@ -579,8 +583,8 @@ The implementation is organized into the following phases:
     - [x] Set ContainerName (e.g., class name for methods, file name for globals)
   - [x] Call `symbolIndex.AddSymbol(symbolInfo)`
   - [x] Update index statistics (total symbols)
-  - **Implementation**: All add* methods properly call index.AddSymbol() with correct parameters
-  - **Location**: `internal/workspace/indexer.go` (various add* methods)
+  - **Implementation**: All add\* methods properly call index.AddSymbol() with correct parameters
+  - **Location**: `internal/workspace/indexer.go` (various add\* methods)
   - **Container names**: Class/record/enum names for members, empty for top-level symbols
 
 - [x] **8.7 Search symbol index for query string matches (substring or prefix)** ✅
@@ -1612,7 +1616,7 @@ The implementation is organized into the following phases:
     - [ ] Find variable declaration in AST
     - [ ] Create TextEdit to delete entire declaration statement
     - [ ] Handle formatting (remove blank line if appropriate)
-  - [ ] Code action 2: "Rename to '_x'"
+  - [ ] Code action 2: "Rename to '\_x'"
     - [ ] Reuse rename functionality from Phase 11
     - [ ] Create WorkspaceEdit to rename `x` to `_x`
     - [ ] This preserves declaration but indicates intentional non-use

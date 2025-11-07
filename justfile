@@ -5,6 +5,25 @@
 default:
     @just --list
 
+# Install development dependencies (formatters and linters)
+setup-deps:
+    @echo "Installing development dependencies..."
+    @echo "Installing gofumpt (Go formatter)..."
+    go install mvdan.cc/gofumpt@latest
+    @echo "Installing gci (Go import formatter)..."
+    go install github.com/daixiang0/gci@latest
+    @echo "Installing shfmt (Shell formatter)..."
+    go install mvdan.cc/sh/v3/cmd/shfmt@latest
+    @echo "Installing golangci-lint (Go linter)..."
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
+    @echo "Development dependencies installation complete!"
+    @echo "Note: Ensure $(go env GOPATH)/bin is in your PATH for Go-based tools"
+    @echo ""
+    @echo "Optional dependencies (install manually if needed):"
+    @echo "  - treefmt: https://github.com/numtide/treefmt/releases"
+    @echo "  - prettier: npm install -g prettier"
+    @echo "  - shellcheck: https://github.com/koalaman/shellcheck"
+
 # Install all required dependencies
 install-deps:
     @echo "Installing Go module dependencies..."
@@ -52,19 +71,24 @@ test-watch:
     @echo "Watching for changes and running tests..."
     find . -name "*.go" | entr -c just test
 
-# Run linters and static analysis
-lint:
-    @echo "Running go vet..."
-    go vet ./...
-    @echo "Running go fmt check..."
-    @test -z "$(gofmt -l .)" || (echo "Files need formatting:" && gofmt -l . && exit 1)
-    @echo "All checks passed!"
-
-# Format code
+# Format code using treefmt (falls back to gofumpt+gci if treefmt not available)
 fmt:
-    @echo "Formatting code..."
-    go fmt ./...
-    @echo "Code formatted!"
+    #!/usr/bin/env sh
+    if command -v treefmt >/dev/null 2>&1; then \
+        treefmt --allow-missing-formatter; \
+    else \
+        echo "treefmt not found, using gofumpt + gci fallback..."; \
+        gofumpt -w .; \
+        gci write --skip-generated -s standard -s default .; \
+    fi
+
+# Run linter
+lint:
+    golangci-lint run --config ./.golangci.toml --timeout 2m
+
+# Run linter (with fix)
+lint-fix:
+    golangci-lint run --config ./.golangci.toml --timeout 2m --fix
 
 # Run benchmarks
 bench:
@@ -87,6 +111,16 @@ security:
 # Run all checks before commit (format, lint, test)
 pre-commit: fmt lint test
     @echo "All pre-commit checks passed!"
+
+# Check if code is formatted (for CI)
+check-fmt:
+    #!/usr/bin/env sh
+    if command -v treefmt >/dev/null 2>&1; then \
+        treefmt --allow-missing-formatter --fail-on-change; \
+    else \
+        echo "treefmt not found, using gofumpt check fallback..."; \
+        test -z "$(gofumpt -l .)" || (echo "Files need formatting:" && gofumpt -l . && exit 1); \
+    fi
 
 # Development: build and run the LSP server
 dev: build

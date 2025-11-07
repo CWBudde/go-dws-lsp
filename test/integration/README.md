@@ -58,6 +58,7 @@ just test-all
 ### Test Categories
 
 **Hover Tests:**
+
 - Variable declaration hover
 - Function declaration hover
 - Class declaration hover
@@ -66,6 +67,7 @@ just test-all
 - Multiple documents
 
 **LSP Protocol Tests:**
+
 - Initialize workflow
 - Document lifecycle (open/change/close)
 - Diagnostics on didOpen
@@ -76,17 +78,20 @@ just test-all
 ## Writing New Integration Tests
 
 1. Add the build tag at the top of your test file:
+
    ```go
    //go:build integration
    // +build integration
    ```
 
 2. Use the `setupTestServer()` helper to create a test server instance:
+
    ```go
    srv := setupTestServer()
    ```
 
 3. Simulate LSP client operations using the protocol types:
+
    ```go
    openParams := &protocol.DidOpenTextDocumentParams{
        TextDocument: protocol.TextDocumentItem{
@@ -111,13 +116,16 @@ Integration tests are run as part of the CI pipeline defined in `.github/workflo
 ## Troubleshooting
 
 **Tests failing due to missing dependencies:**
+
 - Run `just install-deps` to install all required dependencies
 
 **Tests failing with "undefined: lsp.SetServer":**
+
 - Ensure you're running from the project root directory
 - Verify all imports are correct
 
 **Tests timing out:**
+
 - Check if the LSP server is hanging on a specific operation
 - Use `go test -v -timeout 30s` to increase timeout
 

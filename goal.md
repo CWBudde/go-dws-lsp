@@ -181,7 +181,7 @@ _Outcome:_ After Phase 2, the language server supports all essential IDE feature
 - Start by supporting **quick fixes** for diagnostics. For example:
   - If there's a compiler error "Undeclared identifier X", a possible quick fix is to declare that identifier. We can suggest a code action: _"Declare variable 'X'"_. The action would insert a line var X: &lt;Type&gt;; either at the top of the function or in the global section, depending on context. (Choosing a default type might be tricky - perhaps Integer or Variant as a fallback, or allow the user to edit after insertion).
   - If there's a missing semicolon error at a line, offer _"Insert missing ';'"_ as a fix. The action would simply insert a semicolon at the appropriate position.
-  - If a variable is assigned but never used (if we had such a warning), offer to remove it or prefix with _ to mark ignored (just examples).
+  - If a variable is assigned but never used (if we had such a warning), offer to remove it or prefix with \_ to mark ignored (just examples).
   - If there's a type mismatch error, possibly suggest a cast if appropriate (this is more complex and might not always be clear).
 - Also consider **refactorings**:
   - _Extract to function/procedure:_ This is complex (involves selecting code and creating a new function), possibly skip at this stage unless time permits.
