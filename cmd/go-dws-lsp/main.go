@@ -84,6 +84,9 @@ func main() {
 
 		// Text document requests (Phase 4: Hover Support)
 		TextDocumentHover: lsp.Hover,
+
+		// Text document requests (Phase 5: Go-to Definition)
+		TextDocumentDefinition: lsp.Definition,
 	}
 
 	// Create GLSP server
