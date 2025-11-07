@@ -1,0 +1,447 @@
+// Package analysis provides scope-based completion for DWScript.
+package analysis
+
+import (
+	"log"
+	"strings"
+
+	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/cwbudde/go-dws/pkg/ast"
+	protocol "github.com/tliron/glsp/protocol_3_16"
+)
+
+// CollectScopeCompletions gathers all completion items available in the current scope.
+// This includes keywords, local variables, parameters, global symbols, and built-in functions.
+func CollectScopeCompletions(doc *server.Document, line, character int) ([]protocol.CompletionItem, error) {
+	log.Printf("CollectScopeCompletions: gathering completions at %d:%d", line, character)
+
+	var items []protocol.CompletionItem
+
+	// Task 9.8: Add keywords
+	items = append(items, getKeywordCompletions()...)
+
+	if doc.Program == nil || doc.Program.AST() == nil {
+		log.Println("CollectScopeCompletions: no AST available, returning keywords only")
+		return items, nil
+	}
+
+	program := doc.Program.AST()
+
+	// Convert LSP position (0-based) to AST position (1-based)
+	astLine := line + 1
+	astColumn := character + 1
+
+	// Task 9.9: Add local variables and parameters
+	localItems := getLocalCompletions(program, astLine, astColumn)
+	items = append(items, localItems...)
+
+	// Task 9.11: Add global symbols (functions, types, constants)
+	globalItems := getGlobalCompletions(program)
+	items = append(items, globalItems...)
+
+	// Task 9.12: Add built-in functions and types
+	items = append(items, getBuiltInCompletions()...)
+
+	log.Printf("CollectScopeCompletions: found %d total completion items", len(items))
+	return items, nil
+}
+
+// getKeywordCompletions returns completion items for DWScript keywords.
+func getKeywordCompletions() []protocol.CompletionItem {
+	keywords := []string{
+		"begin", "end", "if", "then", "else", "while", "for", "do", "to", "downto",
+		"repeat", "until", "case", "of", "var", "const", "type", "function", "procedure",
+		"class", "record", "interface", "implementation", "uses", "unit", "program",
+		"try", "except", "finally", "raise", "on", "as", "is", "in", "not", "and", "or",
+		"xor", "div", "mod", "shl", "shr", "array", "set", "property", "read", "write",
+		"private", "protected", "public", "published", "constructor", "destructor",
+		"inherited", "nil", "true", "false", "exit", "break", "continue", "with",
+	}
+
+	var items []protocol.CompletionItem
+	kind := protocol.CompletionItemKindKeyword
+
+	for _, keyword := range keywords {
+		detail := "DWScript keyword"
+		item := protocol.CompletionItem{
+			Label:      keyword,
+			Kind:       &kind,
+			Detail:     &detail,
+			InsertText: &keyword,
+		}
+		items = append(items, item)
+	}
+
+	return items
+}
+
+// getLocalCompletions returns completion items for local variables and parameters.
+func getLocalCompletions(program *ast.Program, line, column int) []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+
+	// Find the enclosing function at the cursor position
+	enclosingFunc := findEnclosingFunctionAt(program, line, column)
+	if enclosingFunc == nil {
+		// Not inside a function, no local scope
+		return items
+	}
+
+	// Add function parameters
+	paramKind := protocol.CompletionItemKindVariable
+	for _, param := range enclosingFunc.Parameters {
+		if param.Name == nil {
+			continue
+		}
+
+		detail := "Parameter"
+		if param.Type != nil {
+			detail = "Parameter: " + param.Type.String()
+		}
+
+		item := protocol.CompletionItem{
+			Label:  param.Name.Value,
+			Kind:   &paramKind,
+			Detail: &detail,
+		}
+		items = append(items, item)
+	}
+
+	// Add local variables from function body
+	if enclosingFunc.Body != nil {
+		localVars := extractLocalVariables(enclosingFunc.Body)
+		items = append(items, localVars...)
+	}
+
+	return items
+}
+
+// findEnclosingFunctionAt finds the function that contains the given position.
+func findEnclosingFunctionAt(program *ast.Program, line, column int) *ast.FunctionDecl {
+	var enclosingFunc *ast.FunctionDecl
+
+	ast.Inspect(program, func(node ast.Node) bool {
+		if node == nil {
+			return false
+		}
+
+		if funcDecl, ok := node.(*ast.FunctionDecl); ok {
+			// Check if the cursor is within this function's range
+			if isPositionInNodeRange(node, line, column) {
+				enclosingFunc = funcDecl
+				// Continue traversal to find inner functions if nested
+			}
+		}
+
+		return true
+	})
+
+	return enclosingFunc
+}
+
+// extractLocalVariables extracts all local variable declarations from a block.
+func extractLocalVariables(block *ast.BlockStatement) []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+	kind := protocol.CompletionItemKindVariable
+
+	if block == nil {
+		return items
+	}
+
+	// Traverse statements in the block to find variable declarations
+	for _, stmt := range block.Statements {
+		if varDecl, ok := stmt.(*ast.VarDeclStatement); ok {
+			for _, name := range varDecl.Names {
+				detail := "Local variable"
+				if varDecl.Type != nil {
+					detail = "Local variable: " + varDecl.Type.String()
+				}
+
+				item := protocol.CompletionItem{
+					Label:  name.Value,
+					Kind:   &kind,
+					Detail: &detail,
+				}
+				items = append(items, item)
+			}
+		}
+	}
+
+	return items
+}
+
+// getGlobalCompletions returns completion items for global symbols.
+func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+
+	// Extract top-level declarations
+	for _, stmt := range program.Statements {
+		switch s := stmt.(type) {
+		case *ast.FunctionDecl:
+			if s.Name == nil {
+				continue
+			}
+			kind := protocol.CompletionItemKindFunction
+			signature := buildFunctionSignature(s)
+			item := protocol.CompletionItem{
+				Label:  s.Name.Value,
+				Kind:   &kind,
+				Detail: &signature,
+			}
+			items = append(items, item)
+
+		case *ast.ClassDecl:
+			if s.Name == nil {
+				continue
+			}
+			kind := protocol.CompletionItemKindClass
+			detail := "Class"
+			item := protocol.CompletionItem{
+				Label:  s.Name.Value,
+				Kind:   &kind,
+				Detail: &detail,
+			}
+			items = append(items, item)
+
+		case *ast.RecordDecl:
+			if s.Name == nil {
+				continue
+			}
+			kind := protocol.CompletionItemKindStruct
+			detail := "Record"
+			item := protocol.CompletionItem{
+				Label:  s.Name.Value,
+				Kind:   &kind,
+				Detail: &detail,
+			}
+			items = append(items, item)
+
+		case *ast.InterfaceDecl:
+			if s.Name == nil {
+				continue
+			}
+			kind := protocol.CompletionItemKindInterface
+			detail := "Interface"
+			item := protocol.CompletionItem{
+				Label:  s.Name.Value,
+				Kind:   &kind,
+				Detail: &detail,
+			}
+			items = append(items, item)
+
+		case *ast.VarDeclStatement:
+			kind := protocol.CompletionItemKindVariable
+			for _, name := range s.Names {
+				detail := "Global variable"
+				if s.Type != nil {
+					detail = "Global variable: " + s.Type.String()
+				}
+				item := protocol.CompletionItem{
+					Label:  name.Value,
+					Kind:   &kind,
+					Detail: &detail,
+				}
+				items = append(items, item)
+			}
+
+		case *ast.ConstDecl:
+			if s.Name == nil {
+				continue
+			}
+			kind := protocol.CompletionItemKindConstant
+			detail := "Constant"
+			if s.Type != nil {
+				detail = "Constant: " + s.Type.String()
+			}
+			if s.Value != nil {
+				detail += " = " + s.Value.String()
+			}
+			item := protocol.CompletionItem{
+				Label:  s.Name.Value,
+				Kind:   &kind,
+				Detail: &detail,
+			}
+			items = append(items, item)
+
+		case *ast.EnumDecl:
+			if s.Name == nil {
+				continue
+			}
+			kind := protocol.CompletionItemKindEnum
+			detail := "Enumeration"
+			item := protocol.CompletionItem{
+				Label:  s.Name.Value,
+				Kind:   &kind,
+				Detail: &detail,
+			}
+			items = append(items, item)
+
+			// Also add enum values as constants
+			constKind := protocol.CompletionItemKindEnumMember
+			for _, enumVal := range s.Values {
+				enumDetail := "Enum value: " + s.Name.Value
+				enumItem := protocol.CompletionItem{
+					Label:  enumVal.Name,
+					Kind:   &constKind,
+					Detail: &enumDetail,
+				}
+				items = append(items, enumItem)
+			}
+		}
+	}
+
+	return items
+}
+
+// buildFunctionSignature builds a function signature string for display.
+func buildFunctionSignature(fn *ast.FunctionDecl) string {
+	if fn.Name == nil {
+		return ""
+	}
+
+	signature := fn.Name.Value + "("
+
+	for i, param := range fn.Parameters {
+		if i > 0 {
+			signature += ", "
+		}
+
+		if param.ByRef {
+			signature += "var "
+		} else if param.IsConst {
+			signature += "const "
+		} else if param.IsLazy {
+			signature += "lazy "
+		}
+
+		if param.Name != nil {
+			signature += param.Name.Value
+		}
+		if param.Type != nil {
+			signature += ": " + param.Type.String()
+		}
+	}
+
+	signature += ")"
+
+	if fn.ReturnType != nil {
+		signature += ": " + fn.ReturnType.String()
+	}
+
+	return signature
+}
+
+// getBuiltInCompletions returns completion items for built-in functions and types.
+func getBuiltInCompletions() []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+
+	// Built-in types
+	builtInTypes := []string{
+		"Integer", "Float", "String", "Boolean", "Variant",
+		"TObject", "TClass", "DateTime", "Currency",
+		"Byte", "Word", "Cardinal", "Int64", "UInt64",
+		"Single", "Double", "Extended", "Char",
+	}
+
+	typeKind := protocol.CompletionItemKindClass
+	for _, typeName := range builtInTypes {
+		detail := "Built-in type"
+		item := protocol.CompletionItem{
+			Label:  typeName,
+			Kind:   &typeKind,
+			Detail: &detail,
+		}
+		items = append(items, item)
+	}
+
+	// Built-in functions
+	builtInFunctions := map[string]string{
+		"Print":     "Print(value: Variant)",
+		"PrintLn":   "PrintLn(value: Variant)",
+		"Length":    "Length(s: String): Integer",
+		"Copy":      "Copy(s: String, index, count: Integer): String",
+		"Pos":       "Pos(substr, str: String): Integer",
+		"UpperCase": "UpperCase(s: String): String",
+		"LowerCase": "LowerCase(s: String): String",
+		"Trim":      "Trim(s: String): String",
+		"IntToStr":  "IntToStr(value: Integer): String",
+		"StrToInt":  "StrToInt(s: String): Integer",
+		"FloatToStr": "FloatToStr(value: Float): String",
+		"StrToFloat": "StrToFloat(s: String): Float",
+		"Now":       "Now(): DateTime",
+		"Date":      "Date(): DateTime",
+		"Time":      "Time(): DateTime",
+		"FormatDateTime": "FormatDateTime(format: String, dt: DateTime): String",
+		"Inc":       "Inc(var x: Integer; increment: Integer = 1)",
+		"Dec":       "Dec(var x: Integer; decrement: Integer = 1)",
+		"Chr":       "Chr(code: Integer): Char",
+		"Ord":       "Ord(ch: Char): Integer",
+		"Round":     "Round(value: Float): Integer",
+		"Trunc":     "Trunc(value: Float): Integer",
+		"Abs":       "Abs(value: Float): Float",
+		"Sqrt":      "Sqrt(value: Float): Float",
+		"Sqr":       "Sqr(value: Float): Float",
+		"Sin":       "Sin(angle: Float): Float",
+		"Cos":       "Cos(angle: Float): Float",
+		"Tan":       "Tan(angle: Float): Float",
+		"Exp":       "Exp(value: Float): Float",
+		"Ln":        "Ln(value: Float): Float",
+		"Random":    "Random(): Float",
+		"Randomize": "Randomize()",
+	}
+
+	funcKind := protocol.CompletionItemKindFunction
+	for name, signature := range builtInFunctions {
+		detail := signature
+		item := protocol.CompletionItem{
+			Label:  name,
+			Kind:   &funcKind,
+			Detail: &detail,
+		}
+		items = append(items, item)
+	}
+
+	return items
+}
+
+// isPositionInNodeRange checks if a position is within a node's range.
+func isPositionInNodeRange(node ast.Node, line, column int) bool {
+	if node == nil {
+		return false
+	}
+
+	start := node.Pos()
+	end := node.End()
+
+	if line < start.Line || line > end.Line {
+		return false
+	}
+
+	if line == start.Line && column < start.Column {
+		return false
+	}
+
+	if line == end.Line && column > end.Column {
+		return false
+	}
+
+	return true
+}
+
+// FilterCompletionsByPrefix filters completion items by a prefix string.
+// This is useful when the user has already typed part of an identifier.
+func FilterCompletionsByPrefix(items []protocol.CompletionItem, prefix string) []protocol.CompletionItem {
+	if prefix == "" {
+		return items
+	}
+
+	var filtered []protocol.CompletionItem
+	lowerPrefix := strings.ToLower(prefix)
+
+	for _, item := range items {
+		if strings.HasPrefix(strings.ToLower(item.Label), lowerPrefix) {
+			filtered = append(filtered, item)
+		}
+	}
+
+	return filtered
+}
