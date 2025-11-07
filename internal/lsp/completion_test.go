@@ -81,6 +81,86 @@ end.`
 	t.Logf("Completion returned %d items (expected 0 for now)", len(completionList.Items))
 }
 
+func TestCompletion_TriggerCharacterDot(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Sample DWScript source code with member access
+	source := `program Test;
+
+type TMyClass = class
+  Field: Integer;
+end;
+
+var obj: TMyClass;
+
+begin
+  obj.Field := 42;
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Create completion params with trigger character
+	// Simulate completion request right after typing "obj."
+	triggerChar := "."
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      9, // After "obj."
+				Character: 6, // Position right after the dot
+			},
+		},
+		Context: &protocol.CompletionContext{
+			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
+			TriggerCharacter: &triggerChar,
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	// Should return without error
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	// Should return a CompletionList
+	if result == nil {
+		t.Fatal("Expected non-nil result")
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// For now, we expect an empty list (member completion not yet implemented)
+	if completionList == nil {
+		t.Fatal("Expected non-nil CompletionList")
+	}
+
+	t.Logf("Completion triggered by dot returned %d items", len(completionList.Items))
+}
+
 func TestCompletion_NonExistentDocument(t *testing.T) {
 	// Create a test server
 	srv := server.New()

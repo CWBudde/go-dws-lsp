@@ -615,32 +615,32 @@ The implementation is organized into the following phases:
 
 ### Tasks (27)
 
-- [ ] **9.1 Implement textDocument/completion request handler**
-  - [ ] Create `internal/lsp/completion.go`
-  - [ ] Define handler: `func Completion(context *glsp.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)`
-  - [ ] Extract document URI and position from params
-  - [ ] Retrieve document from store
-  - [ ] Check if document and AST are available
-  - [ ] Determine completion context (see below)
+- [x] **9.1 Implement textDocument/completion request handler**
+  - [x] Create `internal/lsp/completion.go`
+  - [x] Define handler: `func Completion(context *glsp.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)`
+  - [x] Extract document URI and position from params
+  - [x] Retrieve document from store
+  - [x] Check if document and AST are available
+  - [x] Determine completion context (see below)
   - [ ] Collect completion items based on context
-  - [ ] Return CompletionList with items
+  - [x] Return CompletionList with items
 
-- [ ] **9.2 Determine completion context from cursor position**
-  - [ ] Create `internal/analysis/completion_context.go`
-  - [ ] Implement `DetermineContext(doc *Document, pos Position) (*CompletionContext, error)`
-  - [ ] Analyze text before cursor position
-  - [ ] Identify if inside a comment (skip completion)
-  - [ ] Identify if inside a string literal (skip completion)
-  - [ ] Check for member access pattern (identifier followed by dot)
-  - [ ] Determine current scope from AST
-  - [ ] Return context struct with: Type (general/member/keyword), Scope, ParentType
+- [x] **9.2 Determine completion context from cursor position**
+  - [x] Create `internal/analysis/completion_context.go`
+  - [x] Implement `DetermineContext(doc *Document, pos Position) (*CompletionContext, error)`
+  - [x] Analyze text before cursor position
+  - [x] Identify if inside a comment (skip completion)
+  - [x] Identify if inside a string literal (skip completion)
+  - [x] Check for member access pattern (identifier followed by dot)
+  - [x] Determine current scope from AST
+  - [x] Return context struct with: Type (general/member/keyword), Scope, ParentType
 
-- [ ] **9.3 Detect trigger characters (dot for member access)**
-  - [ ] Check `params.Context.TriggerKind == CompletionTriggerKindTriggerCharacter`
-  - [ ] Check `params.Context.TriggerCharacter == "."`
-  - [ ] Extract identifier before the dot
-  - [ ] Set context type to MemberAccess
-  - [ ] Store parent identifier for type resolution
+- [x] **9.3 Detect trigger characters (dot for member access)**
+  - [x] Check `params.Context.TriggerKind == CompletionTriggerKindTriggerCharacter`
+  - [x] Check `params.Context.TriggerCharacter == "."`
+  - [x] Extract identifier before the dot
+  - [x] Set context type to MemberAccess
+  - [x] Store parent identifier for type resolution
 
 - [ ] **9.4 Handle member access completion (object.): determine object type**
   - [ ] Create `ResolveMemberType(doc *Document, identifier string, pos Position) (Type, error)`

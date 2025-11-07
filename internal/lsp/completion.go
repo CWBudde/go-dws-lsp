@@ -7,6 +7,7 @@ import (
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
@@ -54,13 +55,55 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 		}, nil
 	}
 
-	// TODO: Task 9.2 - Determine completion context from cursor position
-	// TODO: Task 9.3 - Detect trigger characters (dot for member access)
+	// Task 9.2: Determine completion context from cursor position
+	completionContext, err := analysis.DetermineContext(doc, int(position.Line), int(position.Character))
+	if err != nil {
+		log.Printf("Error determining completion context: %v\n", err)
+		return &protocol.CompletionList{
+			IsIncomplete: false,
+			Items:        []protocol.CompletionItem{},
+		}, nil
+	}
+
+	// If context is nil, we're in a location where completion shouldn't be provided
+	// (e.g., inside a comment or string)
+	if completionContext == nil {
+		log.Println("Completion suppressed (inside comment or string)")
+		return &protocol.CompletionList{
+			IsIncomplete: false,
+			Items:        []protocol.CompletionItem{},
+		}, nil
+	}
+
+	// Task 9.3: Detect trigger characters (dot for member access)
+	if params.Context != nil {
+		// Check if completion was triggered by a trigger character
+		if params.Context.TriggerKind == protocol.CompletionTriggerKindTriggerCharacter {
+			// Check if the trigger character is a dot
+			if params.Context.TriggerCharacter != nil && *params.Context.TriggerCharacter == "." {
+				log.Println("Completion triggered by dot (member access)")
+				// The context type should already be set to Member by DetermineContext
+				// But we can verify and override if needed
+				if completionContext.Type != analysis.CompletionContextMember {
+					log.Printf("Warning: trigger character is dot but context type is %d, overriding to Member",
+						completionContext.Type)
+					completionContext.Type = analysis.CompletionContextMember
+				}
+			} else if params.Context.TriggerCharacter != nil {
+				log.Printf("Completion triggered by character: %s\n", *params.Context.TriggerCharacter)
+			}
+		}
+	}
+
+	// Log the completion context for debugging
+	log.Printf("Completion context: type=%d, parent=%s\n",
+		completionContext.Type, completionContext.ParentIdentifier)
+
 	// TODO: Task 9.4-9.6 - Handle member access completion
 	// TODO: Task 9.7+ - Collect completion items based on context
 
 	// For now, return an empty completion list
-	// This will be enhanced in subsequent tasks (9.2+)
+	// This will be enhanced in subsequent tasks (9.3+)
 	completionList := &protocol.CompletionList{
 		IsIncomplete: false,
 		Items:        []protocol.CompletionItem{},
