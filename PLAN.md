@@ -836,16 +836,16 @@ The implementation is organized into the following phases:
 
 ### Tasks (15)
 
-- [ ] **6.1 Implement textDocument/references request handler**
-  - [ ] Create `internal/lsp/references.go`
-  - [ ] Define handler: `func References(context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error)`
-  - [ ] Extract document URI, position, and context from params
-  - [ ] Check `params.Context.IncludeDeclaration` flag
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Convert LSP position to document position
-  - [ ] Call helper function to find all references
-  - [ ] Return array of Locations (may be empty)
-  - [ ] Register handler in server initialization
+- [x] **6.1 Implement textDocument/references request handler**
+  - [x] Create `internal/lsp/references.go`
+  - [x] Define handler: `func References(context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error)`
+  - [x] Extract document URI, position, and context from params
+  - [x] Check `params.Context.IncludeDeclaration` flag
+  - [x] Retrieve document from DocumentStore
+  - [x] Convert LSP position to document position
+  - [x] Call helper function to find all references
+  - [x] Return array of Locations (may be empty)
+  - [x] Register handler in server initialization
 
 - [ ] **6.2 Identify symbol at references request position**
   - [ ] Reuse `FindNodeAtPosition` from hover/definition
