@@ -811,15 +811,17 @@ The implementation is organized into the following phases:
   - [x] Test go-to-definition with multiple definitions (overloads)
   - [x] Verify array of Locations returned for overloads
 
-- [ ] **5.14 Write unit tests for cross-file definitions (unit imports)**
-  - [ ] Create test workspace with multiple .dws files
-  - [ ] File A imports File B
-  - [ ] Test go-to-definition from A to symbol defined in B
-  - [ ] Test unit import resolution
-  - [ ] Test definition in imported file
-  - [ ] Verify correct URI returned (File B's URI)
-  - [ ] Test with nested imports (A → B → C)
-  - [ ] Test with symbol not found (should return nil)
+- [x] **5.14 Write unit tests for cross-file definitions (unit imports)** ✅
+  - [x] Create test workspace with multiple .dws files
+  - [x] File A imports File B
+  - [x] Test go-to-definition from A to symbol defined in B
+  - [x] Test unit import resolution
+  - [x] Test definition in imported file
+  - [x] Verify correct URI returned (File B's URI)
+  - [x] Test with nested imports (A → B → C)
+  - [x] Test with symbol not found (should return nil)
+  - **Implementation**: Created setupTestWorkspace() helper and 6 comprehensive tests
+  - **Tests**: All 6 cross-file definition tests passing, total 96 tests in internal/lsp
 
 - [ ] **5.15 Manually test go-to-definition in VSCode**
   - [ ] Open sample DWScript project in VSCode
