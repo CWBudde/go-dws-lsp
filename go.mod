@@ -1,6 +1,6 @@
 module github.com/CWBudde/go-dws-lsp
 
-go 1.25.0
+go 1.24
 
 require (
 	github.com/cwbudde/go-dws v0.0.0-20251105231406-19f37368140d
@@ -28,6 +28,9 @@ require (
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
 )
+
+// Use local go-dws repository
+replace github.com/cwbudde/go-dws => /tmp/go-dws
 
 // Workaround for Windows termenv issue in kutil v0.3.11
 replace github.com/tliron/kutil => github.com/tliron/kutil v0.3.25
