@@ -108,10 +108,20 @@ func (sr *SymbolResolver) resolveLocal(symbolName string) *protocol.Location {
 // resolveClassMember attempts to resolve a symbol as a class member.
 // This is used when the cursor is inside a class method.
 func (sr *SymbolResolver) resolveClassMember(symbolName string) *protocol.Location {
-	// Find the enclosing class at the cursor position
+	// First, try to find the enclosing class at the cursor position
 	enclosingClass := sr.findEnclosingClass()
+
+	// If not directly inside a class, check if we're in a method implementation
 	if enclosingClass == nil {
-		// Not inside a class
+		enclosingFunc := sr.findEnclosingFunction()
+		if enclosingFunc != nil && enclosingFunc.ClassName != nil {
+			// We're in a method implementation (function TClassName.MethodName)
+			enclosingClass = sr.findClassByName(enclosingFunc.ClassName.Value)
+		}
+	}
+
+	if enclosingClass == nil {
+		// Not inside a class or method
 		return nil
 	}
 
@@ -129,9 +139,71 @@ func (sr *SymbolResolver) resolveClassMember(symbolName string) *protocol.Locati
 		}
 	}
 
-	// TODO: Check parent class members (inheritance)
-	// This will require type information and class hierarchy
+	// Check class properties
+	for _, prop := range enclosingClass.Properties {
+		if prop.Name != nil && prop.Name.Value == symbolName {
+			return sr.nodeToLocation(prop.Name)
+		}
+	}
 
+	// Check parent class members (inheritance)
+	if enclosingClass.Parent != nil {
+		if parentLoc := sr.resolveInheritedMember(enclosingClass.Parent.Value, symbolName); parentLoc != nil {
+			return parentLoc
+		}
+	}
+
+	return nil
+}
+
+// resolveInheritedMember searches for a symbol in parent class hierarchy.
+// It recursively searches parent classes for the given symbol.
+func (sr *SymbolResolver) resolveInheritedMember(parentClassName string, symbolName string) *protocol.Location {
+	// Find the parent class declaration in the program
+	parentClass := sr.findClassByName(parentClassName)
+	if parentClass == nil {
+		log.Printf("Parent class '%s' not found in current file", parentClassName)
+		return nil
+	}
+
+	// Check parent class fields
+	for _, field := range parentClass.Fields {
+		if field.Name != nil && field.Name.Value == symbolName {
+			return sr.nodeToLocation(field.Name)
+		}
+	}
+
+	// Check parent class methods
+	for _, method := range parentClass.Methods {
+		if method.Name != nil && method.Name.Value == symbolName {
+			return sr.nodeToLocation(method.Name)
+		}
+	}
+
+	// Check parent class properties
+	for _, prop := range parentClass.Properties {
+		if prop.Name != nil && prop.Name.Value == symbolName {
+			return sr.nodeToLocation(prop.Name)
+		}
+	}
+
+	// Recursively check the parent's parent (grandparent)
+	if parentClass.Parent != nil {
+		return sr.resolveInheritedMember(parentClass.Parent.Value, symbolName)
+	}
+
+	return nil
+}
+
+// findClassByName finds a class declaration by name in the program.
+func (sr *SymbolResolver) findClassByName(className string) *ast.ClassDecl {
+	for _, stmt := range sr.program.Statements {
+		if classDecl, ok := stmt.(*ast.ClassDecl); ok {
+			if classDecl.Name != nil && classDecl.Name.Value == className {
+				return classDecl
+			}
+		}
+	}
 	return nil
 }
 

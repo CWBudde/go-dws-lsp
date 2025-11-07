@@ -711,15 +711,15 @@ The implementation is organized into the following phases:
   - [x] Convert AST position to LSP Location
   - [x] Return nil if not found locally
 
-- [ ] **5.5 Handle class fields/methods (search class definition in AST)**
-  - [ ] Implement `ResolveClassMember(ast *ast.Program, className, memberName string) (*Location, error)`
-  - [ ] Determine if cursor is within class context
-  - [ ] Find class declaration in AST
-  - [ ] Search class fields for matching name
-  - [ ] Search class methods for matching name
-  - [ ] Search class properties for matching name
-  - [ ] Handle inherited members (search parent classes)
-  - [ ] Return definition location with class URI
+- [x] **5.5 Handle class fields/methods (search class definition in AST)** ✅
+  - [x] Implement `ResolveClassMember(ast *ast.Program, className, memberName string) (*Location, error)`
+  - [x] Determine if cursor is within class context
+  - [x] Find class declaration in AST
+  - [x] Search class fields for matching name
+  - [x] Search class methods for matching name
+  - [x] Search class properties for matching name
+  - [x] Handle inherited members (search parent classes)
+  - [x] Return definition location with class URI
 
 - [ ] **5.6 Handle global functions/variables (search current file first)**
   - [ ] Implement `ResolveGlobalSymbol(doc *Document, name string) (*Location, error)`

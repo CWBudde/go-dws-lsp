@@ -10,11 +10,17 @@ import (
 // Helper function to parse DWScript code for testing
 func parseCode(t *testing.T, code string) *ast.Program {
 	t.Helper()
-	program, _, err := ParseDocument(code, "test.dws")
+	program, compileMsgs, err := ParseDocument(code, "test.dws")
 	if err != nil {
 		t.Fatalf("Failed to parse test code: %v", err)
 	}
 	if program == nil {
+		if compileMsgs != nil && len(compileMsgs) > 0 {
+			t.Logf("Compilation errors:")
+			for _, msg := range compileMsgs {
+				t.Logf("  - %s", msg.Message)
+			}
+		}
 		t.Fatal("ParseDocument returned nil program")
 	}
 	return program.AST()
@@ -304,5 +310,166 @@ func TestSymbolResolver_NilProgram(t *testing.T) {
 
 	if locations != nil {
 		t.Errorf("Expected nil for nil program, got %v", locations)
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_Property(t *testing.T) {
+	code := `type
+  TMyClass = class
+  private
+    FValue: Integer;
+  public
+    property Value: Integer read FValue write FValue;
+    function DoSomething: Integer;
+  end;
+
+function TMyClass.DoSomething: Integer;
+begin
+  Result := Value;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the method, on "Value"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   12,
+		Column: 13, // On "Value" property reference
+	})
+
+	locations := resolver.ResolveSymbol("Value")
+
+	// Should find the property declaration
+	if len(locations) == 0 {
+		t.Fatal("Expected to find property, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_InheritedField(t *testing.T) {
+	code := `type TBaseClass = class
+    FBaseField: Integer;
+  end;
+
+type TDerivedClass = class(TBaseClass)
+    FDerivedField: String;
+    function GetBaseField: Integer;
+  end;
+
+function TDerivedClass.GetBaseField: Integer;
+begin
+  Result := FBaseField;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the derived class method, on "FBaseField"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   12,
+		Column: 13, // On "FBaseField" reference
+	})
+
+	locations := resolver.ResolveSymbol("FBaseField")
+
+	// Should find the field in parent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find inherited field, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_InheritedMethod(t *testing.T) {
+	code := `type TBaseClass = class
+    function BaseMethod: Integer;
+  end;
+
+type TDerivedClass = class(TBaseClass)
+    function DerivedMethod: String;
+  end;
+
+function TBaseClass.BaseMethod: Integer;
+begin
+  Result := 42;
+end;
+
+function TDerivedClass.DerivedMethod: String;
+begin
+  var x := BaseMethod();
+  Result := IntToStr(x);
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the derived class method, on "BaseMethod"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   16,
+		Column: 12, // On "BaseMethod" call
+	})
+
+	locations := resolver.ResolveSymbol("BaseMethod")
+
+	// Should find the method in parent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find inherited method, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_InheritedProperty(t *testing.T) {
+	code := `type TBaseClass = class
+  private
+    FValue: Integer;
+  public
+    property Value: Integer read FValue write FValue;
+  end;
+
+type TDerivedClass = class(TBaseClass)
+    function GetValue: Integer;
+  end;
+
+function TDerivedClass.GetValue: Integer;
+begin
+  Result := Value;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the derived class method, on "Value"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   14,
+		Column: 13, // On "Value" property reference
+	})
+
+	locations := resolver.ResolveSymbol("Value")
+
+	// Should find the property in parent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find inherited property, got no results")
+	}
+}
+
+func TestSymbolResolver_ResolveClassMember_MultiLevelInheritance(t *testing.T) {
+	code := `type TGrandparent = class
+    FGrandField: Integer;
+  end;
+
+type TParent = class(TGrandparent)
+    FParentField: String;
+  end;
+
+type TChild = class(TParent)
+    FChildField: Boolean;
+    function GetGrandField: Integer;
+  end;
+
+function TChild.GetGrandField: Integer;
+begin
+  Result := FGrandField;
+end;`
+	programAST := parseCode(t, code)
+
+	// Cursor position inside the child class method, on "FGrandField"
+	resolver := NewSymbolResolver("file:///test.dws", programAST, token.Position{
+		Line:   16,
+		Column: 13, // On "FGrandField" reference
+	})
+
+	locations := resolver.ResolveSymbol("FGrandField")
+
+	// Should find the field in grandparent class
+	if len(locations) == 0 {
+		t.Fatal("Expected to find field from grandparent class, got no results")
 	}
 }
