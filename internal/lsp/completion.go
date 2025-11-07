@@ -104,6 +104,8 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 
 	if completionContext.Type == analysis.CompletionContextMember {
 		// Member access completion: resolve the type of the parent identifier
+		var items []protocol.CompletionItem
+
 		if completionContext.ParentIdentifier != "" {
 			log.Printf("Resolving type of parent identifier: %s", completionContext.ParentIdentifier)
 
@@ -114,17 +116,25 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 				log.Printf("Error resolving member type: %v", err)
 			} else if typeInfo != nil {
 				log.Printf("Resolved parent type: %s (built-in: %v)", typeInfo.TypeName, typeInfo.IsBuiltIn)
-				// TODO: Task 9.5-9.6 - Get members of the resolved type
-				// For now, we just log the type
+
+				// Task 9.5-9.6: Get members of the resolved type
+				members, err := analysis.GetTypeMembers(doc, typeInfo.TypeName)
+				if err != nil {
+					log.Printf("Error retrieving type members: %v", err)
+				} else if len(members) > 0 {
+					log.Printf("Found %d members for type '%s'", len(members), typeInfo.TypeName)
+					items = members
+				} else {
+					log.Printf("No members found for type '%s'", typeInfo.TypeName)
+				}
 			} else {
 				log.Printf("Could not determine type of '%s'", completionContext.ParentIdentifier)
 			}
 		}
 
-		// Return empty list for now - will be populated in tasks 9.5-9.6
 		completionList = &protocol.CompletionList{
 			IsIncomplete: false,
-			Items:        []protocol.CompletionItem{},
+			Items:        items,
 		}
 	} else {
 		// TODO: Task 9.7+ - Handle general scope completion

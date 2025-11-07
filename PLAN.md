@@ -714,25 +714,36 @@ The implementation is organized into the following phases:
   - **Tests**: `internal/analysis/type_resolver_test.go` covers local variables, parameters, class fields, and user-defined types
   - **Integration**: Updated `internal/lsp/completion.go` to call `ResolveMemberType` for member access completion
 
-- [ ] **9.5 Retrieve type information from semantic analyzer**
-  - [ ] Add `GetSymbolType(symbol string, position Position) (Type, error)` to analyzer
-  - [ ] Use analyzer's symbol table to lookup type
-  - [ ] Handle built-in types (Integer, String, Float, Boolean, etc.)
-  - [ ] Handle user-defined types (classes, records)
-  - [ ] Return type structure with methods and fields
+- [x] **9.5 Retrieve type information from semantic analyzer**
+  - [x] Add `GetSymbolType(symbol string, position Position) (Type, error)` to analyzer
+  - [x] Use analyzer's symbol table to lookup type
+  - [x] Handle built-in types (Integer, String, Float, Boolean, etc.)
+  - [x] Handle user-defined types (classes, records)
+  - [x] Return type structure with methods and fields
+  - **Implementation**: Integrated into task 9.4 via `ResolveMemberType` and task 9.6 via `GetTypeMembers`
+  - **Note**: Type information is retrieved from AST nodes directly rather than through a separate semantic analyzer
 
-- [ ] **9.6 List members (fields/methods) of determined type/class**
-  - [ ] Create `GetTypeMembers(typeName string) ([]CompletionItem, error)`
-  - [ ] Search AST for class/record definition
-  - [ ] Extract all fields and their types
-  - [ ] Extract all methods and their signatures
-  - [ ] Extract all properties (getters/setters)
-  - [ ] Create CompletionItem for each member:
-    - [ ] Fields: kind = Field, detail = type
-    - [ ] Methods: kind = Method, detail = signature
-    - [ ] Properties: kind = Property, detail = type
-  - [ ] Sort members alphabetically
-  - [ ] Return member list
+- [x] **9.6 List members (fields/methods) of determined type/class**
+  - [x] Create `GetTypeMembers(typeName string) ([]CompletionItem, error)`
+  - [x] Search AST for class/record definition
+  - [x] Extract all fields and their types
+  - [x] Extract all methods and their signatures
+  - [x] Extract all properties (getters/setters)
+  - [x] Create CompletionItem for each member:
+    - [x] Fields: kind = Field, detail = type
+    - [x] Methods: kind = Method, detail = signature
+    - [x] Properties: kind = Property, detail = type
+  - [x] Sort members alphabetically
+  - [x] Return member list
+  - **Implementation**: Added `GetTypeMembers`, `extractClassMembers`, `extractRecordMembers` functions to `type_resolver.go`
+  - **Features**:
+    - Extracts fields, methods, and properties from class declarations
+    - Extracts fields from record declarations
+    - Builds method signatures with parameter names, types, and modifiers
+    - Sorts completion items alphabetically
+    - Returns empty list for built-in types
+  - **Tests**: Comprehensive tests in `type_resolver_test.go` cover classes, records, built-in types, unknown types, and sorting
+  - **Integration**: Updated `completion.go` to call `GetTypeMembers` and return members as completion items
 
 - [ ] **9.7 Handle general scope completion (no dot): provide keywords, variables, globals**
   - [ ] Create `CollectScopeCompletions(doc *Document, pos Position) ([]CompletionItem, error)`

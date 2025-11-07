@@ -254,3 +254,261 @@ func isBuiltInType(typeName string) bool {
 
 	return builtInTypes[typeName]
 }
+
+// GetTypeMembers retrieves all members (fields, methods, properties) of a type
+// and returns them as CompletionItems suitable for member access completion.
+func GetTypeMembers(doc *server.Document, typeName string) ([]protocol.CompletionItem, error) {
+	log.Printf("GetTypeMembers: retrieving members for type '%s'", typeName)
+
+	if doc.Program == nil || doc.Program.AST() == nil {
+		log.Println("GetTypeMembers: no AST available")
+		return nil, nil
+	}
+
+	var items []protocol.CompletionItem
+
+	// For built-in types, we currently don't provide members
+	// In a full implementation, we might provide built-in methods/properties
+	if isBuiltInType(typeName) {
+		log.Printf("GetTypeMembers: '%s' is a built-in type (no members available)", typeName)
+		return items, nil
+	}
+
+	// Search for the type definition in the AST
+	program := doc.Program.AST()
+
+	// Try to find as a class
+	if classMembers := extractClassMembers(program, typeName); len(classMembers) > 0 {
+		items = append(items, classMembers...)
+	}
+
+	// Try to find as a record
+	if recordMembers := extractRecordMembers(program, typeName); len(recordMembers) > 0 {
+		items = append(items, recordMembers...)
+	}
+
+	// Sort items alphabetically by label
+	sortCompletionItems(items)
+
+	log.Printf("GetTypeMembers: found %d members for type '%s'", len(items), typeName)
+	return items, nil
+}
+
+// extractClassMembers extracts all members from a class declaration.
+func extractClassMembers(program *ast.Program, className string) []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+
+	// Find the class declaration
+	var classDecl *ast.ClassDecl
+	ast.Inspect(program, func(node ast.Node) bool {
+		if node == nil {
+			return false
+		}
+
+		if class, ok := node.(*ast.ClassDecl); ok {
+			if class.Name != nil && class.Name.Value == className {
+				classDecl = class
+				return false // Stop searching
+			}
+		}
+
+		return true
+	})
+
+	if classDecl == nil {
+		return items
+	}
+
+	// Extract fields
+	for _, field := range classDecl.Fields {
+		if field.Name == nil {
+			continue
+		}
+
+		kind := protocol.CompletionItemKindField
+		item := protocol.CompletionItem{
+			Label: field.Name.Value,
+			Kind:  &kind,
+		}
+
+		// Add type information in detail
+		if field.Type != nil {
+			detail := field.Type.String()
+			item.Detail = &detail
+		}
+
+		// Add documentation
+		documentation := "Field"
+		if field.IsClassVar {
+			documentation = "Class variable (static field)"
+		}
+		item.Documentation = documentation
+
+		items = append(items, item)
+	}
+
+	// Extract methods
+	for _, method := range classDecl.Methods {
+		if method.Name == nil {
+			continue
+		}
+
+		kind := protocol.CompletionItemKindMethod
+		item := protocol.CompletionItem{
+			Label: method.Name.Value,
+			Kind:  &kind,
+		}
+
+		// Build method signature
+		signature := buildMethodSignature(method)
+		item.Detail = &signature
+
+		// Add documentation
+		documentation := "Method"
+		if method.IsClassMethod {
+			documentation = "Class method (static method)"
+		}
+		item.Documentation = documentation
+
+		items = append(items, item)
+	}
+
+	// Extract properties
+	for _, prop := range classDecl.Properties {
+		if prop.Name == nil {
+			continue
+		}
+
+		kind := protocol.CompletionItemKindProperty
+		item := protocol.CompletionItem{
+			Label: prop.Name.Value,
+			Kind:  &kind,
+		}
+
+		// Add type information in detail
+		if prop.Type != nil {
+			detail := prop.Type.String()
+			item.Detail = &detail
+		}
+
+		// Add documentation about read/write access
+		documentation := "Property"
+		if prop.ReadSpec != nil && prop.WriteSpec == nil {
+			documentation = "Property (read-only)"
+		} else if prop.ReadSpec == nil && prop.WriteSpec != nil {
+			documentation = "Property (write-only)"
+		}
+		item.Documentation = documentation
+
+		items = append(items, item)
+	}
+
+	return items
+}
+
+// extractRecordMembers extracts all fields from a record declaration.
+func extractRecordMembers(program *ast.Program, recordName string) []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+
+	// Find the record declaration
+	var recordDecl *ast.RecordDecl
+	ast.Inspect(program, func(node ast.Node) bool {
+		if node == nil {
+			return false
+		}
+
+		if record, ok := node.(*ast.RecordDecl); ok {
+			if record.Name != nil && record.Name.Value == recordName {
+				recordDecl = record
+				return false // Stop searching
+			}
+		}
+
+		return true
+	})
+
+	if recordDecl == nil {
+		return items
+	}
+
+	// Extract fields
+	for _, field := range recordDecl.Fields {
+		if field.Name == nil {
+			continue
+		}
+
+		kind := protocol.CompletionItemKindField
+		item := protocol.CompletionItem{
+			Label: field.Name.Value,
+			Kind:  &kind,
+		}
+
+		// Add type information in detail
+		if field.Type != nil {
+			detail := field.Type.String()
+			item.Detail = &detail
+		}
+
+		item.Documentation = "Record field"
+
+		items = append(items, item)
+	}
+
+	return items
+}
+
+// buildMethodSignature builds a method signature string for display.
+func buildMethodSignature(method *ast.FunctionDecl) string {
+	// Start with method name
+	signature := method.Name.Value
+
+	// Add parameters
+	signature += "("
+	for i, param := range method.Parameters {
+		if i > 0 {
+			signature += ", "
+		}
+
+		// Add parameter modifiers
+		if param.ByRef {
+			signature += "var "
+		} else if param.IsConst {
+			signature += "const "
+		} else if param.IsLazy {
+			signature += "lazy "
+		}
+
+		// Add parameter name and type
+		if param.Name != nil {
+			signature += param.Name.Value
+		}
+		if param.Type != nil {
+			signature += ": " + param.Type.String()
+		}
+
+		// Add default value if present
+		if param.DefaultValue != nil {
+			signature += " = " + param.DefaultValue.String()
+		}
+	}
+	signature += ")"
+
+	// Add return type
+	if method.ReturnType != nil {
+		signature += ": " + method.ReturnType.String()
+	}
+
+	return signature
+}
+
+// sortCompletionItems sorts completion items alphabetically by label.
+func sortCompletionItems(items []protocol.CompletionItem) {
+	// Use a simple bubble sort since the list is typically small
+	for i := 0; i < len(items); i++ {
+		for j := i + 1; j < len(items); j++ {
+			if items[i].Label > items[j].Label {
+				items[i], items[j] = items[j], items[i]
+			}
+		}
+	}
+}
