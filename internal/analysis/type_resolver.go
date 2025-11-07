@@ -326,9 +326,12 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		}
 
 		kind := protocol.CompletionItemKindField
+		sortText := "0field~" + field.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: field.Name.Value,
-			Kind:  &kind,
+			Label:    field.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Add type information in detail
@@ -337,12 +340,19 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 			item.Detail = &detail
 		}
 
-		// Add documentation
-		documentation := "Field"
+		// Add documentation with MarkupContent
+		docValue := "**Field**"
 		if field.IsClassVar {
-			documentation = "Class variable (static field)"
+			docValue = "**Class variable** (static field)"
 		}
-		item.Documentation = documentation
+		if field.Type != nil {
+			docValue += "\n\n```pascal\n" + field.Name.Value + ": " + field.Type.String() + "\n```"
+		}
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}
@@ -354,21 +364,29 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		}
 
 		kind := protocol.CompletionItemKindMethod
+		sortText := "1method~" + method.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: method.Name.Value,
-			Kind:  &kind,
+			Label:    method.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Build method signature
 		signature := buildMethodSignature(method)
 		item.Detail = &signature
 
-		// Add documentation
-		documentation := "Method"
+		// Add documentation with MarkupContent
+		docValue := "**Method**"
 		if method.IsClassMethod {
-			documentation = "Class method (static method)"
+			docValue = "**Class method** (static method)"
 		}
-		item.Documentation = documentation
+		docValue += "\n\n```pascal\n" + signature + "\n```"
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}
@@ -380,9 +398,12 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		}
 
 		kind := protocol.CompletionItemKindProperty
+		sortText := "2property~" + prop.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: prop.Name.Value,
-			Kind:  &kind,
+			Label:    prop.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Add type information in detail
@@ -391,14 +412,23 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 			item.Detail = &detail
 		}
 
-		// Add documentation about read/write access
-		documentation := "Property"
+		// Add documentation about read/write access with MarkupContent
+		docValue := "**Property**"
+		accessMode := ""
 		if prop.ReadSpec != nil && prop.WriteSpec == nil {
-			documentation = "Property (read-only)"
+			accessMode = " (read-only)"
 		} else if prop.ReadSpec == nil && prop.WriteSpec != nil {
-			documentation = "Property (write-only)"
+			accessMode = " (write-only)"
 		}
-		item.Documentation = documentation
+		docValue += accessMode
+		if prop.Type != nil {
+			docValue += "\n\n```pascal\nproperty " + prop.Name.Value + ": " + prop.Type.String() + "\n```"
+		}
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}
@@ -438,9 +468,12 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 		}
 
 		kind := protocol.CompletionItemKindField
+		sortText := "0field~" + field.Name.Value
+
 		item := protocol.CompletionItem{
-			Label: field.Name.Value,
-			Kind:  &kind,
+			Label:    field.Name.Value,
+			Kind:     &kind,
+			SortText: &sortText,
 		}
 
 		// Add type information in detail
@@ -449,7 +482,16 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 			item.Detail = &detail
 		}
 
-		item.Documentation = "Record field"
+		// Add documentation with MarkupContent
+		docValue := "**Record field**"
+		if field.Type != nil {
+			docValue += "\n\n```pascal\n" + field.Name.Value + ": " + field.Type.String() + "\n```"
+		}
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: docValue,
+		}
+		item.Documentation = doc
 
 		items = append(items, item)
 	}

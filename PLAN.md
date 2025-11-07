@@ -801,17 +801,22 @@ The implementation is organized into the following phases:
   - **Built-ins included**: String manipulation, type conversion, math, date/time, I/O functions
   - **Note**: Implemented directly in scope_completion.go rather than separate builtins package
 
-- [ ] **9.13 Construct CompletionItem list with label, kind, detail**
-  - [ ] Create CompletionItem struct for each suggestion
-  - [ ] Set required fields:
-    - [ ] label = display name
-    - [ ] kind = appropriate SymbolKind
-  - [ ] Set optional fields:
-    - [ ] detail = type or signature summary
-    - [ ] documentation = longer description (optional)
-    - [ ] sortText = for custom ordering (optional)
-    - [ ] filterText = for filtering (usually same as label)
-  - [ ] Add all items to CompletionList
+- [x] **9.13 Construct CompletionItem list with label, kind, detail**
+  - [x] Create CompletionItem struct for each suggestion
+  - [x] Set required fields:
+    - [x] label = display name
+    - [x] kind = appropriate SymbolKind
+  - [x] Set optional fields:
+    - [x] detail = type or signature summary
+    - [x] documentation = longer description (optional)
+    - [x] sortText = for custom ordering (optional)
+    - [x] filterText = for filtering (usually same as label)
+  - [x] Add all items to CompletionList
+  - **Implementation**:
+    - All CompletionItems now have proper label, kind, and detail fields set
+    - Added sortText to control completion ordering: local symbols (0*) > global symbols (1*) > built-ins (2*) > keywords (~*)
+    - Enhanced documentation using MarkupContent with markdown formatting and code blocks
+    - Applied consistent structure across all completion types (scope, member, built-in)
 
 - [ ] **9.14 For functions: provide snippet-style insert text with parameters**
   - [ ] Parse function signature to extract parameters

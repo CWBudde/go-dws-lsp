@@ -63,11 +63,14 @@ func getKeywordCompletions() []protocol.CompletionItem {
 
 	for _, keyword := range keywords {
 		detail := "DWScript keyword"
+		// Use sortText to ensure keywords appear after local/global symbols
+		sortText := "~keyword~" + keyword // ~ sorts after most alphanumeric characters
 		item := protocol.CompletionItem{
 			Label:      keyword,
 			Kind:       &kind,
 			Detail:     &detail,
 			InsertText: &keyword,
+			SortText:   &sortText,
 		}
 		items = append(items, item)
 	}
@@ -98,10 +101,14 @@ func getLocalCompletions(program *ast.Program, line, column int) []protocol.Comp
 			detail = "Parameter: " + param.Type.String()
 		}
 
+		// Use sortText to prioritize local symbols
+		sortText := "0param~" + param.Name.Value
+
 		item := protocol.CompletionItem{
-			Label:  param.Name.Value,
-			Kind:   &paramKind,
-			Detail: &detail,
+			Label:    param.Name.Value,
+			Kind:     &paramKind,
+			Detail:   &detail,
+			SortText: &sortText,
 		}
 		items = append(items, item)
 	}
@@ -156,10 +163,14 @@ func extractLocalVariables(block *ast.BlockStatement) []protocol.CompletionItem 
 					detail = "Local variable: " + varDecl.Type.String()
 				}
 
+				// Use sortText to prioritize local variables
+				sortText := "0local~" + name.Value
+
 				item := protocol.CompletionItem{
-					Label:  name.Value,
-					Kind:   &kind,
-					Detail: &detail,
+					Label:    name.Value,
+					Kind:     &kind,
+					Detail:   &detail,
+					SortText: &sortText,
 				}
 				items = append(items, item)
 			}
@@ -182,10 +193,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindFunction
 			signature := buildFunctionSignature(s)
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &signature,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &signature,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -195,10 +208,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindClass
 			detail := "Class"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -208,10 +223,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindStruct
 			detail := "Record"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -221,10 +238,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindInterface
 			detail := "Interface"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -235,10 +254,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 				if s.Type != nil {
 					detail = "Global variable: " + s.Type.String()
 				}
+				sortText := "1global~" + name.Value
 				item := protocol.CompletionItem{
-					Label:  name.Value,
-					Kind:   &kind,
-					Detail: &detail,
+					Label:    name.Value,
+					Kind:     &kind,
+					Detail:   &detail,
+					SortText: &sortText,
 				}
 				items = append(items, item)
 			}
@@ -255,10 +276,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Value != nil {
 				detail += " = " + s.Value.String()
 			}
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -268,10 +291,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			}
 			kind := protocol.CompletionItemKindEnum
 			detail := "Enumeration"
+			sortText := "1global~" + s.Name.Value
 			item := protocol.CompletionItem{
-				Label:  s.Name.Value,
-				Kind:   &kind,
-				Detail: &detail,
+				Label:    s.Name.Value,
+				Kind:     &kind,
+				Detail:   &detail,
+				SortText: &sortText,
 			}
 			items = append(items, item)
 
@@ -279,10 +304,12 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			constKind := protocol.CompletionItemKindEnumMember
 			for _, enumVal := range s.Values {
 				enumDetail := "Enum value: " + s.Name.Value
+				enumSortText := "1global~" + enumVal.Name
 				enumItem := protocol.CompletionItem{
-					Label:  enumVal.Name,
-					Kind:   &constKind,
-					Detail: &enumDetail,
+					Label:    enumVal.Name,
+					Kind:     &constKind,
+					Detail:   &enumDetail,
+					SortText: &enumSortText,
 				}
 				items = append(items, enumItem)
 			}
@@ -345,10 +372,12 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 	typeKind := protocol.CompletionItemKindClass
 	for _, typeName := range builtInTypes {
 		detail := "Built-in type"
+		sortText := "2builtin~" + typeName
 		item := protocol.CompletionItem{
-			Label:  typeName,
-			Kind:   &typeKind,
-			Detail: &detail,
+			Label:    typeName,
+			Kind:     &typeKind,
+			Detail:   &detail,
+			SortText: &sortText,
 		}
 		items = append(items, item)
 	}
@@ -392,10 +421,20 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 	funcKind := protocol.CompletionItemKindFunction
 	for name, signature := range builtInFunctions {
 		detail := signature
+		sortText := "2builtin~" + name
+
+		// Create MarkupContent for better documentation
+		doc := protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: "**Built-in function**\n\n```pascal\n" + signature + "\n```",
+		}
+
 		item := protocol.CompletionItem{
-			Label:  name,
-			Kind:   &funcKind,
-			Detail: &detail,
+			Label:         name,
+			Kind:          &funcKind,
+			Detail:        &detail,
+			SortText:      &sortText,
+			Documentation: doc,
 		}
 		items = append(items, item)
 	}
