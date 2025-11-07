@@ -511,107 +511,107 @@ The implementation is organized into the following phases:
 
 ### Tasks (14)
 
-- [ ] **4.1 Implement textDocument/hover request handler**
-  - [ ] Create `internal/lsp/hover.go`
-  - [ ] Define handler: `func Hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error)`
-  - [ ] Extract document URI and position from params
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document and AST are available
-  - [ ] Convert LSP position (UTF-16) to document position (UTF-8)
-  - [ ] Call helper function to get hover information
-  - [ ] Return Hover response or nil if no information available
-  - [ ] Register handler in server initialization
+- [x] **4.1 Implement textDocument/hover request handler** ✅
+  - [x] Create `internal/lsp/hover.go`
+  - [x] Define handler: `func Hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error)`
+  - [x] Extract document URI and position from params
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document and AST are available
+  - [x] Convert LSP position (UTF-16) to document position (UTF-8)
+  - [x] Call helper function to get hover information
+  - [x] Return Hover response or nil if no information available
+  - [x] Register handler in server initialization
 
-- [ ] **4.2 Retrieve document AST for hover position**
-  - [ ] Get document from store using URI
-  - [ ] Check if document has been parsed (Program exists)
-  - [ ] If no Program, return nil (document has errors)
-  - [ ] Get AST from Program: `program.AST()`
-  - [ ] Validate AST is not nil
-  - [ ] Pass AST and position to node finder
+- [x] **4.2 Retrieve document AST for hover position** ✅
+  - [x] Get document from store using URI
+  - [x] Check if document has been parsed (Program exists)
+  - [x] If no Program, return nil (document has errors)
+  - [x] Get AST from Program: `program.AST()`
+  - [x] Validate AST is not nil
+  - [x] Pass AST and position to node finder
 
-- [ ] **4.3 Verify AST nodes have position metadata**
-  - [ ] Verify all AST nodes from go-dws have `Pos()` and `End()` methods (from Phase 2) ✅
-  - [ ] Confirm position information is 1-based (line, column)
-  - [ ] Test position accuracy with sample code
-  - [ ] Document coordinate system (1-based in AST, 0-based in LSP)
+- [x] **4.3 Verify AST nodes have position metadata** ✅
+  - [x] Verify all AST nodes from go-dws have `Pos()` and `End()` methods (from Phase 2) ✅
+  - [x] Confirm position information is 1-based (line, column)
+  - [x] Test position accuracy with sample code
+  - [x] Document coordinate system (1-based in AST, 0-based in LSP)
 
-- [ ] **4.4 Implement position-to-AST-node mapping utility**
-  - [ ] Create `internal/analysis/ast_node_finder.go`
-  - [ ] Implement `FindNodeAtPosition(ast *ast.Program, line, col int) ast.Node`
-  - [ ] Traverse AST recursively using visitor pattern
-  - [ ] Check if position is within node's range (Pos() to End())
-  - [ ] Return the most specific (deepest) node containing position
-  - [ ] Handle edge cases: empty files, position beyond file end
-  - [ ] Use `ast.Inspect()` helper from go-dws for traversal
-  - [ ] Write unit tests for node finding
+- [x] **4.4 Implement position-to-AST-node mapping utility** ✅
+  - [x] Create `internal/analysis/ast_node_finder.go`
+  - [x] Implement `FindNodeAtPosition(ast *ast.Program, line, col int) ast.Node`
+  - [x] Traverse AST recursively using visitor pattern
+  - [x] Check if position is within node's range (Pos() to End())
+  - [x] Return the most specific (deepest) node containing position
+  - [x] Handle edge cases: empty files, position beyond file end
+  - [x] Use `ast.Inspect()` helper from go-dws for traversal
+  - [x] Write unit tests for node finding
 
-- [ ] **4.5 Identify symbol at hover position**
-  - [ ] Check node type from FindNodeAtPosition
-  - [ ] Handle `*ast.Identifier` nodes (variable/function references)
-  - [ ] Handle `*ast.FunctionDeclaration` and `*ast.ProcedureDeclaration` nodes
-  - [ ] Handle `*ast.VariableDeclaration` nodes
-  - [ ] Handle `*ast.ClassDeclaration` and `*ast.TypeDeclaration` nodes
-  - [ ] Handle `*ast.MethodDeclaration` and `*ast.PropertyDeclaration` nodes
-  - [ ] Return symbol name and kind
-  - [ ] Return nil for non-symbol nodes (literals, operators, etc.)
+- [x] **4.5 Identify symbol at hover position** ✅
+  - [x] Check node type from FindNodeAtPosition
+  - [x] Handle `*ast.Identifier` nodes (variable/function references)
+  - [x] Handle `*ast.FunctionDeclaration` and `*ast.ProcedureDeclaration` nodes
+  - [x] Handle `*ast.VariableDeclaration` nodes
+  - [x] Handle `*ast.ClassDeclaration` and `*ast.TypeDeclaration` nodes
+  - [x] Handle `*ast.MethodDeclaration` and `*ast.PropertyDeclaration` nodes
+  - [x] Return symbol name and kind
+  - [x] Return nil for non-symbol nodes (literals, operators, etc.)
 
-- [ ] **4.6 For variables: find declaration and retrieve type**
-  - [ ] Create `internal/analysis/hover_info.go`
-  - [ ] Implement `GetVariableHoverInfo(program *dwscript.Program, identifier string, pos Position) (string, error)`
-  - [ ] Use `program.TypeAt(pos)` to get type information
-  - [ ] Search for variable declaration in AST
-  - [ ] Extract type from declaration node
-  - [ ] Handle local variables, parameters, and fields
-  - [ ] Format hover text: "var {name}: {type}"
-  - [ ] Add scope information (local vs global)
+- [x] **4.6 For variables: find declaration and retrieve type** ✅
+  - [x] Create `internal/analysis/hover_info.go`
+  - [x] Implement `GetVariableHoverInfo(program *dwscript.Program, identifier string, pos Position) (string, error)`
+  - [x] Use `program.TypeAt(pos)` to get type information
+  - [x] Search for variable declaration in AST
+  - [x] Extract type from declaration node
+  - [x] Handle local variables, parameters, and fields
+  - [x] Format hover text: "var {name}: {type}"
+  - [x] Add scope information (local vs global)
 
-- [ ] **4.7 For functions: extract signature (params, return type)**
-  - [ ] Implement `GetFunctionHoverInfo(node *ast.FunctionDeclaration) string`
-  - [ ] Extract function name
-  - [ ] Extract parameters with types
-  - [ ] Extract return type
-  - [ ] Format signature: `function Name(param1: Type1, param2: Type2): ReturnType`
-  - [ ] Handle procedures (no return type)
-  - [ ] Handle methods (include class name)
-  - [ ] Format in markdown for rich display
+- [x] **4.7 For functions: extract signature (params, return type)** ✅
+  - [x] Implement `GetFunctionHoverInfo(node *ast.FunctionDeclaration) string`
+  - [x] Extract function name
+  - [x] Extract parameters with types
+  - [x] Extract return type
+  - [x] Format signature: `function Name(param1: Type1, param2: Type2): ReturnType`
+  - [x] Handle procedures (no return type)
+  - [x] Handle methods (include class name)
+  - [x] Format in markdown for rich display
 
-- [ ] **4.8 For classes/types: get definition and structure**
-  - [ ] Implement `GetClassHoverInfo(node *ast.ClassDeclaration) string`
-  - [ ] Extract class name
-  - [ ] List public fields with types
-  - [ ] List methods with signatures
-  - [ ] List properties with types
-  - [ ] Show inheritance information if available
-  - [ ] Format in markdown with sections
-  - [ ] Handle records and interfaces similarly
+- [x] **4.8 For classes/types: get definition and structure** ✅
+  - [x] Implement `GetClassHoverInfo(node *ast.ClassDeclaration) string`
+  - [x] Extract class name
+  - [x] List public fields with types
+  - [x] List methods with signatures
+  - [x] List properties with types
+  - [x] Show inheritance information if available
+  - [x] Format in markdown with sections
+  - [x] Handle records and interfaces similarly
 
-- [ ] **4.9 Extract documentation comments (future enhancement)**
-  - [ ] Parse leading comments above declarations
-  - [ ] Extract doc comments in standard format (// or (* *))
-  - [ ] Include in hover response
-  - [ ] Format documentation text as markdown
-  - [ ] Handle multi-line documentation
-  - [ ] Note: May defer to later phase if complex
+- [x] **4.9 Extract documentation comments (future enhancement)** ✅
+  - [x] Parse leading comments above declarations
+  - [x] Extract doc comments in standard format (// or (* *))
+  - [x] Include in hover response
+  - [x] Format documentation text as markdown
+  - [x] Handle multi-line documentation
+  - [x] Note: May defer to later phase if complex
 
-- [ ] **4.10 Construct Hover response with MarkupContent**
-  - [ ] Create `protocol.Hover` struct
-  - [ ] Set `Contents` field with MarkupContent
-  - [ ] Use `MarkupKind: protocol.Markdown` for rich formatting
-  - [ ] Format value with markdown syntax:
-    - [ ] Code blocks with ```dwscript
-    - [ ] Bold for keywords
-    - [ ] Sections for different info types
-  - [ ] Set `Range` field (optional) to highlight symbol
+- [x] **4.10 Construct Hover response with MarkupContent** ✅
+  - [x] Create `protocol.Hover` struct
+  - [x] Set `Contents` field with MarkupContent
+  - [x] Use `MarkupKind: protocol.Markdown` for rich formatting
+  - [x] Format value with markdown syntax:
+    - [x] Code blocks with ```dwscript
+    - [x] Bold for keywords
+    - [x] Sections for different info types
+  - [x] Set `Range` field (optional) to highlight symbol
 
-- [ ] **4.11 Format hover content with type info and signatures**
-  - [ ] Create `FormatHoverContent(symbolInfo SymbolInfo) string`
-  - [ ] Start with symbol kind (variable, function, class, etc.)
-  - [ ] Add type or signature in code block
-  - [ ] Add scope information if relevant
-  - [ ] Add documentation if available
-  - [ ] Use markdown formatting for readability
-  - [ ] Example format:
+- [x] **4.11 Format hover content with type info and signatures** ✅
+  - [x] Create `FormatHoverContent(symbolInfo SymbolInfo) string`
+  - [x] Start with symbol kind (variable, function, class, etc.)
+  - [x] Add type or signature in code block
+  - [x] Add scope information if relevant
+  - [x] Add documentation if available
+  - [x] Use markdown formatting for readability
+  - [x] Example format:
     ```markdown
     **variable** `x`
     ```dwscript
