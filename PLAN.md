@@ -595,15 +595,19 @@ The implementation is organized into the following phases:
   - **Location**: `internal/workspace/indexer.go` (various add* methods)
   - **Container names**: Class/record/enum names for members, empty for top-level symbols
 
-- [ ] **8.7 Search symbol index for query string matches (substring or prefix)**
-  - [ ] Implement `SearchIndex(query string) ([]SymbolInformation, error)`
-  - [ ] Convert query to lowercase for case-insensitive search
-  - [ ] For each symbol in index:
-    - [ ] Check if symbol name contains query (substring match)
-    - [ ] OR check if symbol name starts with query (prefix match)
-    - [ ] Add to results if matches
-  - [ ] Limit results to reasonable number (e.g., 100)
-  - [ ] Sort results by relevance (exact match first, then prefix, then substring)
+- [x] **8.7 Search symbol index for query string matches (substring or prefix)** ✅
+  - [x] Implement `SearchIndex(query string) ([]SymbolInformation, error)`
+  - [x] Convert query to lowercase for case-insensitive search
+  - [x] For each symbol in index:
+    - [x] Check if symbol name contains query (substring match)
+    - [x] OR check if symbol name starts with query (prefix match)
+    - [x] Add to results if matches
+  - [x] Limit results to reasonable number (e.g., 100)
+  - [x] Sort results by relevance (exact match first, then prefix, then substring)
+  - **Implementation**: Enhanced `Search()` method with relevance sorting using matchType categorization
+  - **Location**: `internal/workspace/symbol_index.go:244`
+  - **Match Types**: Exact match (highest priority), prefix match (medium), substring match (lowest)
+  - **Tests**: 5 comprehensive tests covering basic matching, relevance sorting, max results, case-insensitive, prefix vs substring
 
 - [ ] **8.8 Implement fallback: parse non-open files on-demand if index not available**
   - [ ] If symbol index not built yet:

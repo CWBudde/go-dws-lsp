@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"strings"
 	"testing"
 
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -383,4 +384,227 @@ func TestSymbolIndex_ThreadSafety(t *testing.T) {
 	if index == nil {
 		t.Error("Index should not be nil after concurrent access")
 	}
+}
+
+func TestSymbolIndex_Search_BasicMatching(t *testing.T) {
+	index := NewSymbolIndex()
+
+	uri := "file:///test.dws"
+	symbolRange := protocol.Range{
+		Start: protocol.Position{Line: 0, Character: 0},
+		End:   protocol.Position{Line: 0, Character: 10},
+	}
+
+	// Add test symbols
+	index.AddSymbol("testFunc", protocol.SymbolKindFunction, uri, symbolRange, "", "")
+	index.AddSymbol("MyTest", protocol.SymbolKindClass, uri, symbolRange, "", "")
+	index.AddSymbol("helper", protocol.SymbolKindFunction, uri, symbolRange, "", "")
+
+	// Test substring match
+	results := index.Search("test", 100)
+	if len(results) != 2 {
+		t.Errorf("Expected 2 results for 'test', got %d", len(results))
+	}
+
+	// Test no match
+	results = index.Search("xyz", 100)
+	if len(results) != 0 {
+		t.Errorf("Expected 0 results for 'xyz', got %d", len(results))
+	}
+
+	// Test empty query
+	results = index.Search("", 100)
+	if len(results) != 3 {
+		t.Errorf("Expected 3 results for empty query, got %d", len(results))
+	}
+}
+
+func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
+	index := NewSymbolIndex()
+
+	uri := "file:///test.dws"
+	symbolRange := protocol.Range{
+		Start: protocol.Position{Line: 0, Character: 0},
+		End:   protocol.Position{Line: 0, Character: 10},
+	}
+
+	// Add symbols with different match types for query "test"
+	index.AddSymbol("test", protocol.SymbolKindFunction, uri, symbolRange, "", "")           // Exact match
+	index.AddSymbol("TEST", protocol.SymbolKindConstant, uri, symbolRange, "", "")           // Exact match (case insensitive)
+	index.AddSymbol("testFunc", protocol.SymbolKindFunction, uri, symbolRange, "", "")       // Prefix match
+	index.AddSymbol("TestClass", protocol.SymbolKindClass, uri, symbolRange, "", "")         // Prefix match (case insensitive)
+	index.AddSymbol("myTest", protocol.SymbolKindClass, uri, symbolRange, "", "")            // Substring match
+	index.AddSymbol("aTestHelper", protocol.SymbolKindFunction, uri, symbolRange, "", "")    // Substring match
+
+	// Search for "test"
+	results := index.Search("test", 100)
+
+	if len(results) != 6 {
+		t.Fatalf("Expected 6 results, got %d", len(results))
+	}
+
+	// Verify sorting: exact matches first
+	exactCount := 0
+	prefixCount := 0
+	substringCount := 0
+	lastMatchType := matchExact
+
+	for i, result := range results {
+		nameLower := strings.ToLower(result.Name)
+
+		var currentMatchType matchType
+		if nameLower == "test" {
+			currentMatchType = matchExact
+			exactCount++
+		} else if strings.HasPrefix(nameLower, "test") {
+			currentMatchType = matchPrefix
+			prefixCount++
+		} else {
+			currentMatchType = matchSubstring
+			substringCount++
+		}
+
+		// Verify match types are in order
+		if currentMatchType < lastMatchType {
+			t.Errorf("Result %d (%s) has better match type than previous result", i, result.Name)
+		}
+		lastMatchType = currentMatchType
+	}
+
+	// Verify we have the expected counts
+	if exactCount != 2 {
+		t.Errorf("Expected 2 exact matches, got %d", exactCount)
+	}
+	if prefixCount != 2 {
+		t.Errorf("Expected 2 prefix matches, got %d", prefixCount)
+	}
+	if substringCount != 2 {
+		t.Errorf("Expected 2 substring matches, got %d", substringCount)
+	}
+
+	// First two results should be exact matches ("test" and "TEST")
+	if exactCount > 0 {
+		firstExactMatch := strings.ToLower(results[0].Name)
+		if firstExactMatch != "test" {
+			t.Errorf("First result should be an exact match, got: %s", results[0].Name)
+		}
+	}
+}
+
+func TestSymbolIndex_Search_MaxResults(t *testing.T) {
+	index := NewSymbolIndex()
+
+	uri := "file:///test.dws"
+	symbolRange := protocol.Range{
+		Start: protocol.Position{Line: 0, Character: 0},
+		End:   protocol.Position{Line: 0, Character: 10},
+	}
+
+	// Add many symbols
+	for i := 0; i < 20; i++ {
+		index.AddSymbol("func"+string(rune('A'+i)), protocol.SymbolKindFunction, uri, symbolRange, "", "")
+	}
+
+	// Test max results limit
+	results := index.Search("func", 5)
+	if len(results) != 5 {
+		t.Errorf("Expected 5 results (max limit), got %d", len(results))
+	}
+
+	// Test with higher limit
+	results = index.Search("func", 15)
+	if len(results) != 15 {
+		t.Errorf("Expected 15 results, got %d", len(results))
+	}
+
+	// Test with no limit (0 means unlimited)
+	results = index.Search("func", 0)
+	if len(results) != 20 {
+		t.Errorf("Expected 20 results (no limit), got %d", len(results))
+	}
+}
+
+func TestSymbolIndex_Search_CaseInsensitive(t *testing.T) {
+	index := NewSymbolIndex()
+
+	uri := "file:///test.dws"
+	symbolRange := protocol.Range{
+		Start: protocol.Position{Line: 0, Character: 0},
+		End:   protocol.Position{Line: 0, Character: 10},
+	}
+
+	index.AddSymbol("TestFunction", protocol.SymbolKindFunction, uri, symbolRange, "", "")
+	index.AddSymbol("UPPERCASE", protocol.SymbolKindClass, uri, symbolRange, "", "")
+	index.AddSymbol("lowercase", protocol.SymbolKindVariable, uri, symbolRange, "", "")
+
+	// Test different case variations
+	testCases := []struct {
+		query         string
+		expectedCount int
+	}{
+		{"test", 1},
+		{"TEST", 1},
+		{"Test", 1},
+		{"upper", 1},
+		{"UPPER", 1},
+		{"lower", 1},
+		{"LOWER", 1},
+	}
+
+	for _, tc := range testCases {
+		results := index.Search(tc.query, 100)
+		if len(results) != tc.expectedCount {
+			t.Errorf("Query %q: expected %d results, got %d", tc.query, tc.expectedCount, len(results))
+		}
+	}
+}
+
+func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
+	index := NewSymbolIndex()
+
+	uri := "file:///test.dws"
+	symbolRange := protocol.Range{
+		Start: protocol.Position{Line: 0, Character: 0},
+		End:   protocol.Position{Line: 0, Character: 10},
+	}
+
+	// Add symbols that demonstrate prefix vs substring matching
+	index.AddSymbol("getUserName", protocol.SymbolKindFunction, uri, symbolRange, "", "")     // Prefix "get"
+	index.AddSymbol("getPassword", protocol.SymbolKindFunction, uri, symbolRange, "", "")     // Prefix "get"
+	index.AddSymbol("targetPath", protocol.SymbolKindVariable, uri, symbolRange, "", "")      // Substring "get"
+	index.AddSymbol("budgetData", protocol.SymbolKindVariable, uri, symbolRange, "", "")      // Substring "get"
+
+	results := index.Search("get", 100)
+
+	if len(results) != 4 {
+		t.Fatalf("Expected 4 results, got %d", len(results))
+	}
+
+	// First two should be prefix matches (getUserName, getPassword)
+	// Last two should be substring matches (targetPath, budgetData)
+	for i := 0; i < 2; i++ {
+		if !strings.HasPrefix(strings.ToLower(results[i].Name), "get") {
+			t.Errorf("Result %d (%s) should be a prefix match", i, results[i].Name)
+		}
+	}
+
+	for i := 2; i < 4; i++ {
+		nameLower := strings.ToLower(results[i].Name)
+		if strings.HasPrefix(nameLower, "get") {
+			t.Errorf("Result %d (%s) should be a substring match, not prefix", i, results[i].Name)
+		}
+		if !strings.Contains(nameLower, "get") {
+			t.Errorf("Result %d (%s) should contain 'get'", i, results[i].Name)
+		}
+	}
+}
+
+// Helper function for tests
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
