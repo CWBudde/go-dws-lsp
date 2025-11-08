@@ -250,36 +250,26 @@ type
 begin
 end.`
 
-	engine, err := dwscript.New()
-	if err != nil {
-		t.Fatalf("Failed to create engine: %v", err)
-	}
-
-	program, err := engine.Compile(source)
-	if err != nil {
-		t.Fatalf("Failed to parse source: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:     "file:///test.dws",
-		Text:    source,
-		Program: program,
-	}
-
-	// Get members of TMyClass
-	members, err := GetTypeMembers(doc, "TMyClass")
-	if err != nil {
-		t.Fatalf("GetTypeMembers returned error: %v", err)
-	}
+	doc := compileTestSource(t, source)
+	members := getTypeMembersOrFail(t, doc, "TMyClass")
 
 	if len(members) == 0 {
 		t.Fatal("Expected members for TMyClass, got none")
 	}
 
-	// Check that we have fields and properties
-	hasField := false
-	hasProperty := false
+	hasField, hasProperty := checkClassMembers(t, members)
 
+	if !hasField {
+		t.Error("Expected to find field members")
+	}
+
+	if !hasProperty {
+		t.Error("Expected to find property members")
+	}
+}
+
+// checkClassMembers verifies class member types and returns booleans for field and property presence.
+func checkClassMembers(t *testing.T, members []protocol.CompletionItem) (hasField, hasProperty bool) {
 	for _, member := range members {
 		t.Logf("Found member: %s (kind: %d)", member.Label, *member.Kind)
 
@@ -291,7 +281,6 @@ end.`
 				t.Errorf("Expected %s to be a Field, got kind %d", member.Label, *member.Kind)
 			}
 		case "GetValue", "SetValue":
-			// These are implemented outside the class, so they won't appear as methods
 			if *member.Kind != protocol.CompletionItemKindMethod {
 				t.Errorf("Expected %s to be a Method, got kind %d", member.Label, *member.Kind)
 			}
@@ -304,13 +293,36 @@ end.`
 		}
 	}
 
-	if !hasField {
-		t.Error("Expected to find field members")
+	return hasField, hasProperty
+}
+
+// compileTestSource compiles DWScript source code and returns a Document.
+func compileTestSource(t *testing.T, source string) *server.Document {
+	engine, err := dwscript.New()
+	if err != nil {
+		t.Fatalf("Failed to create engine: %v", err)
 	}
 
-	if !hasProperty {
-		t.Error("Expected to find property members")
+	program, err := engine.Compile(source)
+	if err != nil {
+		t.Fatalf("Failed to parse source: %v", err)
 	}
+
+	return &server.Document{
+		URI:     "file:///test.dws",
+		Text:    source,
+		Program: program,
+	}
+}
+
+// getTypeMembersOrFail retrieves type members and fails the test if there's an error.
+func getTypeMembersOrFail(t *testing.T, doc *server.Document, typeName string) []protocol.CompletionItem {
+	members, err := GetTypeMembers(doc, typeName)
+	if err != nil {
+		t.Fatalf("GetTypeMembers returned error: %v", err)
+	}
+
+	return members
 }
 
 func TestGetTypeMembers_Record(t *testing.T) {
@@ -326,43 +338,29 @@ begin
   p.X := 10;
 end.`
 
-	engine, err := dwscript.New()
-	if err != nil {
-		t.Fatalf("Failed to create engine: %v", err)
-	}
-
-	program, err := engine.Compile(source)
-	if err != nil {
-		t.Fatalf("Failed to parse source: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:     "file:///test.dws",
-		Text:    source,
-		Program: program,
-	}
-
-	// Get members of TPoint
-	members, err := GetTypeMembers(doc, "TPoint")
-	if err != nil {
-		t.Fatalf("GetTypeMembers returned error: %v", err)
-	}
+	doc := compileTestSource(t, source)
+	members := getTypeMembersOrFail(t, doc, "TPoint")
 
 	if len(members) < 3 {
 		t.Errorf("Expected at least 3 members for TPoint, got %d", len(members))
 	}
 
-	// Check that all are fields
+	checkRecordFieldTypes(t, members)
+	checkRecordFieldPresence(t, members)
+}
+
+// checkRecordFieldTypes verifies that all members are fields.
+func checkRecordFieldTypes(t *testing.T, members []protocol.CompletionItem) {
 	for _, member := range members {
 		if *member.Kind != protocol.CompletionItemKindField {
 			t.Errorf("Expected %s to be a Field, got kind %d", member.Label, *member.Kind)
 		}
 	}
+}
 
-	// Check for specific fields
-	hasX := false
-	hasY := false
-	hasZ := false
+// checkRecordFieldPresence verifies that expected record fields are present.
+func checkRecordFieldPresence(t *testing.T, members []protocol.CompletionItem) {
+	hasX, hasY, hasZ := false, false, false
 
 	for _, member := range members {
 		switch member.Label {
