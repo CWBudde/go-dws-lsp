@@ -978,21 +978,21 @@ The implementation is organized into the following phases:
   - [x] Return SignatureHelp response or nil if not in function call
   - [x] Register handler in server initialization
 
-- [ ] **10.2 Mark signatureHelpProvider in server capabilities**
-  - [ ] In initialize handler, set `capabilities.SignatureHelpProvider` struct
-  - [ ] Set `TriggerCharacters` to `["(", ","]` for auto-trigger
-  - [ ] Optionally set `RetriggerCharacters` to handle edits
-  - [ ] Verify capability is advertised to client
-  - [ ] Test that VSCode triggers signature help on `(` and `,`
+- [x] **10.2 Mark signatureHelpProvider in server capabilities**
+  - [x] In initialize handler, set `capabilities.SignatureHelpProvider` struct
+  - [x] Set `TriggerCharacters` to `["(", ","]` for auto-trigger
+  - [x] Optionally set `RetriggerCharacters` to handle edits
+  - [x] Verify capability is advertised to client
+  - [x] Test that VSCode triggers signature help on `(` and `,`
 
-- [ ] **10.3 Determine call context from cursor position**
-  - [ ] Create `internal/analysis/call_context.go`
-  - [ ] Implement `DetermineCallContext(doc *Document, pos Position) (*CallContext, error)`
-  - [ ] Analyze text around cursor to detect if inside function call
-  - [ ] Return nil if cursor not inside parentheses
-  - [ ] Extract call expression information (function name, parameter index)
-  - [ ] Handle nested function calls (find innermost call)
-  - [ ] Handle method calls and member function calls
+- [x] **10.3 Determine call context from cursor position**
+  - [x] Create `internal/analysis/call_context.go`
+  - [x] Implement `DetermineCallContext(doc *Document, pos Position) (*CallContext, error)`
+  - [x] Analyze text around cursor to detect if inside function call
+  - [x] Return nil if cursor not inside parentheses
+  - [x] Extract call expression information (function name, parameter index)
+  - [x] Handle nested function calls (find innermost call)
+  - [x] Handle method calls and member function calls
 
 - [ ] **10.4 Detect signature help triggers (opening parenthesis, comma)**
   - [ ] Check `params.Context.TriggerKind` for trigger type
