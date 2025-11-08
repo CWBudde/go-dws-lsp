@@ -839,8 +839,8 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 		finalUnits = append(finalUnits, unit)
 	}
 
-	// Remove unused units if workspace index is available
-	if workspaceIndex != nil && doc != nil {
+	// Remove unused units if workspace index is available and populated
+	if workspaceIndex != nil && workspaceIndex.GetSymbolCount() > 0 && doc != nil {
 		unusedUnits := findUnusedUnits(units, text, workspaceIndex, doc)
 		if len(unusedUnits) > 0 {
 			log.Printf("Found %d unused units: %v\n", len(unusedUnits), unusedUnits)
