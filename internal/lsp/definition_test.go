@@ -10,15 +10,17 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-const testDefinitionURI = "file:///test/test.dws"
-const testEnumTypeTColor = "TColor"
-const testEnumDeclarationCode = `
+const (
+	testDefinitionURI       = "file:///test/test.dws"
+	testEnumTypeTColor      = "TColor"
+	testEnumDeclarationCode = `
 type
   TColor = (clRed, clGreen, clBlue);
 
 var color: TColor;
 color := clRed;
 `
+)
 const testUsesMyUnit = "uses MyUnit;"
 
 func TestNodeToLocation(t *testing.T) {
@@ -591,7 +593,7 @@ func TestFindIdentifierDefinition_LoopVariable(t *testing.T) {
 	}
 
 	// Loop variable should be at line 2 (0-based: line 1)
-	if location.Range.Start.Line < 0 {
+	if false { // uint32 cannot be < 0
 		t.Errorf("Invalid line number: %d", location.Range.Start.Line)
 	}
 }
@@ -780,7 +782,7 @@ func parseCode(t *testing.T, code string) *ast.Program {
 	}
 
 	if program == nil {
-		if compileMsgs != nil && len(compileMsgs) > 0 {
+		if len(compileMsgs) > 0 {
 			t.Logf("Compilation errors:")
 
 			for _, msg := range compileMsgs {
@@ -1365,11 +1367,10 @@ func TestGlobalDefinition_EnumDeclaration(t *testing.T) {
 
 // setupTestWorkspace creates a test workspace with multiple files and populates the symbol index.
 // Returns the workspace symbol index and a map of URIs to parsed ASTs.
-func setupTestWorkspace(t *testing.T, files map[string]string) (*workspace.SymbolIndex, map[string]*ast.Program) {
+func setupTestWorkspace(t *testing.T, files map[string]string) *workspace.SymbolIndex {
 	t.Helper()
 
 	index := workspace.NewSymbolIndex()
-	asts := make(map[string]*ast.Program)
 
 	// Parse each file and populate the index
 	for uri, code := range files {
@@ -1383,13 +1384,12 @@ func setupTestWorkspace(t *testing.T, files map[string]string) (*workspace.Symbo
 		}
 
 		programAST := program.AST()
-		asts[uri] = programAST
 
 		// Add symbols from this file to the workspace index
 		addSymbolsToIndex(t, index, uri, programAST)
 	}
 
-	return index, asts
+	return index
 }
 
 // addSymbolsToIndex adds all top-level symbols from an AST to the workspace index.
@@ -1462,7 +1462,7 @@ end;
 		"file:///test/MyUnit.dws": fileB,
 	}
 
-	index, _ := setupTestWorkspace(t, files)
+	index := setupTestWorkspace(t, files)
 
 	// File A has "uses MyUnit;" which imports the symbols from MyUnit.dws
 	// We parse just the uses clause to test cross-file resolution
@@ -1515,7 +1515,7 @@ end;
 		"file:///test/MyUnit.dws": fileB,
 	}
 
-	index, _ := setupTestWorkspace(t, files)
+	index := setupTestWorkspace(t, files)
 
 	// File A imports MyUnit
 	codeWithImport := testUsesMyUnit
@@ -1555,7 +1555,7 @@ end;
 		"file:///test/MyUnit.dws": fileB,
 	}
 
-	index, _ := setupTestWorkspace(t, files)
+	index := setupTestWorkspace(t, files)
 
 	// File A imports MyUnit
 	codeWithImport := testUsesMyUnit
@@ -1601,7 +1601,7 @@ end;
 		"file:///test/Math.dws":  fileMath,
 	}
 
-	index, _ := setupTestWorkspace(t, files)
+	index := setupTestWorkspace(t, files)
 
 	// File A imports both Utils and Math
 	codeWithImport := `uses Utils, Math;`
@@ -1663,7 +1663,7 @@ end;
 		"file:///test/Models.dws": fileModels,
 	}
 
-	index, _ := setupTestWorkspace(t, files)
+	index := setupTestWorkspace(t, files)
 
 	// File A imports Models
 	codeWithImport := `uses Models;`
@@ -1700,7 +1700,7 @@ const DEFAULT_TIMEOUT = 30;
 		"file:///test/Constants.dws": fileConstants,
 	}
 
-	index, _ := setupTestWorkspace(t, files)
+	index := setupTestWorkspace(t, files)
 
 	// File A imports Constants
 	codeWithImport := `uses Constants;`

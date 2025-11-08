@@ -32,7 +32,7 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (any, 
 		log.Printf("Client snippet support: %v\n", srv.SupportsSnippets())
 
 		// Extract and store workspace folders from params
-		if params.WorkspaceFolders != nil && len(params.WorkspaceFolders) > 0 {
+		if len(params.WorkspaceFolders) > 0 {
 			folders := make([]string, 0, len(params.WorkspaceFolders))
 			for _, wf := range params.WorkspaceFolders {
 				// Convert URI to path

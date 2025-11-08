@@ -322,10 +322,8 @@ end.`,
 				if !ctx.IsInsideCall {
 					t.Error("Expected IsInsideCall to be true")
 				}
-			} else {
-				if ctx != nil {
-					t.Errorf("Expected no call context, got context for function %q", ctx.FunctionName)
-				}
+			} else if ctx != nil {
+				t.Errorf("Expected no call context, got context for function %q", ctx.FunctionName)
 			}
 		})
 	}

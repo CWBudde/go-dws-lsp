@@ -10,8 +10,10 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-const testResultID1 = "result-1"
-const testResultID2 = "result-2"
+const (
+	testResultID1 = "result-1"
+	testResultID2 = "result-2"
+)
 
 func TestNewSemanticTokensCache(t *testing.T) {
 	cache := NewSemanticTokensCache()

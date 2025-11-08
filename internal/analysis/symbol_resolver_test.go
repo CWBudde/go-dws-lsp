@@ -19,7 +19,7 @@ func parseCode(t *testing.T, code string) *ast.Program {
 	}
 
 	if program == nil {
-		if compileMsgs != nil && len(compileMsgs) > 0 {
+		if len(compileMsgs) > 0 {
 			t.Logf("Compilation errors:")
 
 			for _, msg := range compileMsgs {

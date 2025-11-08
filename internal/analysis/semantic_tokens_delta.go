@@ -23,7 +23,7 @@ type SemanticTokensDeltaResult struct {
 // If the delta is too large or oldTokens is nil, it returns a full response instead.
 func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, newResultID string) *SemanticTokensDeltaResult {
 	// If no old tokens, return full
-	if oldTokens == nil || len(oldTokens) == 0 {
+	if len(oldTokens) == 0 {
 		log.Println("No old tokens, returning full semantic tokens")
 
 		return &SemanticTokensDeltaResult{
@@ -36,7 +36,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 	}
 
 	// If no new tokens but had old tokens, it's a delete-all delta
-	if newTokens == nil || len(newTokens) == 0 {
+	if len(newTokens) == 0 {
 		log.Println("No new tokens, returning delete-all delta")
 
 		edits := []protocol.SemanticTokensEdit{

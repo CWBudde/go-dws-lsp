@@ -12,7 +12,7 @@ import (
 func uriToPath(u string) (string, error) {
 	parsed, err := url.Parse(u)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse URI: %w", err)
 	}
 
 	if parsed.Scheme != "file" && parsed.Scheme != "" {
