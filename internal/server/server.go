@@ -31,6 +31,9 @@ type Server struct {
 	// config holds server configuration
 	config *Config
 
+	// semanticTokensLegend defines the token types and modifiers for semantic highlighting
+	semanticTokensLegend *SemanticTokensLegend
+
 	// mutex protects server state
 	mu sync.RWMutex
 
@@ -50,10 +53,11 @@ type Config struct {
 // New creates a new LSP server instance.
 func New() *Server {
 	return &Server{
-		documents:       NewDocumentStore(),
-		symbolIndex:     NewSymbolIndex(),
-		workspaceIndex:  workspace.NewSymbolIndex(),
-		completionCache: NewCompletionCache(),
+		documents:            NewDocumentStore(),
+		symbolIndex:          NewSymbolIndex(),
+		workspaceIndex:       workspace.NewSymbolIndex(),
+		completionCache:      NewCompletionCache(),
+		semanticTokensLegend: NewSemanticTokensLegend(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -164,4 +168,10 @@ func (s *Server) SupportsSnippets() bool {
 // CompletionCache returns the completion cache.
 func (s *Server) CompletionCache() *CompletionCache {
 	return s.completionCache
+}
+
+// SemanticTokensLegend returns the semantic tokens legend.
+// The legend is immutable and shared across all requests.
+func (s *Server) SemanticTokensLegend() *SemanticTokensLegend {
+	return s.semanticTokensLegend
 }
