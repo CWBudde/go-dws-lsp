@@ -97,6 +97,17 @@ func GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *server.Document, ur
 		}
 	}
 
+	// Check if diagnostic is for missing semicolon
+	if isMissingSemicolon(diagnostic) {
+		log.Printf("Generating quick fix for missing semicolon at line %d\n", diagnostic.Range.Start.Line)
+
+		// Create "Insert missing semicolon" quick fix
+		action := createInsertSemicolonAction(diagnostic, uri)
+		if action != nil {
+			actions = append(actions, *action)
+		}
+	}
+
 	return actions, nil
 }
 
@@ -124,6 +135,36 @@ func isUndeclaredIdentifier(diagnostic protocol.Diagnostic) bool {
 	if diagnostic.Code != nil {
 		code := diagnostic.Code.Value
 		if code == "E_UNDECLARED" || code == "E_UNKNOWN_IDENTIFIER" {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isMissingSemicolon checks if a diagnostic indicates a missing semicolon error.
+func isMissingSemicolon(diagnostic protocol.Diagnostic) bool {
+	message := strings.ToLower(diagnostic.Message)
+
+	// Check for common missing semicolon patterns
+	patterns := []string{
+		"missing semicolon",
+		"expected ';'",
+		"expected semicolon",
+		"; expected",
+		"semicolon expected",
+	}
+
+	for _, pattern := range patterns {
+		if strings.Contains(message, pattern) {
+			return true
+		}
+	}
+
+	// Check error code if available
+	if diagnostic.Code != nil {
+		code := diagnostic.Code.Value
+		if code == "E_MISSING_SEMICOLON" || code == "E_SEMICOLON_EXPECTED" {
 			return true
 		}
 	}
@@ -192,6 +233,42 @@ func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName 
 	}
 
 	log.Printf("Created quick fix: %s (type: %s) at line %d\n", title, varType, insertPosition.Line)
+	return &action
+}
+
+// createInsertSemicolonAction creates a quick fix action to insert a missing semicolon.
+func createInsertSemicolonAction(diagnostic protocol.Diagnostic, uri string) *protocol.CodeAction {
+	title := "Insert missing semicolon"
+
+	// The semicolon should be inserted at the end of the diagnostic range
+	// This is typically where the parser expected the semicolon to be
+	insertPosition := diagnostic.Range.End
+
+	// Create a zero-length range at the insertion point
+	textEdit := protocol.TextEdit{
+		Range: protocol.Range{
+			Start: insertPosition,
+			End:   insertPosition,
+		},
+		NewText: ";",
+	}
+
+	// Create WorkspaceEdit
+	changes := make(map[string][]protocol.TextEdit)
+	changes[uri] = []protocol.TextEdit{textEdit}
+
+	workspaceEdit := protocol.WorkspaceEdit{
+		Changes: changes,
+	}
+
+	action := protocol.CodeAction{
+		Title:       title,
+		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Diagnostics: []protocol.Diagnostic{diagnostic},
+		Edit:        &workspaceEdit,
+	}
+
+	log.Printf("Created quick fix: %s at line %d, column %d\n", title, insertPosition.Line, insertPosition.Character)
 	return &action
 }
 

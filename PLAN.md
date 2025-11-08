@@ -1698,16 +1698,16 @@ The implementation is organized into the following phases:
   - [x] Example: `\n  var x: Integer;\n`
   - [x] Handle existing var blocks (append to block vs create new)
 
-- [ ] **13.7 Implement quick fix for 'Missing semicolon' error**
-  - [ ] Check diagnostic for "missing semicolon" or "expected ';'"
-  - [ ] Extract position where semicolon expected (from diagnostic range)
-  - [ ] Create CodeAction with title: `"Insert missing semicolon"`
-  - [ ] Create WorkspaceEdit with TextEdit:
-    - [ ] Range: zero-length at expected position
-    - [ ] NewText: `;`
-  - [ ] Set Kind to QuickFix
-  - [ ] Attach diagnostic
-  - [ ] Test that applying action resolves the diagnostic
+- [x] **13.7 Implement quick fix for 'Missing semicolon' error**
+  - [x] Check diagnostic for "missing semicolon" or "expected ';'"
+  - [x] Extract position where semicolon expected (from diagnostic range)
+  - [x] Create CodeAction with title: `"Insert missing semicolon"`
+  - [x] Create WorkspaceEdit with TextEdit:
+    - [x] Range: zero-length at expected position
+    - [x] NewText: `;`
+  - [x] Set Kind to QuickFix
+  - [x] Attach diagnostic
+  - [x] Test that applying action resolves the diagnostic
 
 - [ ] **13.8 Implement quick fix for unused variable warning**
   - [ ] Check diagnostic for "unused variable" or code `W_UNUSED_VAR`
