@@ -1643,24 +1643,24 @@ The implementation is organized into the following phases:
   - [x] Return array of CodeAction (may be empty)
   - [x] Register handler in server initialization
 
-- [ ] **13.2 Mark codeActionProvider in server capabilities**
-  - [ ] In initialize handler, set `capabilities.CodeActionProvider`
-  - [ ] Use struct with `CodeActionKinds` field
-  - [ ] Specify supported kinds (see next task)
-  - [ ] Optionally set `ResolveProvider: true` for lazy resolution (defer to later)
-  - [ ] Verify capability advertised to client
-  - [ ] Test that VSCode shows lightbulb icon when code actions available
+- [x] **13.2 Mark codeActionProvider in server capabilities**
+  - [x] In initialize handler, set `capabilities.CodeActionProvider`
+  - [x] Use struct with `CodeActionKinds` field
+  - [x] Specify supported kinds (see next task)
+  - [x] Optionally set `ResolveProvider: true` for lazy resolution (defer to later)
+  - [x] Verify capability advertised to client
+  - [x] Test that VSCode shows lightbulb icon when code actions available
 
-- [ ] **13.3 Specify supported codeActionKinds (quickfix, refactor, etc.)**
-  - [ ] Define supported kinds:
-    - [ ] `CodeActionKind.QuickFix` - for fixing diagnostics
-    - [ ] `CodeActionKind.Refactor` - for refactoring actions
-    - [ ] `CodeActionKind.RefactorExtract` - extract to function/variable
-    - [ ] `CodeActionKind.RefactorInline` - inline variable/function
-    - [ ] `CodeActionKind.Source` - source actions (organize imports)
-    - [ ] `CodeActionKind.SourceOrganizeImports` - organize imports/units
-  - [ ] Set `CodeActionProvider.CodeActionKinds` to array of supported kinds
-  - [ ] Client may request specific kinds
+- [x] **13.3 Specify supported codeActionKinds (quickfix, refactor, etc.)**
+  - [x] Define supported kinds:
+    - [x] `CodeActionKind.QuickFix` - for fixing diagnostics
+    - [x] `CodeActionKind.Refactor` - for refactoring actions
+    - [x] `CodeActionKind.RefactorExtract` - extract to function/variable
+    - [x] `CodeActionKind.RefactorInline` - inline variable/function
+    - [x] `CodeActionKind.Source` - source actions (organize imports)
+    - [x] `CodeActionKind.SourceOrganizeImports` - organize imports/units
+  - [x] Set `CodeActionProvider.CodeActionKinds` to array of supported kinds
+  - [x] Client may request specific kinds
 
 - [ ] **13.4 Implement quick fix for 'Undeclared identifier' error**
   - [ ] Create `GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *Document) ([]CodeAction, error)`

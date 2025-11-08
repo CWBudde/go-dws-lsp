@@ -125,10 +125,14 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 		// Code actions (quick fixes, refactorings)
 		CodeActionProvider: &protocol.CodeActionOptions{
 			CodeActionKinds: []protocol.CodeActionKind{
-				protocol.CodeActionKindQuickFix,
-				protocol.CodeActionKindRefactor,
+				protocol.CodeActionKindQuickFix,            // Fix diagnostics
+				protocol.CodeActionKindRefactor,            // General refactorings
+				protocol.CodeActionKindRefactorExtract,     // Extract to function/variable
+				protocol.CodeActionKindRefactorInline,      // Inline variable/function
+				protocol.CodeActionKindSource,              // Source actions
+				protocol.CodeActionKindSourceOrganizeImports, // Organize imports/units
 			},
-			ResolveProvider: &[]bool{false}[0],
+			ResolveProvider: &[]bool{false}[0], // Don't use lazy resolution for now
 		},
 
 		// Diagnostics (we'll push these, not pull)
