@@ -900,15 +900,20 @@ The implementation is organized into the following phases:
     - Timing measurements log completion time to verify <100ms target
     - Cache reuse avoids recomputing keywords, built-ins, and global symbols
 
-- [ ] **9.19 Write unit tests for variable name completion**
-  - [ ] Create `internal/lsp/completion_test.go`
-  - [ ] Test case: typing partial variable name
-    - [ ] Setup: code with variables `alpha`, `beta`, `alphabet`
-    - [ ] Input: cursor after `alp`
-    - [ ] Expected: `alpha` and `alphabet` in results
-    - [ ] Verify: `beta` not in results
-  - [ ] Test case: parameter completion in function
-  - [ ] Test case: local variable shadowing global
+- [x] **9.19 Write unit tests for variable name completion** ✅
+  - [x] Create `internal/lsp/completion_test.go`
+  - [x] Test case: typing partial variable name
+    - [x] Setup: code with variables `alpha`, `beta`, `alphabet`
+    - [x] Input: cursor after `alp`
+    - [x] Expected: `alpha` and `alphabet` in results
+    - [x] Verify: `beta` not in results
+  - [x] Test case: parameter completion in function
+  - [x] Test case: local variable shadowing global
+  - **Implementation**:
+    - Added `TestCompletion_PartialVariableName`: Tests prefix filtering with variables "alpha", "beta", "alphabet" - verifies "alp" matches "alpha" and "alphabet" but not "beta"
+    - Added `TestCompletion_ParameterCompletion`: Tests parameter completion in function - verifies "fir" matches "firstParam" but not "secondParam"
+    - Added `TestCompletion_LocalVariableShadowsGlobal`: Tests local variable shadowing global - verifies both local and global "value" appear, with local sorted first (sortText: "0local~" < "1global~")
+  - **Test results**: All 3 tests pass, completion time <1ms (well under 100ms target)
 
 - [ ] **9.20 Write unit tests for member access completion**
   - [ ] Test case: member access on class instance
