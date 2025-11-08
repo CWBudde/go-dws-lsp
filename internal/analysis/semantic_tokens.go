@@ -4,6 +4,7 @@ package analysis
 import (
 	"log"
 	"sort"
+	"unicode/utf16"
 
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
@@ -67,24 +68,24 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 	switch n := node.(type) {
 	// Literals
 	case *ast.StringLiteral:
-		tc.addToken(pos, len(n.Value)+2, server.TokenTypeString, 0) // +2 for quotes
+		tc.addToken(pos, utf16Length(n.Value)+2, server.TokenTypeString, 0) // +2 for quotes
 	case *ast.CharLiteral:
-		tc.addToken(pos, len(n.Token.Literal), server.TokenTypeString, 0)
+		tc.addToken(pos, utf16Length(n.Token.Literal), server.TokenTypeString, 0)
 	case *ast.IntegerLiteral:
-		tc.addToken(pos, len(n.Token.Literal), server.TokenTypeNumber, 0)
+		tc.addToken(pos, utf16Length(n.Token.Literal), server.TokenTypeNumber, 0)
 	case *ast.FloatLiteral:
-		tc.addToken(pos, len(n.Token.Literal), server.TokenTypeNumber, 0)
+		tc.addToken(pos, utf16Length(n.Token.Literal), server.TokenTypeNumber, 0)
 	case *ast.BooleanLiteral:
-		tc.addToken(pos, len(n.Token.Literal), server.TokenTypeKeyword, 0)
+		tc.addToken(pos, utf16Length(n.Token.Literal), server.TokenTypeKeyword, 0)
 	case *ast.NilLiteral:
-		tc.addToken(pos, 3, server.TokenTypeKeyword, 0) // "nil"
+		tc.addToken(pos, 3, server.TokenTypeKeyword, 0) // "nil" - always 3 chars
 
 	// Variable declarations with declaration modifier
 	case *ast.VarDeclStatement:
 		for _, name := range n.Names {
 			if name != nil {
 				namePos := name.Pos()
-				tc.addToken(namePos, len(name.Value), server.TokenTypeVariable,
+				tc.addToken(namePos, utf16Length(name.Value), server.TokenTypeVariable,
 					tc.legend.GetModifierMask(server.TokenModifierDeclaration))
 			}
 		}
@@ -93,7 +94,7 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 	case *ast.ConstDecl:
 		if n.Name != nil {
 			namePos := n.Name.Pos()
-			tc.addToken(namePos, len(n.Name.Value), server.TokenTypeVariable,
+			tc.addToken(namePos, utf16Length(n.Name.Value), server.TokenTypeVariable,
 				tc.legend.GetModifierMask(server.TokenModifierDeclaration, server.TokenModifierReadonly))
 		}
 
@@ -109,10 +110,10 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 				if n.IsAbstract {
 					modifiers |= tc.legend.GetModifierMask(server.TokenModifierAbstract)
 				}
-				tc.addToken(namePos, len(n.Name.Value), server.TokenTypeMethod, modifiers)
+				tc.addToken(namePos, utf16Length(n.Name.Value), server.TokenTypeMethod, modifiers)
 			} else {
 				// It's a function
-				tc.addToken(namePos, len(n.Name.Value), server.TokenTypeFunction, modifiers)
+				tc.addToken(namePos, utf16Length(n.Name.Value), server.TokenTypeFunction, modifiers)
 			}
 		}
 		// Mark parameters with declaration modifier
@@ -120,7 +121,7 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 			for _, param := range n.Parameters {
 				if param.Name != nil {
 					paramPos := param.Name.Pos()
-					tc.addToken(paramPos, len(param.Name.Value), server.TokenTypeParameter,
+					tc.addToken(paramPos, utf16Length(param.Name.Value), server.TokenTypeParameter,
 						tc.legend.GetModifierMask(server.TokenModifierDeclaration))
 				}
 			}
@@ -130,7 +131,15 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 	case *ast.ClassDecl:
 		if n.Name != nil {
 			namePos := n.Name.Pos()
-			tc.addToken(namePos, len(n.Name.Value), server.TokenTypeClass,
+			tc.addToken(namePos, utf16Length(n.Name.Value), server.TokenTypeClass,
+				tc.legend.GetModifierMask(server.TokenModifierDeclaration))
+		}
+
+	// Interface declarations
+	case *ast.InterfaceDecl:
+		if n.Name != nil {
+			namePos := n.Name.Pos()
+			tc.addToken(namePos, utf16Length(n.Name.Value), server.TokenTypeInterface,
 				tc.legend.GetModifierMask(server.TokenModifierDeclaration))
 		}
 
@@ -142,22 +151,26 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 			if n.IsClassVar {
 				modifiers |= tc.legend.GetModifierMask(server.TokenModifierStatic)
 			}
-			tc.addToken(fieldPos, len(n.Name.Value), server.TokenTypeProperty, modifiers)
+			tc.addToken(fieldPos, utf16Length(n.Name.Value), server.TokenTypeProperty, modifiers)
 		}
 
 	// Property declarations
 	case *ast.PropertyDecl:
 		if n.Name != nil {
 			propPos := n.Name.Pos()
-			tc.addToken(propPos, len(n.Name.Value), server.TokenTypeProperty,
-				tc.legend.GetModifierMask(server.TokenModifierDeclaration))
+			modifiers := tc.legend.GetModifierMask(server.TokenModifierDeclaration)
+			// Add readonly modifier if property has no setter (WriteSpec is nil)
+			if n.WriteSpec == nil {
+				modifiers |= tc.legend.GetModifierMask(server.TokenModifierReadonly)
+			}
+			tc.addToken(propPos, utf16Length(n.Name.Value), server.TokenTypeProperty, modifiers)
 		}
 
 	// Type declarations
 	case *ast.TypeDeclaration:
 		if n.Name != nil {
 			typePos := n.Name.Pos()
-			tc.addToken(typePos, len(n.Name.Value), server.TokenTypeType,
+			tc.addToken(typePos, utf16Length(n.Name.Value), server.TokenTypeType,
 				tc.legend.GetModifierMask(server.TokenModifierDeclaration))
 		}
 
@@ -165,7 +178,7 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 	case *ast.EnumDecl:
 		if n.Name != nil {
 			enumPos := n.Name.Pos()
-			tc.addToken(enumPos, len(n.Name.Value), server.TokenTypeEnum,
+			tc.addToken(enumPos, utf16Length(n.Name.Value), server.TokenTypeEnum,
 				tc.legend.GetModifierMask(server.TokenModifierDeclaration))
 		}
 		// Mark enum members - Note: EnumValue.Name is a string
@@ -180,14 +193,30 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 	case *ast.MemberAccessExpression:
 		if n.Member != nil {
 			memberPos := n.Member.Pos()
-			tc.addToken(memberPos, len(n.Member.Value), server.TokenTypeProperty, 0)
+			tc.addToken(memberPos, utf16Length(n.Member.Value), server.TokenTypeProperty, 0)
+		}
+
+	// Function calls (e.g., Foo(), not method calls)
+	case *ast.CallExpression:
+		// If the function is a simple identifier (not a member access), tag it as function
+		if ident, ok := n.Function.(*ast.Identifier); ok && ident != nil {
+			funcPos := ident.Pos()
+			tc.addToken(funcPos, utf16Length(ident.Value), server.TokenTypeFunction, 0)
+		}
+		// If it's a member access, it will be handled by MethodCallExpression or MemberAccessExpression
+
+	// Method calls (e.g., obj.Method())
+	case *ast.MethodCallExpression:
+		if n.Method != nil {
+			methodPos := n.Method.Pos()
+			tc.addToken(methodPos, utf16Length(n.Method.Value), server.TokenTypeMethod, 0)
 		}
 
 	// Type annotations - Note: Name is a string
 	case *ast.TypeAnnotation:
 		if n.Name != "" && len(n.Name) > 0 {
 			// TypeAnnotation has position from Token
-			tc.addToken(n.Token.Pos, len(n.Name), server.TokenTypeType, 0)
+			tc.addToken(n.Token.Pos, utf16Length(n.Name), server.TokenTypeType, 0)
 		}
 	}
 
@@ -257,4 +286,10 @@ func EncodeSemanticTokens(tokens []SemanticToken) []uint32 {
 	}
 
 	return encoded
+}
+
+// utf16Length calculates the length of a string in UTF-16 code units.
+// LSP uses UTF-16 for character positions and lengths.
+func utf16Length(s string) int {
+	return len(utf16.Encode([]rune(s)))
 }
