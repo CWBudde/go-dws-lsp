@@ -1165,22 +1165,21 @@ The implementation is organized into the following phases:
 
 ### Tasks (14)
 
-- [ ] **11.1 Implement textDocument/rename request handler**
-  - [ ] Create `internal/lsp/rename.go`
-  - [ ] Define handler: `func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.WorkspaceEdit, error)`
-  - [ ] Extract document URI, position, and new name from params
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document and AST are available
-  - [ ] Convert LSP position to document position
-  - [ ] Call helper function to compute rename edits
-  - [ ] Return WorkspaceEdit or error if rename not possible
-  - [ ] Register handler in server initialization
+- [x] **11.1 Implement textDocument/rename request handler**
+  - [x] Create `internal/lsp/rename.go`
+  - [x] Define handler: `func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.WorkspaceEdit, error)`
+  - [x] Extract document URI, position, and new name from params
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document and AST are available
+  - [x] Convert LSP position to document position
+  - [x] Call helper function to compute rename edits
+  - [x] Return WorkspaceEdit or error if rename not possible
+  - [x] Register handler in server initialization
 
-- [ ] **11.2 Mark renameProvider in server capabilities**
-  - [ ] In initialize handler, set `capabilities.RenameProvider` to true or struct
-  - [ ] Optionally set `PrepareProvider: true` to support textDocument/prepareRename
-  - [ ] Verify capability is advertised to client
-  - [ ] Test that VSCode enables rename (F2) on symbols
+- [x] **11.2 Mark renameProvider in server capabilities**
+  - [x] In initialize handler, set `capabilities.RenameProvider` to true or struct
+  - [x] Optionally set `PrepareProvider: true` to support textDocument/prepareRename
+  - [x] Verify capability is advertised to client
 
 - [ ] **11.3 Identify symbol at rename position**
   - [ ] Reuse `FindNodeAtPosition` from hover/definition implementations

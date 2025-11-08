@@ -102,6 +102,10 @@ func main() {
 
 		// Text document requests (Phase 10: Signature Help)
 		TextDocumentSignatureHelp: lsp.SignatureHelp,
+
+		// Text document requests (Phase 11: Rename Support)
+		TextDocumentRename:        lsp.Rename,
+		TextDocumentPrepareRename: lsp.PrepareRename,
 	}
 
 	// Create GLSP server
