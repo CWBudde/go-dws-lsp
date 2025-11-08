@@ -20,7 +20,8 @@ The implementation is organized into the following phases:
 - **Phase 11**: Rename Support
 - **Phase 12**: Semantic Tokens
 - **Phase 13**: Code Actions
-- **Phase 14**: Testing, Quality, and Finalization
+- **Phase 14**: Remaining Tasks
+- **Phase 15**: Testing, Quality, and Finalization
 
 **Total Tasks**: 296 (254 original + 42 go-dws enhancements)
 
@@ -1894,11 +1895,26 @@ The implementation is organized into the following phases:
 
 ---
 
-## Phase 14: Testing, Quality, and Finalization
+## Phase 14: Remaining Tasks
+
+---
+
+## Phase 15: Testing, Quality, and Finalization
 
 **Goal**: Ensure robustness, performance, and code quality before release.
 
 ### Tasks (20)
+
+- [ ] **Collect all deferred or yet open tasks from this roadmap**
+  - [ ] Review all previous phases
+  - [ ] Identify any incomplete or deferred tasks
+  - [ ] Create a consolidated list of open tasks
+  - [ ] Prioritize tasks based on impact and effort
+  - [ ] Check, if - by any chance - the task is already done (maybe we forgot to mark it as done)
+  - [ ] Collect tasks to Phase 14 "Remaining Tasks" list (based on impact and priority, renumber!)
+  - [ ] Mark manual test tasks as done (do not consider these)
+  - [ ] Mark tasks, which have been listed under Phase 14 as done in the original Phase
+    - Add a note that it is deferred to Phase 14.
 
 - [ ] **Run comprehensive integration tests against real DWScript projects**
   - [ ] Identify or create sample DWScript projects for testing:
