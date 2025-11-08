@@ -99,6 +99,9 @@ func main() {
 
 		// Text document requests (Phase 9: Code Completion)
 		TextDocumentCompletion: lsp.Completion,
+
+		// Text document requests (Phase 10: Signature Help)
+		TextDocumentSignatureHelp: lsp.SignatureHelp,
 	}
 
 	// Create GLSP server

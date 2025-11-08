@@ -967,16 +967,16 @@ The implementation is organized into the following phases:
 
 ### Tasks (18)
 
-- [ ] **10.1 Implement textDocument/signatureHelp request handler**
-  - [ ] Create `internal/lsp/signature_help.go`
-  - [ ] Define handler: `func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) (*protocol.SignatureHelp, error)`
-  - [ ] Extract document URI and position from params
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document and AST are available
-  - [ ] Convert LSP position (UTF-16) to document position (UTF-8)
-  - [ ] Call helper function to compute signature help
-  - [ ] Return SignatureHelp response or nil if not in function call
-  - [ ] Register handler in server initialization
+- [x] **10.1 Implement textDocument/signatureHelp request handler**
+  - [x] Create `internal/lsp/signature_help.go`
+  - [x] Define handler: `func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) (*protocol.SignatureHelp, error)`
+  - [x] Extract document URI and position from params
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document and AST are available
+  - [x] Convert LSP position (UTF-16) to document position (UTF-8)
+  - [x] Call helper function to compute signature help
+  - [x] Return SignatureHelp response or nil if not in function call
+  - [x] Register handler in server initialization
 
 - [ ] **10.2 Mark signatureHelpProvider in server capabilities**
   - [ ] In initialize handler, set `capabilities.SignatureHelpProvider` struct
