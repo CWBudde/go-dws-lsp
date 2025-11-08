@@ -186,7 +186,7 @@ func TestDocumentSymbol_Class(t *testing.T) {
 	SetServer(srv)
 
 	uri := "file:///test_class.dws"
-	content := "type TPerson = class\n  FName: String;\n  FAge: Integer;\n\n  function GetName: String;\n  begin\n    Result := FName;\n  end;\n\n  procedure SetAge(value: Integer);\n  begin\n    FAge := value;\n  end;"
+	content := "type TPerson = class\n  FName: String;\n  FAge: Integer;\n\n  function GetName: String;\n  begin\n    Result := FName;\n  end;\n\n  procedure SetAge(value: Integer);\n  begin\n    FAge := value;\n  end;\nend;"
 
 	err := DidOpen(&glsp.Context{}, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{

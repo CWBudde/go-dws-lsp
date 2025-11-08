@@ -379,7 +379,7 @@ end;`
 }
 
 func TestCollectSemanticTokens_StaticField(t *testing.T) {
-	code := "type TMyClass = class\n  var FCounter: Integer;\nend;"
+	code := "type TMyClass = class\n  class var FCounter: Integer;\nend;"
 	doc := parseTestCode(t, code)
 	legend := setupTestLegend()
 

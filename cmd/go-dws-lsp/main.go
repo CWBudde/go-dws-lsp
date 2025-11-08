@@ -126,12 +126,14 @@ func main() {
 	// Start server with appropriate transport
 	if tcpMode {
 		fmt.Fprintf(os.Stderr, "Starting TCP server on port %d...\n", tcpPort)
+
 		err := glspServer.RunTCP(fmt.Sprintf("127.0.0.1:%d", tcpPort))
 		if err != nil {
 			log.Fatalf("TCP server error: %v", err)
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Starting STDIO server...\n")
+
 		err := glspServer.RunStdio()
 		if err != nil {
 			log.Fatalf("STDIO server error: %v", err)

@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
@@ -1121,13 +1122,16 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 
 	// Extract the uses clause text
 	usesText := ""
+
 	var usesTextSb1095 strings.Builder
 	for i := usesStart; i <= usesEnd; i++ {
 		usesTextSb1095.WriteString(lines[i])
+
 		if i < usesEnd {
 			usesTextSb1095.WriteString("\n")
 		}
 	}
+
 	usesText += usesTextSb1095.String()
 
 	// Parse unit names from the uses clause
@@ -1212,8 +1216,8 @@ func parseUnitsFromUsesClause(usesText string) []string {
 	text = strings.TrimSpace(text)
 
 	// Split by comma
-	parts := strings.Split(text, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(text, ",")
+	for part := range parts {
 		unit := strings.TrimSpace(part)
 		if unit != "" {
 			units = append(units, unit)
@@ -1549,8 +1553,8 @@ func getUsedIdentifiers(programAST *ast.Program) map[string]bool {
 func getUnitNameFromURI(uri string) string {
 	// Extract filename from URI
 	path := uri
-	if strings.HasPrefix(uri, "file://") {
-		path = strings.TrimPrefix(uri, "file://")
+	if after, ok := strings.CutPrefix(uri, "file://"); ok {
+		path = after
 		// On Windows, remove leading slash
 		if len(path) > 2 && path[0] == '/' && path[2] == ':' {
 			path = path[1:]
@@ -1585,13 +1589,7 @@ func findUsesInsertionPoint(lines []string) int {
 
 // containsString checks if a string slice contains a specific string.
 func containsString(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(slice, str)
 }
 
 // isKeyword checks if a string is a DWScript keyword.

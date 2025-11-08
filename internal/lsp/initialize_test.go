@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
@@ -115,14 +116,7 @@ func TestInitialize(t *testing.T) {
 			t.Error("CompletionProvider should have trigger characters")
 		}
 		// Check for expected triggers
-		hasDot := false
-
-		for _, trigger := range triggers {
-			if trigger == "." {
-				hasDot = true
-				break
-			}
-		}
+		hasDot := slices.Contains(triggers, ".")
 
 		if !hasDot {
 			t.Error("CompletionProvider should have '.' as trigger character")
@@ -138,14 +132,7 @@ func TestInitialize(t *testing.T) {
 			t.Error("SignatureHelpProvider should have trigger characters")
 		}
 		// Check for expected triggers
-		hasParen := false
-
-		for _, trigger := range triggers {
-			if trigger == "(" {
-				hasParen = true
-				break
-			}
-		}
+		hasParen := slices.Contains(triggers, "(")
 
 		if !hasParen {
 			t.Error("SignatureHelpProvider should have '(' as trigger character")

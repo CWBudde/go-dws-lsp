@@ -155,6 +155,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 	// Add parameters
 	var sigSb157 strings.Builder
+
 	for i, param := range fn.Parameters {
 		if i > 0 {
 			sigSb157.WriteString(", ")
@@ -174,6 +175,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 		if param.Name != nil {
 			sigSb157.WriteString(param.Name.Value)
+
 			if param.Type != nil {
 				sigSb157.WriteString(": " + param.Type.Name)
 			}
@@ -183,6 +185,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 			sigSb157.WriteString(" = " + param.DefaultValue.String())
 		}
 	}
+
 	sig += sigSb157.String()
 
 	sig += ")"

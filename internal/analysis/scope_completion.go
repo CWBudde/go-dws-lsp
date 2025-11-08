@@ -461,9 +461,11 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		return ""
 	}
 
-	signature := fn.Name.Value + "("
+	var signature strings.Builder
+	signature.WriteString(fn.Name.Value + "(")
 
 	var signatureSb451 strings.Builder
+
 	for i, param := range fn.Parameters {
 		if i > 0 {
 			signatureSb451.WriteString(", ")
@@ -472,9 +474,9 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		if param.ByRef {
 			signatureSb451.WriteString("var ")
 		} else if param.IsConst {
-			signature += "const "
+			signature.WriteString("const ")
 		} else if param.IsLazy {
-			signature += "lazy "
+			signature.WriteString("lazy ")
 		}
 
 		if param.Name != nil {
@@ -485,15 +487,16 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 			signatureSb451.WriteString(": " + param.Type.String())
 		}
 	}
-	signature += signatureSb451.String()
 
-	signature += ")"
+	signature.WriteString(signatureSb451.String())
+
+	signature.WriteString(")")
 
 	if fn.ReturnType != nil {
-		signature += ": " + fn.ReturnType.String()
+		signature.WriteString(": " + fn.ReturnType.String())
 	}
 
-	return signature
+	return signature.String()
 }
 
 // buildFunctionSnippet builds an LSP snippet string for function insertion.
@@ -512,6 +515,7 @@ func buildFunctionSnippet(fn *ast.FunctionDecl) (string, protocol.InsertTextForm
 	snippet := fn.Name.Value + "("
 
 	var snippetSb496 strings.Builder
+
 	for i, param := range fn.Parameters {
 		if i > 0 {
 			snippetSb496.WriteString(", ")
@@ -528,6 +532,7 @@ func buildFunctionSnippet(fn *ast.FunctionDecl) (string, protocol.InsertTextForm
 		// Build tabstop: ${1:paramName}
 		snippetSb496.WriteString("${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}")
 	}
+
 	snippet += snippetSb496.String()
 
 	snippet += ")$0" // $0 is the final cursor position
@@ -561,6 +566,7 @@ func buildSnippetFromSignature(functionName, signature string) (string, protocol
 	snippet := functionName + "("
 
 	var snippetSb542 strings.Builder
+
 	for i, param := range params {
 		if i > 0 {
 			snippetSb542.WriteString(", ")
@@ -588,6 +594,7 @@ func buildSnippetFromSignature(functionName, signature string) (string, protocol
 		tabstopNum := i + 1
 		snippetSb542.WriteString("${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}")
 	}
+
 	snippet += snippetSb542.String()
 
 	snippet += ")$0"

@@ -526,10 +526,11 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 // buildMethodSignature builds a method signature string for display.
 func buildMethodSignature(method *ast.FunctionDecl) string {
 	// Start with method name
-	signature := method.Name.Value
+	var signature strings.Builder
+	signature.WriteString(method.Name.Value)
 
 	// Add parameters
-	signature += "("
+	signature.WriteString("(")
 	var signatureSb520 strings.Builder
 
 	for i, param := range method.Parameters {
@@ -541,9 +542,9 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 		if param.ByRef {
 			signatureSb520.WriteString("var ")
 		} else if param.IsConst {
-			signature += "const "
+			signature.WriteString("const ")
 		} else if param.IsLazy {
-			signature += "lazy "
+			signature.WriteString("lazy ")
 		}
 
 		// Add parameter name and type
@@ -560,16 +561,17 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 			signatureSb520.WriteString(" = " + param.DefaultValue.String())
 		}
 	}
-	signature += signatureSb520.String()
 
-	signature += ")"
+	signature.WriteString(signatureSb520.String())
+
+	signature.WriteString(")")
 
 	// Add return type
 	if method.ReturnType != nil {
-		signature += ": " + method.ReturnType.String()
+		signature.WriteString(": " + method.ReturnType.String())
 	}
 
-	return signature
+	return signature.String()
 }
 
 // buildMethodSnippet builds an LSP snippet string for method insertion.
@@ -588,6 +590,7 @@ func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFo
 	snippet := method.Name.Value + "("
 
 	var snippetSb572 strings.Builder
+
 	for i, param := range method.Parameters {
 		if i > 0 {
 			snippetSb572.WriteString(", ")
@@ -604,6 +607,7 @@ func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFo
 		// Build tabstop: ${1:paramName}
 		snippetSb572.WriteString("${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}")
 	}
+
 	snippet += snippetSb572.String()
 
 	snippet += ")$0" // $0 is the final cursor position
@@ -614,7 +618,7 @@ func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFo
 // sortCompletionItems sorts completion items alphabetically by label.
 func sortCompletionItems(items []protocol.CompletionItem) {
 	// Use a simple bubble sort since the list is typically small
-	for i := 0; i < len(items); i++ {
+	for i := range items {
 		for j := i + 1; j < len(items); j++ {
 			if items[i].Label > items[j].Label {
 				items[i], items[j] = items[j], items[i]

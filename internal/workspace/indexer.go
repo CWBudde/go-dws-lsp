@@ -484,6 +484,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	sig := "function " + fn.Name.Value + "("
 
 	var sigSb483 strings.Builder
+
 	for i, param := range fn.Parameters {
 		if i > 0 {
 			sigSb483.WriteString(", ")
@@ -503,6 +504,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 		if param.Name != nil {
 			sigSb483.WriteString(param.Name.Value)
+
 			if param.Type != nil {
 				sigSb483.WriteString(": " + param.Type.Name)
 			}
@@ -512,6 +514,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 			sigSb483.WriteString(" = " + param.DefaultValue.String())
 		}
 	}
+
 	sig += sigSb483.String()
 
 	sig += ")"
@@ -526,8 +529,8 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 // uriToPath converts a URI to a file system path.
 func uriToPath(uri string) string {
 	// Handle file:// URIs
-	if strings.HasPrefix(uri, "file://") {
-		path := strings.TrimPrefix(uri, "file://")
+	if after, ok := strings.CutPrefix(uri, "file://"); ok {
+		path := after
 		// On Windows, URIs are like file:///C:/path, so we need to handle the leading slash
 		if len(path) > 2 && path[0] == '/' && path[2] == ':' {
 			path = path[1:] // Remove leading slash for Windows paths
@@ -550,15 +553,6 @@ func pathToURI(path string) string {
 	}
 
 	return "file://" + path
-}
-
-// max returns the maximum of two integers.
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
 }
 
 // IndexWorkspace is a helper function that creates an indexer and builds the workspace index.

@@ -186,15 +186,6 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 	return filtered, nil
 }
 
-// max returns the larger of a or b.
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
-}
-
 // sortLocationsByFileAndPosition sorts locations by file (URI) then by position (line, then character).
 // This ensures consistent ordering of reference results as specified in task 6.10.
 func sortLocationsByFileAndPosition(locations []protocol.Location) {
