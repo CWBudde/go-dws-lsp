@@ -83,7 +83,7 @@ func SemanticTokensFull(context *glsp.Context, params *protocol.SemanticTokensPa
 // It returns incremental changes to semantic tokens since the previous request.
 func SemanticTokensFullDelta(context *glsp.Context, params *protocol.SemanticTokensDeltaParams) (interface{}, error) {
 	log.Printf("SemanticTokensFullDelta request for: %s (previousResultId: %s)\n",
-		params.TextDocument.URI, *params.PreviousResultID)
+		params.TextDocument.URI, params.PreviousResultID)
 
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
@@ -131,14 +131,14 @@ func SemanticTokensFullDelta(context *glsp.Context, params *protocol.SemanticTok
 	newResultID := server.GenerateResultID(params.TextDocument.URI, doc.Version)
 
 	// Try to retrieve old tokens from cache
-	var oldTokens []analysis.SemanticToken
+	var oldTokens []server.SemanticToken
 	cache := srv.SemanticTokensCache()
-	if cache != nil && params.PreviousResultID != nil {
-		if cached, found := cache.Retrieve(params.TextDocument.URI, *params.PreviousResultID); found {
+	if cache != nil && params.PreviousResultID != "" {
+		if cached, found := cache.Retrieve(params.TextDocument.URI, params.PreviousResultID); found {
 			oldTokens = cached.Tokens
-			log.Printf("Found cached tokens for previousResultId: %s\n", *params.PreviousResultID)
+			log.Printf("Found cached tokens for previousResultId: %s\n", params.PreviousResultID)
 		} else {
-			log.Printf("Previous resultId not found in cache: %s\n", *params.PreviousResultID)
+			log.Printf("Previous resultId not found in cache: %s\n", params.PreviousResultID)
 		}
 	}
 

@@ -1632,16 +1632,16 @@ The implementation is organized into the following phases:
 
 ### Tasks (23)
 
-- [ ] **13.1 Implement textDocument/codeAction request handler**
-  - [ ] Create `internal/lsp/code_action.go`
-  - [ ] Define handler: `func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) ([]protocol.CodeAction, error)`
-  - [ ] Extract document URI, range, and context from params
-  - [ ] Get diagnostics from params.Context.Diagnostics
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document has AST available
-  - [ ] Call helper functions to generate code actions
-  - [ ] Return array of CodeAction (may be empty)
-  - [ ] Register handler in server initialization
+- [x] **13.1 Implement textDocument/codeAction request handler**
+  - [x] Create `internal/lsp/code_action.go`
+  - [x] Define handler: `func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error)`
+  - [x] Extract document URI, range, and context from params
+  - [x] Get diagnostics from params.Context.Diagnostics
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document has AST available
+  - [x] Call helper functions to generate code actions
+  - [x] Return array of CodeAction (may be empty)
+  - [x] Register handler in server initialization
 
 - [ ] **13.2 Mark codeActionProvider in server capabilities**
   - [ ] In initialize handler, set `capabilities.CodeActionProvider`

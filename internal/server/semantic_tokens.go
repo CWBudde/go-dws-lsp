@@ -140,3 +140,12 @@ const (
 	TokenModifierModification  = "modification"
 	TokenModifierDocumentation = "documentation"
 )
+
+// SemanticToken represents a raw semantic token with position and classification.
+type SemanticToken struct {
+	Line      uint32 // 0-based line number
+	StartChar uint32 // 0-based start character
+	Length    uint32 // Token length
+	TokenType uint32 // Index into legend.TokenTypes
+	Modifiers uint32 // Bit flags for modifiers
+}

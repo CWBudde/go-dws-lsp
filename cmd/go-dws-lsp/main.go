@@ -110,6 +110,9 @@ func main() {
 		// Text document requests (Phase 12: Semantic Tokens)
 		TextDocumentSemanticTokensFull:      lsp.SemanticTokensFull,
 		TextDocumentSemanticTokensFullDelta: lsp.SemanticTokensFullDelta,
+
+		// Text document requests (Phase 13: Code Actions)
+		TextDocumentCodeAction: lsp.CodeAction,
 	}
 
 	// Create GLSP server

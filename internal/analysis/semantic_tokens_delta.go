@@ -4,6 +4,7 @@ package analysis
 import (
 	"log"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -20,7 +21,7 @@ type SemanticTokensDeltaResult struct {
 
 // ComputeSemanticTokensDelta computes the delta between old and new tokens.
 // If the delta is too large or oldTokens is nil, it returns a full response instead.
-func ComputeSemanticTokensDelta(oldTokens, newTokens []SemanticToken, newResultID string) *SemanticTokensDeltaResult {
+func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, newResultID string) *SemanticTokensDeltaResult {
 	// If no old tokens, return full
 	if oldTokens == nil || len(oldTokens) == 0 {
 		log.Println("No old tokens, returning full semantic tokens")
@@ -46,7 +47,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []SemanticToken, newResultI
 		return &SemanticTokensDeltaResult{
 			IsDelta: true,
 			Delta: &protocol.SemanticTokensDelta{
-				ResultID: &newResultID,
+				ResultId: &newResultID,
 				Edits:    edits,
 			},
 		}
@@ -56,7 +57,6 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []SemanticToken, newResultI
 	edits := computeEdits(oldTokens, newTokens)
 
 	// Check if delta is worth it
-	oldEncoded := EncodeSemanticTokens(oldTokens)
 	newEncoded := EncodeSemanticTokens(newTokens)
 	deltaSize := calculateDeltaSize(edits)
 	fullSize := len(newEncoded)
@@ -77,7 +77,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []SemanticToken, newResultI
 	return &SemanticTokensDeltaResult{
 		IsDelta: true,
 		Delta: &protocol.SemanticTokensDelta{
-			ResultID: &newResultID,
+			ResultId: &newResultID,
 			Edits:    edits,
 		},
 	}
@@ -85,7 +85,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []SemanticToken, newResultI
 
 // computeEdits computes the edit operations to transform oldTokens into newTokens.
 // This uses a simple sequential scan algorithm for efficiency.
-func computeEdits(oldTokens, newTokens []SemanticToken) []protocol.SemanticTokensEdit {
+func computeEdits(oldTokens, newTokens []server.SemanticToken) []protocol.SemanticTokensEdit {
 	var edits []protocol.SemanticTokensEdit
 
 	// Encode both token sets for comparison
@@ -146,26 +146,10 @@ func calculateDeltaSize(edits []protocol.SemanticTokensEdit) int {
 }
 
 // tokensEqual checks if two tokens are equal in all fields.
-func tokensEqual(a, b SemanticToken) bool {
+func tokensEqual(a, b server.SemanticToken) bool {
 	return a.Line == b.Line &&
 		a.StartChar == b.StartChar &&
 		a.Length == b.Length &&
 		a.TokenType == b.TokenType &&
 		a.Modifiers == b.Modifiers
-}
-
-// min returns the minimum of two integers.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// max returns the maximum of two integers.
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
