@@ -1905,7 +1905,7 @@ The implementation is organized into the following phases:
 
 ### Tasks (20)
 
-- [ ] **Collect all deferred or yet open tasks from this roadmap**
+- [ ] **15.1 Collect all deferred or yet open tasks from this roadmap**
   - [ ] Review all previous phases
   - [ ] Identify any incomplete or deferred tasks
   - [ ] Create a consolidated list of open tasks
@@ -1916,7 +1916,7 @@ The implementation is organized into the following phases:
   - [ ] Mark tasks, which have been listed under Phase 14 as done in the original Phase
     - Add a note that it is deferred to Phase 14.
 
-- [ ] **Run comprehensive integration tests against real DWScript projects**
+- [ ] **15.2 Run comprehensive integration tests against real DWScript projects**
   - [ ] Identify or create sample DWScript projects for testing:
     - [ ] Small project (single file, ~100 LOC)
     - [ ] Medium project (5-10 files, ~1000 LOC)
@@ -1930,7 +1930,7 @@ The implementation is organized into the following phases:
   - [ ] Run tests with `-race` flag to detect race conditions
   - [ ] Document any issues found and verify fixes
 
-- [ ] **Test all features together in VSCode with sample projects**
+- [ ] **15.3 Test all features together in VSCode with sample projects**
   - [ ] Install language server in VSCode (via manual configuration or extension)
   - [ ] Open each sample project
   - [ ] Test feature interactions:
@@ -1942,7 +1942,7 @@ The implementation is organized into the following phases:
   - [ ] Test opening/closing multiple files
   - [ ] Monitor for crashes or hangs
 
-- [ ] **Verify no feature breaks another (document sync during go-to-def, etc.)**
+- [ ] **15.4 Verify no feature breaks another (document sync during go-to-def, etc.)**
   - [ ] Test document synchronization while:
     - [ ] Hover requests are in-flight
     - [ ] Completion is triggered
@@ -1953,7 +1953,7 @@ The implementation is organized into the following phases:
   - [ ] Verify state consistency after each operation
   - [ ] Check for deadlocks or race conditions
 
-- [ ] **Performance testing: ensure no IDE freezing during operations**
+- [ ] **15.5 Performance testing: ensure no IDE freezing during operations**
   - [ ] Use `pprof` to profile CPU usage
   - [ ] Test performance of critical operations:
     - [ ] didChange on large file (10000+ LOC)
@@ -1966,7 +1966,7 @@ The implementation is organized into the following phases:
   - [ ] Identify and fix performance bottlenecks
   - [ ] Add performance regression tests
 
-- [ ] **Optimize find-references for large projects (async, partial results)**
+- [ ] **15.6 Optimize find-references for large projects (async, partial results)**
   - [ ] Implement workspace search in batches
   - [ ] Send partial results as they're found (streaming)
   - [ ] Use LSP progress notifications:
@@ -1976,7 +1976,7 @@ The implementation is organized into the following phases:
   - [ ] Test with large workspace (1000+ files)
   - [ ] Verify UI remains responsive
 
-- [ ] **Implement progress reporting for long operations (optional)**
+- [ ] **15.7 Implement progress reporting for long operations (optional)**
   - [ ] Identify operations that may take >1 second:
     - [ ] Workspace indexing
     - [ ] Find all references
@@ -1987,7 +1987,7 @@ The implementation is organized into the following phases:
   - [ ] Complete progress on finish
   - [ ] Test in VSCode (progress indicator shows)
 
-- [ ] **Memory management: ensure closing documents frees data**
+- [ ] **15.8 Memory management: ensure closing documents frees data**
   - [ ] Run memory profiler: `go test -memprofile`
   - [ ] Test document lifecycle:
     - [ ] Open 100 documents
@@ -2000,7 +2000,7 @@ The implementation is organized into the following phases:
     - [ ] Caches not invalidated
   - [ ] Add finalizers or explicit cleanup if needed
 
-- [ ] **Consider LRU cache for workspace file ASTs**
+- [ ] **15.9 Consider LRU cache for workspace file ASTs**
   - [ ] Implement LRU cache with size limit (e.g., 50 files)
   - [ ] When cache full, evict least recently used AST
   - [ ] Keep open documents always in cache
@@ -2009,7 +2009,7 @@ The implementation is organized into the following phases:
   - [ ] Test with large workspace
   - [ ] Compare memory usage with/without LRU
 
-- [ ] **Audit code for Go best practices and idioms**
+- [ ] **15.10 Audit code for Go best practices and idioms**
   - [ ] Run `go vet` on all packages
   - [ ] Run `golint` or `staticcheck`
   - [ ] Review and fix all warnings
@@ -2023,7 +2023,7 @@ The implementation is organized into the following phases:
     - [ ] channels (communication)
   - [ ] Review exported API for clarity
 
-- [ ] **Ensure proper package naming and division (internal/lsp, internal/dwscript)**
+- [ ] **15.11 Ensure proper package naming and division (internal/lsp, internal/dwscript)**
   - [ ] Verify package structure:
     - [ ] `cmd/go-dws-lsp/` - main executable
     - [ ] `internal/lsp/` - LSP handlers
@@ -2036,14 +2036,14 @@ The implementation is organized into the following phases:
   - [ ] Use `internal/` to hide implementation details
   - [ ] Document package responsibilities
 
-- [ ] **Refactor to remove unnecessary global state**
+- [ ] **15.12 Refactor to remove unnecessary global state**
   - [ ] Identify all package-level variables
   - [ ] Move state to `Server` struct where appropriate
   - [ ] Pass dependencies explicitly (dependency injection)
   - [ ] Keep only truly global things (constants, loggers)
   - [ ] Update tests to use struct-based state
 
-- [ ] **Use struct to encapsulate server state (docs, caches)**
+- [ ] **15.13 Use struct to encapsulate server state (docs, caches)**
   - [ ] Define comprehensive `Server` struct:
     - [ ] `documents *DocumentStore`
     - [ ] `index *SymbolIndex`
@@ -2054,7 +2054,7 @@ The implementation is organized into the following phases:
   - [ ] Store server in GLSP context user data
   - [ ] Use methods on Server for operations
 
-- [ ] **Double-check concurrency safety for all shared data**
+- [ ] **15.14 Double-check concurrency safety for all shared data**
   - [ ] Review all mutex usage:
     - [ ] Locks acquired in consistent order (avoid deadlock)
     - [ ] Locks held for minimal time
@@ -2065,7 +2065,7 @@ The implementation is organized into the following phases:
   - [ ] Document locking strategy in comments
   - [ ] Consider using `sync.Map` for high-contention maps
 
-- [ ] **Consider sync.Map or RWMutex for document/symbol access**
+- [ ] **15.15 Consider sync.Map or RWMutex for document/symbol access**
   - [ ] Profile lock contention
   - [ ] If high read contention: use `sync.RWMutex`
   - [ ] If high write contention: consider `sync.Map`
@@ -2073,7 +2073,7 @@ The implementation is organized into the following phases:
   - [ ] Choose best option for access patterns
   - [ ] Document choice and reasoning
 
-- [ ] **Ensure high test coverage for all features**
+- [ ] **15.16 Ensure high test coverage for all features**
   - [ ] Run `go test -cover ./...`
   - [ ] Target >80% code coverage
   - [ ] Focus on critical paths:
@@ -2087,7 +2087,7 @@ The implementation is organized into the following phases:
     - [ ] Unicode/UTF-8 handling
   - [ ] Use table-driven tests for multiple scenarios
 
-- [ ] **Add scenario tests for complex features (completion, rename)**
+- [ ] **15.17 Add scenario tests for complex features (completion, rename)**
   - [ ] Create `test/scenarios/` directory
   - [ ] Write end-to-end scenario tests:
     - [ ] Complete a class member access
@@ -2098,7 +2098,7 @@ The implementation is organized into the following phases:
   - [ ] Verify complete LSP interaction flow
   - [ ] Automate with test harness
 
-- [ ] **Document architecture and contribution guidelines**
+- [ ] **15.18 Document architecture and contribution guidelines**
   - [ ] Create `ARCHITECTURE.md`:
     - [ ] High-level design overview
     - [ ] Package responsibilities
@@ -2112,7 +2112,7 @@ The implementation is organized into the following phases:
   - [ ] Add code comments to complex algorithms
   - [ ] Document LSP protocol mapping
 
-- [ ] **Update README with build/test instructions**
+- [ ] **15.19 Update README with build/test instructions**
   - [ ] Add "Building" section:
     - [ ] Prerequisites (Go version)
     - [ ] Clone and dependencies
@@ -2126,7 +2126,7 @@ The implementation is organized into the following phases:
     - [ ] Command-line flags
     - [ ] VSCode integration (link to extension repo)
 
-- [ ] **Document important implementation details for contributors**
+- [ ] **15.20 Document important implementation details for contributors**
   - [ ] Document position encoding (UTF-16 vs UTF-8)
   - [ ] Document AST traversal patterns
   - [ ] Document symbol resolution strategy
@@ -2137,7 +2137,7 @@ The implementation is organized into the following phases:
     - [ ] Adding completion items
   - [ ] Document debugging techniques (TCP mode, logging)
 
-- [ ] **Final manual testing pass in VSCode with all features**
+- [ ] **15.21 Final manual testing pass in VSCode with all features**
   - [ ] Create comprehensive test checklist
   - [ ] Test each feature systematically:
     - [ ] ✓ Diagnostics (syntax and semantic)
@@ -2154,7 +2154,7 @@ The implementation is organized into the following phases:
   - [ ] Test error scenarios (network loss, bad files, etc.)
   - [ ] Verify graceful degradation on errors
 
-- [ ] **Verify feature-completeness against original plan**
+- [ ] **15.22 Verify feature-completeness against original plan**
   - [ ] Review goal.md and PLAN.md
   - [ ] Check off all implemented features
   - [ ] Document any deferred features (future work)
