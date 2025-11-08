@@ -450,7 +450,7 @@ func createDeclareFunctionAction(diagnostic protocol.Diagnostic, identifierName 
 
 	action := protocol.CodeAction{
 		Title:       title,
-		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Kind:        stringPtr(protocol.CodeActionKindQuickFix),
 		Diagnostics: []protocol.Diagnostic{diagnostic},
 		Edit:        &workspaceEdit,
 	}
@@ -633,7 +633,7 @@ func createInsertSemicolonAction(diagnostic protocol.Diagnostic, uri string) *pr
 
 	action := protocol.CodeAction{
 		Title:       title,
-		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Kind:        stringPtr(protocol.CodeActionKindQuickFix),
 		Diagnostics: []protocol.Diagnostic{diagnostic},
 		Edit:        &workspaceEdit,
 	}
@@ -688,7 +688,7 @@ func createRemoveVariableAction(diagnostic protocol.Diagnostic, variableName str
 
 	action := protocol.CodeAction{
 		Title:       title,
-		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Kind:        stringPtr(protocol.CodeActionKindQuickFix),
 		Diagnostics: []protocol.Diagnostic{diagnostic},
 		Edit:        &workspaceEdit,
 	}
@@ -749,7 +749,7 @@ func createPrefixUnderscoreAction(diagnostic protocol.Diagnostic, variableName s
 
 	action := protocol.CodeAction{
 		Title:       title,
-		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Kind:        stringPtr(protocol.CodeActionKindQuickFix),
 		Diagnostics: []protocol.Diagnostic{diagnostic},
 		Edit:        &workspaceEdit,
 	}

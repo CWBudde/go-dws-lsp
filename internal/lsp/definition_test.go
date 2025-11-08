@@ -591,11 +591,6 @@ func TestFindIdentifierDefinition_LoopVariable(t *testing.T) {
 	if location.URI != uri {
 		t.Errorf("Expected URI %s, got %s", uri, location.URI)
 	}
-
-	// Loop variable should be at line 2 (0-based: line 1)
-	if false { // uint32 cannot be < 0
-		t.Errorf("Invalid line number: %d", location.Range.Start.Line)
-	}
 }
 
 func TestFindIdentifierDefinition_InvalidPosition(t *testing.T) {
