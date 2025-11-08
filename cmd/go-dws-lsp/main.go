@@ -51,6 +51,27 @@ func main() {
 		os.Exit(0)
 	}
 
+	printStartupInfo()
+
+	// Initialize server state
+	srv := server.New()
+
+	// Set up logging
+	setupLogging()
+
+	// Create GLSP handler and server
+	handler := createHandler()
+	glspServer := glspserver.NewServer(&handler, "go-dws-lsp", false)
+
+	// Store our server instance for handler access
+	lsp.SetServer(srv)
+
+	// Start server with appropriate transport
+	runServer(glspServer)
+}
+
+// printStartupInfo prints server startup information to stderr.
+func printStartupInfo() {
 	fmt.Fprintf(os.Stderr, "go-dws-lsp version %s starting...\n", version)
 	fmt.Fprintf(os.Stderr, "Transport: ")
 
@@ -61,15 +82,11 @@ func main() {
 	}
 
 	fmt.Fprintf(os.Stderr, "Log level: %s\n", logLevel)
+}
 
-	// Initialize server state
-	srv := server.New()
-
-	// Set up logging
-	setupLogging()
-
-	// Create GLSP handler
-	handler := protocol.Handler{
+// createHandler creates and configures the GLSP protocol handler.
+func createHandler() protocol.Handler {
+	return protocol.Handler{
 		Initialize:  lsp.Initialize,
 		Initialized: lsp.Initialized,
 		Shutdown:    lsp.Shutdown,
@@ -116,14 +133,10 @@ func main() {
 		// Text document requests (Phase 13: Code Actions)
 		TextDocumentCodeAction: lsp.CodeAction,
 	}
+}
 
-	// Create GLSP server
-	glspServer := glspserver.NewServer(&handler, "go-dws-lsp", false)
-
-	// Store our server instance for handler access
-	lsp.SetServer(srv)
-
-	// Start server with appropriate transport
+// runServer starts the GLSP server with the appropriate transport.
+func runServer(glspServer *glspserver.Server) {
 	if tcpMode {
 		fmt.Fprintf(os.Stderr, "Starting TCP server on port %d...\n", tcpPort)
 
