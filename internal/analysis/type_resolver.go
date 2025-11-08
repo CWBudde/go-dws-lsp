@@ -31,12 +31,12 @@ type TypeInfo struct {
 // ResolveMemberType resolves the type of an identifier at a given position.
 // This is used for member access completion (e.g., "myObject.").
 // Returns the type information or nil if the type cannot be determined.
-func ResolveMemberType(doc *server.Document, identifier string, line, character int) (*TypeInfo, error) {
+func ResolveMemberType(doc *server.Document, identifier string, line, character int) *TypeInfo {
 	log.Printf("ResolveMemberType: resolving type of '%s' at %d:%d", identifier, line, character)
 
 	if doc.Program == nil || doc.Program.AST() == nil {
 		log.Println("ResolveMemberType: no AST available")
-		return nil, nil
+		return nil
 	}
 
 	// Convert LSP position (0-based) to AST position (1-based)
@@ -54,7 +54,7 @@ func ResolveMemberType(doc *server.Document, identifier string, line, character 
 	locations := resolver.ResolveSymbol(identifier)
 	if len(locations) == 0 {
 		log.Printf("ResolveMemberType: could not find declaration for '%s'", identifier)
-		return nil, nil
+		return nil
 	}
 
 	// Get the first location (most relevant)
@@ -72,7 +72,7 @@ func ResolveMemberType(doc *server.Document, identifier string, line, character 
 		log.Printf("ResolveMemberType: could not determine type for '%s'", identifier)
 	}
 
-	return typeInfo, nil
+	return typeInfo
 }
 
 // extractTypeFromLocation finds the declaration node at the given location

@@ -27,7 +27,7 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in CodeAction")
-		return nil, nil
+		return []protocol.CodeAction{}, nil
 	}
 
 	// Extract document URI, range, and context from params
@@ -48,7 +48,7 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found for code action: %s\n", uri)
-		return nil, nil
+		return []protocol.CodeAction{}, nil
 	}
 
 	// Check if document has AST available
@@ -423,14 +423,14 @@ func createDeclareFunctionAction(diagnostic protocol.Diagnostic, identifierName 
 	functionSignature := generateFunctionSignature(identifierName, args)
 
 	// Find the appropriate insertion location
-	insertPosition, indentation := findFunctionInsertionLocation(diagnostic, doc)
+	insertPosition := findFunctionInsertionLocation(diagnostic, doc)
 
-	// Generate the function declaration with proper indentation
-	functionDecl := indentation + functionSignature + "\n" +
-		indentation + "begin\n" +
-		indentation + "  // TODO: Implement " + identifierName + "\n" +
-		indentation + "  Result := nil;\n" +
-		indentation + "end;\n"
+	// Generate the function declaration
+	functionDecl := functionSignature + "\n" +
+		"begin\n" +
+		"  // TODO: Implement " + identifierName + "\n" +
+		"  Result := nil;\n" +
+		"end;\n"
 
 	textEdit := protocol.TextEdit{
 		Range: protocol.Range{
@@ -461,11 +461,11 @@ func createDeclareFunctionAction(diagnostic protocol.Diagnostic, identifierName 
 }
 
 // findFunctionInsertionLocation determines where to insert a function declaration.
-// Returns the position and indentation string.
+// Returns the position where the function should be inserted.
 // Functions should be inserted at the top level (global scope) or in the implementation section.
-func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document) (protocol.Position, string) {
+func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document) protocol.Position {
 	if doc.Text == "" {
-		return protocol.Position{Line: 0, Character: 0}, ""
+		return protocol.Position{Line: 0, Character: 0}
 	}
 
 	lines := strings.Split(doc.Text, "\n")
@@ -481,7 +481,7 @@ func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.D
 	if implLine >= 0 {
 		// Insert after implementation keyword
 		insertLine := implLine + 1
-		return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+		return protocol.Position{Line: uint32(insertLine), Character: 0}
 	}
 
 	// Find last function declaration before error line
@@ -491,7 +491,7 @@ func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.D
 		funcEndLine := findFunctionEnd(lines, lastFuncLine)
 		if funcEndLine >= 0 {
 			insertLine := funcEndLine + 1
-			return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+			return protocol.Position{Line: uint32(insertLine), Character: 0}
 		}
 	}
 
@@ -499,13 +499,13 @@ func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.D
 	lastVarLine := findLastGlobalVarDeclaration(lines, len(lines))
 	if lastVarLine >= 0 {
 		insertLine := lastVarLine + 1
-		return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+		return protocol.Position{Line: uint32(insertLine), Character: 0}
 	}
 
 	// Default to after program header
 	insertAfterLine := findProgramHeader(lines)
 
-	return protocol.Position{Line: uint32(insertAfterLine + 1), Character: 0}, ""
+	return protocol.Position{Line: uint32(insertAfterLine + 1), Character: 0}
 }
 
 // findImplementationSection finds the "implementation" keyword line.
@@ -596,7 +596,7 @@ func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName 
 
 	action := protocol.CodeAction{
 		Title:       title,
-		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Kind:        stringPtr(protocol.CodeActionKindQuickFix),
 		Diagnostics: []protocol.Diagnostic{diagnostic},
 		Edit:        &workspaceEdit,
 	}
@@ -984,7 +984,7 @@ func GenerateSourceActions(doc *server.Document, uri string, context protocol.Co
 
 	// Check if source actions are requested
 	// If only specific kinds are requested, check if source actions are included
-	if context.Only != nil && len(context.Only) > 0 {
+	if len(context.Only) > 0 {
 		hasSourceKind := false
 
 		for _, kind := range context.Only {

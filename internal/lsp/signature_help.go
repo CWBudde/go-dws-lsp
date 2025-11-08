@@ -18,7 +18,7 @@ func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) 
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in SignatureHelp")
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Extract document URI and position from params
@@ -31,19 +31,19 @@ func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) 
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found: %s\n", uri)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Check if document and AST are available
 	if doc.Program == nil {
 		log.Printf("No program available for document: %s\n", uri)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	programAST := doc.Program.AST()
 	if programAST == nil {
 		log.Printf("No AST available for document: %s\n", uri)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Convert LSP position (0-based, UTF-16) to document position (1-based, UTF-8)

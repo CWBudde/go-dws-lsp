@@ -25,7 +25,7 @@ require (
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.2.0 // indirect
 	github.com/tliron/commonlog v0.2.17 // indirect
-	github.com/tliron/kutil v0.3.24 // indirect
+	github.com/tliron/kutil v0.3.25 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
@@ -37,4 +37,3 @@ require (
 // replace github.com/cwbudde/go-dws => /tmp/go-dws
 
 // Workaround for Windows termenv issue in kutil v0.3.11
-replace github.com/tliron/kutil => github.com/tliron/kutil v0.3.25

@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -734,7 +735,7 @@ func parseCodeForHoverTest(code string) (*dwscript.Program, error) {
 	// Use the analysis package's ParseDocument to parse the code
 	program, _, err := analysis.ParseDocument(code, "test.dws")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse code: %w", err)
 	}
 
 	return program, nil

@@ -19,7 +19,7 @@ func DocumentSymbol(context *glsp.Context, params *protocol.DocumentSymbolParams
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in DocumentSymbol")
-		return nil, nil
+		return []protocol.DocumentSymbol{}, nil
 	}
 
 	// Extract document URI from params
@@ -30,13 +30,13 @@ func DocumentSymbol(context *glsp.Context, params *protocol.DocumentSymbolParams
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found for document symbols: %s\n", uri)
-		return nil, nil
+		return []protocol.DocumentSymbol{}, nil
 	}
 
 	// Check if document has valid AST
 	if doc.Program == nil || doc.Program.AST() == nil {
 		log.Printf("No AST available for document symbols (document has parse errors): %s\n", uri)
-		return nil, nil
+		return []protocol.DocumentSymbol{}, nil
 	}
 
 	programAST := doc.Program.AST()

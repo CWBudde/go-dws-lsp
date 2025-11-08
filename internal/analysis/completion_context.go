@@ -13,8 +13,11 @@ import (
 type CompletionContextType int
 
 const (
+	// CompletionContextNone represents no completion (inside comments, strings, etc.)
+	CompletionContextNone CompletionContextType = iota
+
 	// CompletionContextGeneral represents general code completion (identifiers, keywords, etc.)
-	CompletionContextGeneral CompletionContextType = iota
+	CompletionContextGeneral
 
 	// CompletionContextMember represents member access completion (after a dot).
 	CompletionContextMember
@@ -58,14 +61,16 @@ func DetermineContext(doc *server.Document, line, character int) (*CompletionCon
 
 	// Check if we're inside a comment
 	if isInsideComment(textBeforeCursor, doc.Text, line, character) {
-		// Return nil to indicate no completion should be provided
-		return nil, nil
+		// Return a context with type None to indicate no completion should be provided
+		ctx.Type = CompletionContextNone
+		return ctx, nil
 	}
 
 	// Check if we're inside a string literal
 	if isInsideString(textBeforeCursor) {
-		// Return nil to indicate no completion should be provided
-		return nil, nil
+		// Return a context with type None to indicate no completion should be provided
+		ctx.Type = CompletionContextNone
+		return ctx, nil
 	}
 
 	// Check for member access pattern (identifier followed by dot)

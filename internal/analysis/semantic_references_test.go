@@ -17,7 +17,7 @@ func compileCode(t *testing.T, code string) *dwscript.Program {
 	}
 
 	if program == nil {
-		if compileMsgs != nil && len(compileMsgs) > 0 {
+		if len(compileMsgs) > 0 {
 			t.Logf("Compilation errors:")
 
 			for _, msg := range compileMsgs {

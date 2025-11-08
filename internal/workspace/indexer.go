@@ -598,7 +598,7 @@ func FallbackSearch(workspaceFolders []string, query string, maxResults int) []S
 		// Walk through the folder
 		err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				return nil // Skip errors
+				return err // Return walk errors
 			}
 
 			// Skip directories

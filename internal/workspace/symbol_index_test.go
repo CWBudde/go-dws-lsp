@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -463,13 +462,14 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 		nameLower := strings.ToLower(result.Name)
 
 		var currentMatchType matchType
-		if nameLower == "test" {
+		switch {
+		case nameLower == "test":
 			currentMatchType = matchExact
 			exactCount++
-		} else if strings.HasPrefix(nameLower, "test") {
+		case strings.HasPrefix(nameLower, "test"):
 			currentMatchType = matchPrefix
 			prefixCount++
-		} else {
+		default:
 			currentMatchType = matchSubstring
 			substringCount++
 		}
@@ -611,9 +611,4 @@ func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
 			t.Errorf("Result %d (%s) should contain 'get'", i, results[i].Name)
 		}
 	}
-}
-
-// Helper function for tests.
-func contains(slice []string, item string) bool {
-	return slices.Contains(slice, item)
 }

@@ -7,8 +7,10 @@ import (
 	"github.com/cwbudde/go-dws/pkg/token"
 )
 
-const testClassNameMyClass = "MyClass"
-const testFieldName = "field"
+const (
+	testClassNameMyClass = "MyClass"
+	testFieldName        = "field"
+)
 
 func TestIdentifySymbolAtPosition_Identifier(t *testing.T) {
 	ident := &ast.Identifier{

@@ -19,42 +19,42 @@ func SemanticTokensFull(context *glsp.Context, params *protocol.SemanticTokensPa
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Error: server instance not available")
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Get document from store
 	doc, ok := srv.Documents().Get(string(params.TextDocument.URI))
 	if !ok || doc == nil {
 		log.Printf("Document not found: %s\n", params.TextDocument.URI)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Check if document has a valid program
 	program := doc.Program
 	if program == nil {
 		log.Printf("Document has no program: %s\n", params.TextDocument.URI)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Get the AST
 	ast := program.AST()
 	if ast == nil {
 		log.Printf("Document AST is nil: %s\n", params.TextDocument.URI)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Get the semantic tokens legend
 	legend := srv.SemanticTokensLegend()
 	if legend == nil {
 		log.Println("Error: semantic tokens legend not available")
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Collect semantic tokens from AST
 	tokens, err := analysis.CollectSemanticTokens(ast, legend)
 	if err != nil {
 		log.Printf("Error collecting semantic tokens: %v\n", err)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Generate a resultId for delta support
@@ -88,42 +88,42 @@ func SemanticTokensFullDelta(context *glsp.Context, params *protocol.SemanticTok
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Error: server instance not available")
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Get document from store
 	doc, ok := srv.Documents().Get(string(params.TextDocument.URI))
 	if !ok || doc == nil {
 		log.Printf("Document not found: %s\n", params.TextDocument.URI)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Check if document has a valid program
 	program := doc.Program
 	if program == nil {
 		log.Printf("Document has no program: %s\n", params.TextDocument.URI)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Get the AST
 	ast := program.AST()
 	if ast == nil {
 		log.Printf("Document AST is nil: %s\n", params.TextDocument.URI)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Get the semantic tokens legend
 	legend := srv.SemanticTokensLegend()
 	if legend == nil {
 		log.Println("Error: semantic tokens legend not available")
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Collect new semantic tokens from AST
 	newTokens, err := analysis.CollectSemanticTokens(ast, legend)
 	if err != nil {
 		log.Printf("Error collecting semantic tokens: %v\n", err)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
 	// Generate new resultId

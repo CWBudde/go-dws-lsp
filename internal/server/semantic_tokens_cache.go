@@ -88,7 +88,7 @@ func (c *SemanticTokensCache) InvalidateDocument(uri protocol.DocumentUri) {
 	// Remove all cache entries for this document
 	for key := range c.cache {
 		// Keys are in format "uri:resultId", check if they start with this URI
-		if len(key) > len(uri) && key[:len(uri)] == string(uri) && key[len(uri)] == ':' {
+		if len(key) > len(uri) && key[:len(uri)] == uri && key[len(uri)] == ':' {
 			delete(c.cache, key)
 		}
 	}
