@@ -487,8 +487,12 @@ func TestDocumentSymbol_DocumentNotFound(t *testing.T) {
 		t.Fatalf("DocumentSymbol failed: %v", err)
 	}
 
-	// Should return nil for non-existent document
-	if result != nil {
-		t.Errorf("Expected nil for non-existent document, got %v", result)
+	symbols, ok := result.([]protocol.DocumentSymbol)
+	if !ok {
+		t.Fatalf("Expected []protocol.DocumentSymbol for non-existent document, got %T", result)
+	}
+
+	if len(symbols) != 0 {
+		t.Errorf("Expected 0 symbols for non-existent document, got %d", len(symbols))
 	}
 }

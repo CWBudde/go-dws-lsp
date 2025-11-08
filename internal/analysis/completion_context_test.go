@@ -102,9 +102,9 @@ end.`
 		t.Fatalf("DetermineContext failed: %v", err)
 	}
 
-	// Context should be nil when inside a comment
-	if ctx != nil {
-		t.Error("Expected nil context when inside comment")
+	// Context should explicitly signal "none" when inside a comment
+	if ctx == nil || ctx.Type != CompletionContextNone {
+		t.Error("Expected CompletionContextNone when inside comment")
 	}
 }
 
@@ -131,9 +131,9 @@ end.`
 		t.Fatalf("DetermineContext failed: %v", err)
 	}
 
-	// Context should be nil when inside a string
-	if ctx != nil {
-		t.Error("Expected nil context when inside string")
+	// Context should explicitly signal "none" when inside a string
+	if ctx == nil || ctx.Type != CompletionContextNone {
+		t.Error("Expected CompletionContextNone when inside string")
 	}
 }
 

@@ -196,13 +196,18 @@ func TestCompletion_NonExistentDocument(t *testing.T) {
 	// Call Completion handler
 	ctx := &glsp.Context{}
 	result, err := Completion(ctx, params)
-	// Should return nil without error (graceful handling)
+	// Should return an empty completion list without error (graceful handling)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
 
-	if result != nil {
-		t.Fatalf("Expected nil result for non-existent document, got %v", result)
+	list, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList for non-existent document, got %T", result)
+	}
+
+	if len(list.Items) != 0 || list.IsIncomplete {
+		t.Fatalf("Expected empty completion list for non-existent document, got %+v", list)
 	}
 }
 
