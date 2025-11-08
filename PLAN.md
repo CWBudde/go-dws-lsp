@@ -154,13 +154,25 @@ This document tracks the implementation status of the go-dws Language Server Pro
     - [ ] Small project (single file, ~100 LOC)
     - [ ] Medium project (5-10 files, ~1000 LOC)
     - [ ] Large project (50+ files, ~10000 LOC)
-  - [ ] Create `test/integration/` directory
-  - [ ] Write integration test suite that:
-    - [ ] Starts LSP server
-    - [ ] Opens project files
-    - [ ] Executes all LSP operations
-    - [ ] Verifies expected responses
-  - [ ] Run tests with `-race` flag to detect race conditions
+  - [x] Create `test/integration/` directory - DONE
+  - [x] Write integration test suite framework - DONE
+    - [x] Setup helper functions
+    - [x] Server lifecycle management
+  - [ ] Integration tests for all LSP operations (26 tests exist, 7 LSP features missing):
+    - [x] Initialize/Shutdown workflow (2 tests) - lsp_integration_test.go
+    - [x] Document lifecycle (didOpen/didChange/didClose) (4 tests) - lsp_integration_test.go
+    - [x] Diagnostics (1 test) - lsp_integration_test.go
+    - [x] Hover (6 tests) - hover_integration_test.go
+    - [x] Go to Definition (7 tests) - definition_integration_test.go
+    - [x] Signature Help (7 tests) - signature_help_integration_test.go
+    - [ ] Find References (0 tests) - MISSING
+    - [ ] Document Symbols (0 tests) - MISSING
+    - [ ] Workspace Symbols (0 tests) - MISSING
+    - [ ] Code Completion (0 tests) - MISSING
+    - [ ] Rename (0 tests) - MISSING
+    - [ ] Semantic Tokens (0 tests) - MISSING
+    - [ ] Code Actions (0 tests) - MISSING
+  - [x] Run tests with `-race` flag - Available via `go test -race -tags=integration ./test/integration/...`
   - [ ] Document any issues found and verify fixes
 
 - [ ] **15.3 Test all features together in VSCode with sample projects**
