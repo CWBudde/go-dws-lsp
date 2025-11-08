@@ -9,22 +9,27 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// Helper function to parse DWScript code for testing
+// Helper function to parse DWScript code for testing.
 func parseCode(t *testing.T, code string) *ast.Program {
 	t.Helper()
+
 	program, compileMsgs, err := ParseDocument(code, "test.dws")
 	if err != nil {
 		t.Fatalf("Failed to parse test code: %v", err)
 	}
+
 	if program == nil {
 		if compileMsgs != nil && len(compileMsgs) > 0 {
 			t.Logf("Compilation errors:")
+
 			for _, msg := range compileMsgs {
 				t.Logf("  - %s", msg.Message)
 			}
 		}
+
 		t.Fatal("ParseDocument returned nil program")
 	}
+
 	return program.AST()
 }
 
@@ -687,6 +692,7 @@ end;
 		if loc.URI == "file:///lib/helpers.dws" {
 			foundHelpers = true
 		}
+
 		if loc.URI == "file:///lib/utils.dws" {
 			foundUtils = true
 		}

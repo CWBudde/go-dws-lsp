@@ -3,9 +3,8 @@ package lsp
 import (
 	"testing"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // TestCanRenameSymbol_Keywords tests that DWScript keywords cannot be renamed.
@@ -371,6 +370,7 @@ func TestBuildWorkspaceEdit(t *testing.T) {
 
 			// Count total edits across all documents
 			totalEdits := 0
+
 			for _, change := range edit.DocumentChanges {
 				if textDocEdit, ok := change.(protocol.TextDocumentEdit); ok {
 					totalEdits += len(textDocEdit.Edits)
@@ -450,6 +450,7 @@ func TestConvertToEdits(t *testing.T) {
 			if textEdit.NewText != textEdits[i].NewText {
 				t.Errorf("edit[%d]: expected NewText '%s', got '%s'", i, textEdits[i].NewText, textEdit.NewText)
 			}
+
 			if textEdit.Range.Start.Line != textEdits[i].Range.Start.Line {
 				t.Errorf("edit[%d]: expected Line %d, got %d", i, textEdits[i].Range.Start.Line, textEdit.Range.Start.Line)
 			}

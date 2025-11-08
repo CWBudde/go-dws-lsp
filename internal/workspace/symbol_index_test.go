@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -126,6 +127,7 @@ func TestSymbolIndex_FindSymbol_MultipleLocations(t *testing.T) {
 		if loc.Location.URI == uri1 {
 			foundUri1 = true
 		}
+
 		if loc.Location.URI == uri2 {
 			foundUri2 = true
 		}
@@ -362,17 +364,19 @@ func TestSymbolIndex_ThreadSafety(t *testing.T) {
 
 	// Concurrent writes
 	go func() {
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			index.AddSymbol("Func1", protocol.SymbolKindFunction, uri, symbolRange, "", "")
 		}
+
 		done <- true
 	}()
 
 	// Concurrent reads
 	go func() {
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			index.FindSymbol("Func1")
 		}
+
 		done <- true
 	}()
 
@@ -429,12 +433,12 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 	}
 
 	// Add symbols with different match types for query "test"
-	index.AddSymbol("test", protocol.SymbolKindFunction, uri, symbolRange, "", "")           // Exact match
-	index.AddSymbol("TEST", protocol.SymbolKindConstant, uri, symbolRange, "", "")           // Exact match (case insensitive)
-	index.AddSymbol("testFunc", protocol.SymbolKindFunction, uri, symbolRange, "", "")       // Prefix match
-	index.AddSymbol("TestClass", protocol.SymbolKindClass, uri, symbolRange, "", "")         // Prefix match (case insensitive)
-	index.AddSymbol("myTest", protocol.SymbolKindClass, uri, symbolRange, "", "")            // Substring match
-	index.AddSymbol("aTestHelper", protocol.SymbolKindFunction, uri, symbolRange, "", "")    // Substring match
+	index.AddSymbol("test", protocol.SymbolKindFunction, uri, symbolRange, "", "")        // Exact match
+	index.AddSymbol("TEST", protocol.SymbolKindConstant, uri, symbolRange, "", "")        // Exact match (case insensitive)
+	index.AddSymbol("testFunc", protocol.SymbolKindFunction, uri, symbolRange, "", "")    // Prefix match
+	index.AddSymbol("TestClass", protocol.SymbolKindClass, uri, symbolRange, "", "")      // Prefix match (case insensitive)
+	index.AddSymbol("myTest", protocol.SymbolKindClass, uri, symbolRange, "", "")         // Substring match
+	index.AddSymbol("aTestHelper", protocol.SymbolKindFunction, uri, symbolRange, "", "") // Substring match
 
 	// Search for "test"
 	results := index.Search("test", 100)
@@ -468,6 +472,7 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 		if currentMatchType < lastMatchType {
 			t.Errorf("Result %d (%s) has better match type than previous result", i, result.Name)
 		}
+
 		lastMatchType = currentMatchType
 	}
 
@@ -475,9 +480,11 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 	if exactCount != 2 {
 		t.Errorf("Expected 2 exact matches, got %d", exactCount)
 	}
+
 	if prefixCount != 2 {
 		t.Errorf("Expected 2 prefix matches, got %d", prefixCount)
 	}
+
 	if substringCount != 2 {
 		t.Errorf("Expected 2 substring matches, got %d", substringCount)
 	}
@@ -501,7 +508,7 @@ func TestSymbolIndex_Search_MaxResults(t *testing.T) {
 	}
 
 	// Add many symbols
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		index.AddSymbol("func"+string(rune('A'+i)), protocol.SymbolKindFunction, uri, symbolRange, "", "")
 	}
 
@@ -569,10 +576,10 @@ func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
 	}
 
 	// Add symbols that demonstrate prefix vs substring matching
-	index.AddSymbol("getUserName", protocol.SymbolKindFunction, uri, symbolRange, "", "")     // Prefix "get"
-	index.AddSymbol("getPassword", protocol.SymbolKindFunction, uri, symbolRange, "", "")     // Prefix "get"
-	index.AddSymbol("targetPath", protocol.SymbolKindVariable, uri, symbolRange, "", "")      // Substring "get"
-	index.AddSymbol("budgetData", protocol.SymbolKindVariable, uri, symbolRange, "", "")      // Substring "get"
+	index.AddSymbol("getUserName", protocol.SymbolKindFunction, uri, symbolRange, "", "") // Prefix "get"
+	index.AddSymbol("getPassword", protocol.SymbolKindFunction, uri, symbolRange, "", "") // Prefix "get"
+	index.AddSymbol("targetPath", protocol.SymbolKindVariable, uri, symbolRange, "", "")  // Substring "get"
+	index.AddSymbol("budgetData", protocol.SymbolKindVariable, uri, symbolRange, "", "")  // Substring "get"
 
 	results := index.Search("get", 100)
 
@@ -582,7 +589,7 @@ func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
 
 	// First two should be prefix matches (getUserName, getPassword)
 	// Last two should be substring matches (targetPath, budgetData)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if !strings.HasPrefix(strings.ToLower(results[i].Name), "get") {
 			t.Errorf("Result %d (%s) should be a prefix match", i, results[i].Name)
 		}
@@ -593,18 +600,14 @@ func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
 		if strings.HasPrefix(nameLower, "get") {
 			t.Errorf("Result %d (%s) should be a substring match, not prefix", i, results[i].Name)
 		}
+
 		if !strings.Contains(nameLower, "get") {
 			t.Errorf("Result %d (%s) should contain 'get'", i, results[i].Name)
 		}
 	}
 }
 
-// Helper function for tests
+// Helper function for tests.
 func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, item)
 }

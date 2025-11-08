@@ -4,6 +4,7 @@ package analysis
 import (
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
@@ -292,6 +293,7 @@ func GetTypeMembers(doc *server.Document, typeName string) ([]protocol.Completio
 	sortCompletionItems(items)
 
 	log.Printf("GetTypeMembers: found %d members for type '%s'", len(items), typeName)
+
 	return items, nil
 }
 
@@ -301,6 +303,7 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 
 	// Find the class declaration
 	var classDecl *ast.ClassDecl
+
 	ast.Inspect(program, func(node ast.Node) bool {
 		if node == nil {
 			return false
@@ -322,6 +325,7 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 
 	// Extract fields
 	plainTextFormat := protocol.InsertTextFormatPlainText
+
 	for _, field := range classDecl.Fields {
 		if field.Name == nil {
 			continue
@@ -348,9 +352,11 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		if field.IsClassVar {
 			docValue = "**Class variable** (static field)"
 		}
+
 		if field.Type != nil {
 			docValue += "\n\n```pascal\n" + field.Name.Value + ": " + field.Type.String() + "\n```"
 		}
+
 		doc := protocol.MarkupContent{
 			Kind:  protocol.MarkupKindMarkdown,
 			Value: docValue,
@@ -380,6 +386,7 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		if method.IsClassMethod {
 			docValue = "**Class method** (static method)"
 		}
+
 		docValue += "\n\n```pascal\n" + signature + "\n```"
 		doc := protocol.MarkupContent{
 			Kind:  protocol.MarkupKindMarkdown,
@@ -423,16 +430,19 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 
 		// Add documentation about read/write access with MarkupContent
 		docValue := "**Property**"
+
 		accessMode := ""
 		if prop.ReadSpec != nil && prop.WriteSpec == nil {
 			accessMode = " (read-only)"
 		} else if prop.ReadSpec == nil && prop.WriteSpec != nil {
 			accessMode = " (write-only)"
 		}
+
 		docValue += accessMode
 		if prop.Type != nil {
 			docValue += "\n\n```pascal\nproperty " + prop.Name.Value + ": " + prop.Type.String() + "\n```"
 		}
+
 		doc := protocol.MarkupContent{
 			Kind:  protocol.MarkupKindMarkdown,
 			Value: docValue,
@@ -451,6 +461,7 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 
 	// Find the record declaration
 	var recordDecl *ast.RecordDecl
+
 	ast.Inspect(program, func(node ast.Node) bool {
 		if node == nil {
 			return false
@@ -472,6 +483,7 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 
 	// Extract fields
 	plainTextFormat := protocol.InsertTextFormatPlainText
+
 	for _, field := range recordDecl.Fields {
 		if field.Name == nil {
 			continue
@@ -498,6 +510,7 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 		if field.Type != nil {
 			docValue += "\n\n```pascal\n" + field.Name.Value + ": " + field.Type.String() + "\n```"
 		}
+
 		doc := protocol.MarkupContent{
 			Kind:  protocol.MarkupKindMarkdown,
 			Value: docValue,
@@ -517,14 +530,16 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 
 	// Add parameters
 	signature += "("
+	var signatureSb520 strings.Builder
+
 	for i, param := range method.Parameters {
 		if i > 0 {
-			signature += ", "
+			signatureSb520.WriteString(", ")
 		}
 
 		// Add parameter modifiers
 		if param.ByRef {
-			signature += "var "
+			signatureSb520.WriteString("var ")
 		} else if param.IsConst {
 			signature += "const "
 		} else if param.IsLazy {
@@ -533,17 +548,20 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 
 		// Add parameter name and type
 		if param.Name != nil {
-			signature += param.Name.Value
+			signatureSb520.WriteString(param.Name.Value)
 		}
+
 		if param.Type != nil {
-			signature += ": " + param.Type.String()
+			signatureSb520.WriteString(": " + param.Type.String())
 		}
 
 		// Add default value if present
 		if param.DefaultValue != nil {
-			signature += " = " + param.DefaultValue.String()
+			signatureSb520.WriteString(" = " + param.DefaultValue.String())
 		}
 	}
+	signature += signatureSb520.String()
+
 	signature += ")"
 
 	// Add return type
@@ -556,7 +574,7 @@ func buildMethodSignature(method *ast.FunctionDecl) string {
 
 // buildMethodSnippet builds an LSP snippet string for method insertion.
 // Returns the snippet string and insertTextFormat.
-// Example: "MyMethod(${1:param1}, ${2:param2})$0"
+// Example: "MyMethod(${1:param1}, ${2:param2})$0".
 func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFormat) {
 	if method.Name == nil {
 		return "", protocol.InsertTextFormatPlainText
@@ -569,21 +587,24 @@ func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFo
 
 	snippet := method.Name.Value + "("
 
+	var snippetSb572 strings.Builder
 	for i, param := range method.Parameters {
 		if i > 0 {
-			snippet += ", "
+			snippetSb572.WriteString(", ")
 		}
 
 		// Add tabstop with parameter name as placeholder
 		tabstopNum := i + 1
+
 		paramName := "param"
 		if param.Name != nil {
 			paramName = param.Name.Value
 		}
 
 		// Build tabstop: ${1:paramName}
-		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+		snippetSb572.WriteString("${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}")
 	}
+	snippet += snippetSb572.String()
 
 	snippet += ")$0" // $0 is the final cursor position
 

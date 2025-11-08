@@ -31,9 +31,11 @@ func ApplyContentChange(text string, change protocol.TextDocumentContentChangeEv
 	if startLine < 0 || startLine >= len(lines) {
 		return "", fmt.Errorf("start line %d out of range (0-%d)", startLine, len(lines)-1)
 	}
+
 	if endLine < 0 || endLine >= len(lines) {
 		return "", fmt.Errorf("end line %d out of range (0-%d)", endLine, len(lines)-1)
 	}
+
 	if startLine > endLine {
 		return "", fmt.Errorf("start line %d after end line %d", startLine, endLine)
 	}
@@ -59,11 +61,13 @@ func ApplyContentChange(text string, change protocol.TextDocumentContentChangeEv
 		newLine := before + change.Text + after
 
 		// Reconstruct document
-		for i := 0; i < startLine; i++ {
+		for i := range startLine {
 			result.WriteString(lines[i])
 			result.WriteString("\n")
 		}
+
 		result.WriteString(newLine)
+
 		for i := startLine + 1; i < len(lines); i++ {
 			result.WriteString("\n")
 			result.WriteString(lines[i])
@@ -74,13 +78,15 @@ func ApplyContentChange(text string, change protocol.TextDocumentContentChangeEv
 		after := lines[endLine][endByteOffset:]
 
 		// Reconstruct document
-		for i := 0; i < startLine; i++ {
+		for i := range startLine {
 			result.WriteString(lines[i])
 			result.WriteString("\n")
 		}
+
 		result.WriteString(before)
 		result.WriteString(change.Text)
 		result.WriteString(after)
+
 		for i := endLine + 1; i < len(lines); i++ {
 			result.WriteString("\n")
 			result.WriteString(lines[i])
@@ -107,6 +113,7 @@ func utf16CharOffsetToByteOffset(line string, utf16Offset int) (int, error) {
 		if utf16Offset == len(utf16Units) {
 			return len(line), nil
 		}
+
 		return 0, fmt.Errorf("UTF-16 offset %d exceeds line length %d", utf16Offset, len(utf16Units))
 	}
 
@@ -145,7 +152,7 @@ func PositionToOffset(text string, line, character int) (int, error) {
 
 	// Calculate offset: sum of all previous lines + newlines + character offset in current line
 	offset := 0
-	for i := 0; i < line; i++ {
+	for i := range line {
 		offset += len(lines[i]) + 1 // +1 for newline
 	}
 
@@ -173,12 +180,15 @@ func OffsetToPosition(text string, offset int) (line, character int, err error) 
 		if currentOffset+lineLen >= offset {
 			// Offset is in this line
 			byteOffsetInLine := offset - currentOffset
+
 			utf16Offset, err := byteOffsetToUTF16Offset(lineText, byteOffsetInLine)
 			if err != nil {
 				return 0, 0, err
 			}
+
 			return i, utf16Offset, nil
 		}
+
 		currentOffset += lineLen + 1 // +1 for newline
 		currentLine++
 	}

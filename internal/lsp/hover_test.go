@@ -4,11 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/dwscript"
 	"github.com/cwbudde/go-dws/pkg/token"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 )
 
 func TestGetIdentifierHover(t *testing.T) {
@@ -42,6 +41,7 @@ func TestGetIdentifierHover(t *testing.T) {
 			if !strings.Contains(result, tt.expected) {
 				t.Errorf("Expected hover to contain %q, got %q", tt.expected, result)
 			}
+
 			if !strings.Contains(result, "```dwscript") {
 				t.Error("Expected hover to contain markdown code block")
 			}
@@ -192,15 +192,15 @@ func TestGetConstHover(t *testing.T) {
 
 func TestGetClassHover(t *testing.T) {
 	tests := []struct {
-		name     string
+		name      string
 		classDecl *ast.ClassDecl
-		expected []string
+		expected  []string
 	}{
 		{
 			name: "simple class",
 			classDecl: &ast.ClassDecl{
-				Name:   &ast.Identifier{Value: "MyClass"},
-				Fields: []*ast.FieldDecl{{}, {}},
+				Name:    &ast.Identifier{Value: "MyClass"},
+				Fields:  []*ast.FieldDecl{{}, {}},
 				Methods: []*ast.FunctionDecl{{}, {}, {}},
 			},
 			expected: []string{"type", "MyClass", "= class", "2 field(s)", "3 method(s)"},
@@ -328,24 +328,24 @@ func TestHover_VariableDeclaration(t *testing.T) {
 		expected []string
 	}{
 		{
-			name: "simple variable declaration",
-			code: "var x: Integer;",
-			line: 1,
-			col:  5, // position on 'x'
+			name:     "simple variable declaration",
+			code:     "var x: Integer;",
+			line:     1,
+			col:      5,             // position on 'x'
 			expected: []string{"x"}, // Currently returns identifier info
 		},
 		{
-			name: "variable with initialization",
-			code: "var count: Integer := 42;",
-			line: 1,
-			col:  5, // position on 'count'
+			name:     "variable with initialization",
+			code:     "var count: Integer := 42;",
+			line:     1,
+			col:      5,                 // position on 'count'
 			expected: []string{"count"}, // Currently returns identifier info
 		},
 		{
-			name: "multiple variables",
-			code: "var x, y: Float;",
-			line: 1,
-			col:  5, // position on 'x'
+			name:     "multiple variables",
+			code:     "var x, y: Float;",
+			line:     1,
+			col:      5,             // position on 'x'
 			expected: []string{"x"}, // Currently returns identifier info
 		},
 	}
@@ -400,8 +400,8 @@ func TestHover_FunctionDeclaration(t *testing.T) {
 begin
   Result := a + b;
 end;`,
-			line: 1,
-			col:  10, // position on 'Add'
+			line:     1,
+			col:      10,              // position on 'Add'
 			expected: []string{"Add"}, // Currently returns identifier
 		},
 		{
@@ -410,8 +410,8 @@ end;`,
 begin
   PrintLn(name);
 end;`,
-			line: 1,
-			col:  11, // position on 'DoWork'
+			line:     1,
+			col:      11,                 // position on 'DoWork'
 			expected: []string{"DoWork"}, // Currently returns identifier
 		},
 		{
@@ -422,8 +422,8 @@ begin
   a := b;
   b := temp;
 end;`,
-			line: 1,
-			col:  10, // position on 'Swap'
+			line:     1,
+			col:      10,               // position on 'Swap'
 			expected: []string{"Swap"}, // Currently returns identifier
 		},
 	}
@@ -679,7 +679,7 @@ func TestHover_BuiltInTypes(t *testing.T) {
 }
 
 // Helper function to test hover at a specific position
-// Returns the hover content string, or empty string if no hover
+// Returns the hover content string, or empty string if no hover.
 func testHoverAtPosition(t *testing.T, code string, line, col int) string {
 	t.Helper()
 
@@ -690,6 +690,7 @@ func testHoverAtPosition(t *testing.T, code string, line, col int) string {
 		if strings.Contains(t.Name(), "MissingAST") || strings.Contains(t.Name(), "InvalidPositions") {
 			return ""
 		}
+
 		t.Fatalf("Failed to parse code: %v\nCode:\n%s", err, code)
 	}
 
@@ -698,6 +699,7 @@ func testHoverAtPosition(t *testing.T, code string, line, col int) string {
 		if strings.Contains(t.Name(), "MissingAST") {
 			return ""
 		}
+
 		t.Fatal("Program is nil")
 	}
 
@@ -707,6 +709,7 @@ func testHoverAtPosition(t *testing.T, code string, line, col int) string {
 		if strings.Contains(t.Name(), "MissingAST") {
 			return ""
 		}
+
 		t.Fatal("AST is nil")
 	}
 
@@ -726,12 +729,13 @@ func testHoverAtPosition(t *testing.T, code string, line, col int) string {
 	return content
 }
 
-// Helper to parse DWScript code for hover tests
+// Helper to parse DWScript code for hover tests.
 func parseCodeForHoverTest(code string) (*dwscript.Program, error) {
 	// Use the analysis package's ParseDocument to parse the code
 	program, _, err := analysis.ParseDocument(code, "test.dws")
 	if err != nil {
 		return nil, err
 	}
+
 	return program, nil
 }

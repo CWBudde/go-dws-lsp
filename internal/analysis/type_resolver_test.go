@@ -20,6 +20,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -35,7 +36,6 @@ end.`
 	// Resolve type of 'x' at the position where the cursor would be
 	// Line 3 (0-based), character 2 (after 'x')
 	typeInfo, err := ResolveMemberType(doc, "x", 3, 2)
-
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -64,6 +64,7 @@ end;`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -77,7 +78,6 @@ end;`
 
 	// Resolve type of parameter 's'
 	typeInfo, err := ResolveMemberType(doc, "s", 3, 2)
-
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -112,6 +112,7 @@ end;`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -125,7 +126,6 @@ end;`
 
 	// Resolve type of field 'FValue'
 	typeInfo, err := ResolveMemberType(doc, "FValue", 9, 2)
-
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -159,6 +159,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -172,7 +173,6 @@ end.`
 
 	// Resolve type of 'p'
 	typeInfo, err := ResolveMemberType(doc, "p", 8, 2)
-
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -201,6 +201,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -214,7 +215,6 @@ end.`
 
 	// Try to resolve a non-existent identifier
 	typeInfo, err := ResolveMemberType(doc, "unknown", 3, 2)
-
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -267,6 +267,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -280,7 +281,6 @@ end.`
 
 	// Get members of TMyClass
 	members, err := GetTypeMembers(doc, "TMyClass")
-
 	if err != nil {
 		t.Fatalf("GetTypeMembers returned error: %v", err)
 	}
@@ -295,9 +295,11 @@ end.`
 
 	for _, member := range members {
 		t.Logf("Found member: %s (kind: %d)", member.Label, *member.Kind)
+
 		switch member.Label {
 		case "FValue", "FName":
 			hasField = true
+
 			if *member.Kind != protocol.CompletionItemKindField {
 				t.Errorf("Expected %s to be a Field, got kind %d", member.Label, *member.Kind)
 			}
@@ -308,6 +310,7 @@ end.`
 			}
 		case "Value":
 			hasProperty = true
+
 			if *member.Kind != protocol.CompletionItemKindProperty {
 				t.Errorf("Expected %s to be a Property, got kind %d", member.Label, *member.Kind)
 			}
@@ -317,6 +320,7 @@ end.`
 	if !hasField {
 		t.Error("Expected to find field members")
 	}
+
 	if !hasProperty {
 		t.Error("Expected to find property members")
 	}
@@ -339,6 +343,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -352,7 +357,6 @@ end.`
 
 	// Get members of TPoint
 	members, err := GetTypeMembers(doc, "TPoint")
-
 	if err != nil {
 		t.Fatalf("GetTypeMembers returned error: %v", err)
 	}
@@ -400,6 +404,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -413,7 +418,6 @@ end.`
 
 	// Get members of Integer (built-in type)
 	members, err := GetTypeMembers(doc, "Integer")
-
 	if err != nil {
 		t.Fatalf("GetTypeMembers returned error: %v", err)
 	}
@@ -435,6 +439,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -448,7 +453,6 @@ end.`
 
 	// Get members of an unknown type
 	members, err := GetTypeMembers(doc, "TUnknownType")
-
 	if err != nil {
 		t.Fatalf("GetTypeMembers returned error: %v", err)
 	}
@@ -477,6 +481,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -490,7 +495,6 @@ end.`
 
 	// Get members of TMyClass
 	members, err := GetTypeMembers(doc, "TMyClass")
-
 	if err != nil {
 		t.Fatalf("GetTypeMembers returned error: %v", err)
 	}
@@ -504,9 +508,11 @@ end.`
 	if members[0].Label != "AField" {
 		t.Errorf("Expected first member to be 'AField', got '%s'", members[0].Label)
 	}
+
 	if members[1].Label != "MField" {
 		t.Errorf("Expected second member to be 'MField', got '%s'", members[1].Label)
 	}
+
 	if members[2].Label != "ZField" {
 		t.Errorf("Expected third member to be 'ZField', got '%s'", members[2].Label)
 	}

@@ -12,26 +12,26 @@ import (
 type SymbolKind string
 
 const (
-	SymbolKindVariable       SymbolKind = "variable"
-	SymbolKindFunction       SymbolKind = "function"
-	SymbolKindParameter      SymbolKind = "parameter"
-	SymbolKindClass          SymbolKind = "class"
-	SymbolKindField          SymbolKind = "field"
-	SymbolKindMethod         SymbolKind = "method"
-	SymbolKindProperty       SymbolKind = "property"
-	SymbolKindConstant       SymbolKind = "constant"
-	SymbolKindEnum           SymbolKind = "enum"
-	SymbolKindEnumValue      SymbolKind = "enumValue"
-	SymbolKindType           SymbolKind = "type"
-	SymbolKindInterface      SymbolKind = "interface"
-	SymbolKindUnknown        SymbolKind = "unknown"
+	SymbolKindVariable  SymbolKind = "variable"
+	SymbolKindFunction  SymbolKind = "function"
+	SymbolKindParameter SymbolKind = "parameter"
+	SymbolKindClass     SymbolKind = "class"
+	SymbolKindField     SymbolKind = "field"
+	SymbolKindMethod    SymbolKind = "method"
+	SymbolKindProperty  SymbolKind = "property"
+	SymbolKindConstant  SymbolKind = "constant"
+	SymbolKindEnum      SymbolKind = "enum"
+	SymbolKindEnumValue SymbolKind = "enumValue"
+	SymbolKindType      SymbolKind = "type"
+	SymbolKindInterface SymbolKind = "interface"
+	SymbolKindUnknown   SymbolKind = "unknown"
 )
 
 // SymbolInfo contains information about a symbol at a cursor position.
 type SymbolInfo struct {
-	Name string      // The symbol name
-	Kind SymbolKind  // The kind of symbol
-	Node ast.Node    // The AST node
+	Name string     // The symbol name
+	Kind SymbolKind // The kind of symbol
+	Node ast.Node   // The AST node
 }
 
 // IdentifySymbolAtPosition identifies what symbol is at the given AST node.
@@ -266,5 +266,6 @@ func (si *SymbolInfo) String() string {
 	if si == nil {
 		return "<nil>"
 	}
+
 	return fmt.Sprintf("Symbol{Name: %s, Kind: %s}", si.Name, si.Kind)
 }

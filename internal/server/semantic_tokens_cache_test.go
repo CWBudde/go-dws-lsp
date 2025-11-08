@@ -33,7 +33,7 @@ func TestSemanticTokensCache_StoreAndRetrieve(t *testing.T) {
 	// Retrieve tokens
 	retrieved, found := cache.Retrieve(uri, resultID)
 	assert.True(t, found)
-	assert.Equal(t, len(tokens), len(retrieved.Tokens))
+	assert.Len(t, retrieved.Tokens, len(tokens))
 	assert.Equal(t, tokens[0].Line, retrieved.Tokens[0].Line)
 	assert.Equal(t, tokens[1].TokenType, retrieved.Tokens[1].TokenType)
 }
@@ -71,6 +71,7 @@ func TestSemanticTokensCache_InvalidateDocument(t *testing.T) {
 	// Verify both results are gone
 	_, found1 := cache.Retrieve(uri, resultID1)
 	_, found2 := cache.Retrieve(uri, resultID2)
+
 	assert.False(t, found1)
 	assert.False(t, found2)
 }
@@ -97,6 +98,7 @@ func TestSemanticTokensCache_InvalidateResult(t *testing.T) {
 	// Verify first result is gone, second remains
 	_, found1 := cache.Retrieve(uri, resultID1)
 	_, found2 := cache.Retrieve(uri, resultID2)
+
 	assert.False(t, found1)
 	assert.True(t, found2)
 }
@@ -176,8 +178,8 @@ func TestSemanticTokensCache_MultipleDocumentsDontInterfere(t *testing.T) {
 
 	assert.True(t, found1)
 	assert.True(t, found2)
-	assert.Equal(t, 1, len(retrieved1.Tokens))
-	assert.Equal(t, 2, len(retrieved2.Tokens))
+	assert.Len(t, retrieved1.Tokens, 1)
+	assert.Len(t, retrieved2.Tokens, 2)
 
 	// Invalidate one document shouldn't affect the other
 	cache.InvalidateDocument(uri1)
@@ -185,6 +187,7 @@ func TestSemanticTokensCache_MultipleDocumentsDontInterfere(t *testing.T) {
 
 	_, found1 = cache.Retrieve(uri1, resultID)
 	_, found2 = cache.Retrieve(uri2, resultID)
+
 	assert.False(t, found1)
 	assert.True(t, found2)
 }
@@ -199,7 +202,7 @@ func TestSemanticTokensCache_ConcurrentAccess(t *testing.T) {
 	wg.Add(numGoroutines)
 
 	// Launch multiple goroutines performing concurrent operations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(id int) {
 			defer wg.Done()
 
@@ -208,7 +211,7 @@ func TestSemanticTokensCache_ConcurrentAccess(t *testing.T) {
 				{Line: uint32(id), StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
 			}
 
-			for j := 0; j < numOperations; j++ {
+			for j := range numOperations {
 				resultID := fmt.Sprintf("result-%d-%d", id, j)
 
 				// Store
@@ -217,10 +220,11 @@ func TestSemanticTokensCache_ConcurrentAccess(t *testing.T) {
 				// Retrieve
 				retrieved, found := cache.Retrieve(uri, resultID)
 				assert.True(t, found)
-				assert.Equal(t, len(tokens), len(retrieved.Tokens))
+				assert.Len(t, retrieved.Tokens, len(tokens))
 
 				// Get latest
 				latestID := cache.GetLatestResultID(uri)
+
 				assert.True(t, found)
 				assert.NotEmpty(t, latestID)
 
@@ -275,7 +279,7 @@ func TestSemanticTokensCache_StoreEmptyTokens(t *testing.T) {
 	retrieved, found := cache.Retrieve(uri, resultID)
 	assert.True(t, found)
 	assert.NotNil(t, retrieved)
-	assert.Equal(t, 0, len(retrieved.Tokens))
+	assert.Empty(t, retrieved.Tokens)
 }
 
 func TestSemanticTokensCache_StoreNilTokens(t *testing.T) {
@@ -324,7 +328,7 @@ func TestSemanticTokensCache_MultipleResultsPerDocument(t *testing.T) {
 	numResults := 5
 
 	// Store multiple results for same document
-	for i := 0; i < numResults; i++ {
+	for i := range numResults {
 		resultID := fmt.Sprintf("result-%d", i)
 		tokens := []SemanticToken{
 			{Line: uint32(i), StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
@@ -335,11 +339,11 @@ func TestSemanticTokensCache_MultipleResultsPerDocument(t *testing.T) {
 	assert.Equal(t, numResults, cache.Size())
 
 	// Verify all results can be retrieved
-	for i := 0; i < numResults; i++ {
+	for i := range numResults {
 		resultID := fmt.Sprintf("result-%d", i)
 		retrieved, found := cache.Retrieve(uri, resultID)
 		require.True(t, found)
-		require.Equal(t, 1, len(retrieved.Tokens))
+		require.Len(t, retrieved.Tokens, 1)
 		assert.Equal(t, uint32(i), retrieved.Tokens[0].Line)
 	}
 

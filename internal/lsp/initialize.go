@@ -6,27 +6,24 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-var (
-	// serverInstance holds the global server instance
-	// This is set by SetServer and accessed by handlers
-	serverInstance interface{}
-)
+// serverInstance holds the global server instance
+// This is set by SetServer and accessed by handlers.
+var serverInstance any
 
 // SetServer sets the global server instance for handlers to access.
-func SetServer(srv interface{}) {
+func SetServer(srv any) {
 	serverInstance = srv
 }
 
 // Initialize handles the LSP initialize request.
 // This is the first request sent by the client and establishes the server capabilities.
-func Initialize(context *glsp.Context, params *protocol.InitializeParams) (interface{}, error) {
+func Initialize(context *glsp.Context, params *protocol.InitializeParams) (any, error) {
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
 	if ok && srv != nil {
@@ -44,6 +41,7 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 					folders = append(folders, path)
 				}
 			}
+
 			srv.SetWorkspaceFolders(folders)
 			log.Printf("Stored %d workspace folders\n", len(folders))
 		} else if params.RootURI != nil && *params.RootURI != "" {
@@ -63,13 +61,14 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 
 	// Get semantic tokens legend from server
 	var semanticTokensProvider *protocol.SemanticTokensOptions
+
 	if ok && srv != nil {
 		legend := srv.SemanticTokensLegend()
 		if legend != nil {
 			semanticTokensProvider = &protocol.SemanticTokensOptions{
 				Legend: legend.ToProtocolLegend(),
 				// Full field accepts: nil, bool, or SemanticDelta
-				// SemanticDelta is the correct type for delta support (not SemanticTokensFullOptions)
+				// is the correct type for delta support (not SemanticTokensFullOptions)
 				Full: protocol.SemanticDelta{
 					Delta: &trueVal, // Support delta incremental updates
 				},
@@ -106,7 +105,7 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 		// Code completion
 		CompletionProvider: &protocol.CompletionOptions{
 			TriggerCharacters: []string{".", ":"}, // Member access triggers
-			ResolveProvider:   &[]bool{false}[0],   // Don't use lazy resolution for now
+			ResolveProvider:   &[]bool{false}[0],  // Don't use lazy resolution for now
 		},
 
 		// Signature help
@@ -127,11 +126,11 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 		// Code actions (quick fixes, refactorings)
 		CodeActionProvider: &protocol.CodeActionOptions{
 			CodeActionKinds: []protocol.CodeActionKind{
-				protocol.CodeActionKindQuickFix,            // Fix diagnostics
-				protocol.CodeActionKindRefactor,            // General refactorings
-				protocol.CodeActionKindRefactorExtract,     // Extract to function/variable
-				protocol.CodeActionKindRefactorInline,      // Inline variable/function
-				protocol.CodeActionKindSource,              // Source actions
+				protocol.CodeActionKindQuickFix,              // Fix diagnostics
+				protocol.CodeActionKindRefactor,              // General refactorings
+				protocol.CodeActionKindRefactorExtract,       // Extract to function/variable
+				protocol.CodeActionKindRefactorInline,        // Inline variable/function
+				protocol.CodeActionKindSource,                // Source actions
 				protocol.CodeActionKindSourceOrganizeImports, // Organize imports/units
 			},
 			ResolveProvider: &[]bool{false}[0], // Don't use lazy resolution for now
@@ -219,20 +218,23 @@ func Shutdown(context *glsp.Context) error {
 	srv.Documents().Clear()
 
 	log.Println("LSP server shutdown complete")
+
 	return nil
 }
 
 // uriToPath converts a URI to a file system path.
 func uriToPath(uri string) string {
 	// Handle file:// URIs
-	if strings.HasPrefix(uri, "file://") {
-		path := strings.TrimPrefix(uri, "file://")
+	if after, ok := strings.CutPrefix(uri, "file://"); ok {
+		path := after
 		// On Windows, URIs are like file:///C:/path, so we need to handle the leading slash
 		if len(path) > 2 && path[0] == '/' && path[2] == ':' {
 			path = path[1:] // Remove leading slash for Windows paths
 		}
+
 		return path
 	}
+
 	return uri
 }
 

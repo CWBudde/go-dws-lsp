@@ -7,12 +7,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // CodeAction handles the textDocument/codeAction request.
@@ -71,6 +70,7 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 			log.Printf("Error generating quick fixes: %v\n", err)
 			continue
 		}
+
 		actions = append(actions, quickFixes...)
 	}
 
@@ -83,6 +83,7 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 	// 3. Selected range (extract method, etc.)
 
 	log.Printf("Returning %d code actions\n", len(actions))
+
 	return actions, nil
 }
 
@@ -239,17 +240,17 @@ func isUnusedVariable(diagnostic protocol.Diagnostic) bool {
 }
 
 // extractIdentifierName extracts the identifier name from a diagnostic message.
-// It looks for patterns like "undeclared identifier 'x'" or "unknown identifier: x"
+// It looks for patterns like "undeclared identifier 'x'" or "unknown identifier: x".
 func extractIdentifierName(diagnostic protocol.Diagnostic) string {
 	message := diagnostic.Message
 
 	// Try various regex patterns to extract the identifier
 	patterns := []*regexp.Regexp{
-		regexp.MustCompile(`['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]`),           // 'identifier' or "identifier"
-		regexp.MustCompile(`identifier:\s*([a-zA-Z_][a-zA-Z0-9_]*)`),     // identifier: name
-		regexp.MustCompile(`identifier\s+([a-zA-Z_][a-zA-Z0-9_]*)`),      // identifier name
-		regexp.MustCompile(`\b([a-zA-Z_][a-zA-Z0-9_]*)\s+not\s+found`),   // name not found
-		regexp.MustCompile(`unknown\s+([a-zA-Z_][a-zA-Z0-9_]*)`),         // unknown name
+		regexp.MustCompile(`['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]`),         // 'identifier' or "identifier"
+		regexp.MustCompile(`identifier:\s*([a-zA-Z_][a-zA-Z0-9_]*)`),   // identifier: name
+		regexp.MustCompile(`identifier\s+([a-zA-Z_][a-zA-Z0-9_]*)`),    // identifier name
+		regexp.MustCompile(`\b([a-zA-Z_][a-zA-Z0-9_]*)\s+not\s+found`), // name not found
+		regexp.MustCompile(`unknown\s+([a-zA-Z_][a-zA-Z0-9_]*)`),       // unknown name
 	}
 
 	for _, pattern := range patterns {
@@ -263,16 +264,16 @@ func extractIdentifierName(diagnostic protocol.Diagnostic) string {
 }
 
 // extractVariableName extracts the variable name from an unused variable diagnostic message.
-// It looks for patterns like "unused variable 'x'" or "variable x not used"
+// It looks for patterns like "unused variable 'x'" or "variable x not used".
 func extractVariableName(diagnostic protocol.Diagnostic) string {
 	message := diagnostic.Message
 
 	// Try various regex patterns to extract the variable name
 	patterns := []*regexp.Regexp{
-		regexp.MustCompile(`['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]`),                // 'varname' or "varname"
-		regexp.MustCompile(`variable\s+([a-zA-Z_][a-zA-Z0-9_]*)`),               // variable name
-		regexp.MustCompile(`([a-zA-Z_][a-zA-Z0-9_]*)\s+(?:not used|unused)`),    // name not used/unused
-		regexp.MustCompile(`unused:\s*([a-zA-Z_][a-zA-Z0-9_]*)`),                // unused: name
+		regexp.MustCompile(`['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]`),             // 'varname' or "varname"
+		regexp.MustCompile(`variable\s+([a-zA-Z_][a-zA-Z0-9_]*)`),            // variable name
+		regexp.MustCompile(`([a-zA-Z_][a-zA-Z0-9_]*)\s+(?:not used|unused)`), // name not used/unused
+		regexp.MustCompile(`unused:\s*([a-zA-Z_][a-zA-Z0-9_]*)`),             // unused: name
 	}
 
 	for _, pattern := range patterns {
@@ -294,6 +295,7 @@ func isFunctionCall(identifierName string, diagnostic protocol.Diagnostic, doc *
 
 	// Get the line where the error occurred
 	lines := strings.Split(doc.Text, "\n")
+
 	lineNum := int(diagnostic.Range.Start.Line)
 	if lineNum >= len(lines) {
 		return false
@@ -304,6 +306,7 @@ func isFunctionCall(identifierName string, diagnostic protocol.Diagnostic, doc *
 	// Look for the identifier followed by an opening parenthesis
 	// Pattern: identifier(
 	pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(identifierName) + `\s*\(`)
+
 	return pattern.MatchString(line)
 }
 
@@ -315,6 +318,7 @@ func extractCallArguments(identifierName string, diagnostic protocol.Diagnostic,
 	}
 
 	lines := strings.Split(doc.Text, "\n")
+
 	lineNum := int(diagnostic.Range.Start.Line)
 	if lineNum >= len(lines) {
 		return nil
@@ -339,6 +343,7 @@ func extractCallArguments(identifierName string, diagnostic protocol.Diagnostic,
 
 	// Split by comma (simplified - doesn't handle nested calls)
 	args := strings.Split(argsText, ",")
+
 	result := make([]string, 0, len(args))
 	for _, arg := range args {
 		result = append(result, strings.TrimSpace(arg))
@@ -382,11 +387,13 @@ func generateFunctionSignature(functionName string, args []string) string {
 
 	for i, arg := range args {
 		paramType := inferParameterType(arg)
+
 		paramName := "arg" + string(rune('0'+i))
 		if i < 26 {
 			// Use letters for first 26 parameters
 			paramName = string(rune('a' + i))
 		}
+
 		params = append(params, paramName+": "+paramType)
 	}
 
@@ -394,6 +401,7 @@ func generateFunctionSignature(functionName string, args []string) string {
 	if paramsStr != "" {
 		return "function " + functionName + "(" + paramsStr + "): Variant;"
 	}
+
 	return "function " + functionName + "(): Variant;"
 }
 
@@ -442,6 +450,7 @@ func createDeclareFunctionAction(diagnostic protocol.Diagnostic, identifierName 
 	}
 
 	log.Printf("Created quick fix: %s with signature: %s at line %d\n", title, functionSignature, insertPosition.Line)
+
 	return &action
 }
 
@@ -489,6 +498,7 @@ func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.D
 
 	// Default to after program header
 	insertAfterLine := findProgramHeader(lines)
+
 	return protocol.Position{Line: uint32(insertAfterLine + 1), Character: 0}, ""
 }
 
@@ -501,6 +511,7 @@ func findImplementationSection(lines []string) int {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -585,6 +596,7 @@ func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName 
 	}
 
 	log.Printf("Created quick fix: %s (type: %s) at line %d\n", title, varType, insertPosition.Line)
+
 	return &action
 }
 
@@ -621,6 +633,7 @@ func createInsertSemicolonAction(diagnostic protocol.Diagnostic, uri string) *pr
 	}
 
 	log.Printf("Created quick fix: %s at line %d, column %d\n", title, insertPosition.Line, insertPosition.Character)
+
 	return &action
 }
 
@@ -675,6 +688,7 @@ func createRemoveVariableAction(diagnostic protocol.Diagnostic, variableName str
 	}
 
 	log.Printf("Created quick fix: %s at line %d\n", title, varLine)
+
 	return &action
 }
 
@@ -735,6 +749,7 @@ func createPrefixUnderscoreAction(diagnostic protocol.Diagnostic, variableName s
 	}
 
 	log.Printf("Created quick fix: %s (%d edits)\n", title, len(edits))
+
 	return &action
 }
 
@@ -742,7 +757,7 @@ func createPrefixUnderscoreAction(diagnostic protocol.Diagnostic, variableName s
 // For Task 13.5, this provides basic type inference:
 // - Integer literals → Integer
 // - String literals → String
-// - Default → Variant
+// - Default → Variant.
 func inferTypeFromContext(diagnostic protocol.Diagnostic, identifierName string, doc *server.Document) string {
 	// For now, we'll use a simple heuristic by looking at the line of code
 	// More sophisticated analysis would examine the AST
@@ -796,7 +811,7 @@ func inferTypeFromContext(diagnostic protocol.Diagnostic, identifierName string,
 
 // findInsertionLocation determines where to insert a variable declaration.
 // Returns the position and indentation string.
-// Task 13.6: Insert at function top (after begin) or global scope (after var block)
+// Task 13.6: Insert at function top (after begin) or global scope (after var block).
 func findInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document) (protocol.Position, string) {
 	if doc.Text == "" {
 		// Default to beginning of file if no text
@@ -819,6 +834,7 @@ func findInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document)
 		// We're inside a function, insert after the begin line
 		insertLine := functionBeginLine + 1
 		indentation := detectIndentation(lines, insertLine)
+
 		return protocol.Position{Line: uint32(insertLine), Character: 0}, indentation
 	}
 
@@ -833,6 +849,7 @@ func findInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document)
 	// No var block found, insert at beginning of file
 	// Look for program header/uses clause and insert after
 	insertAfterLine := findProgramHeader(lines)
+
 	return protocol.Position{Line: uint32(insertAfterLine), Character: 0}, ""
 }
 
@@ -855,6 +872,7 @@ func findFunctionBegin(lines []string, errorLine int) int {
 			break
 		}
 	}
+
 	return -1
 }
 
@@ -924,6 +942,7 @@ func detectIndentation(lines []string, nearLine int) string {
 		if i >= len(lines) {
 			break
 		}
+
 		line := lines[i]
 		if len(line) > 0 && line[0] == ' ' {
 			// Count leading spaces
@@ -931,6 +950,7 @@ func detectIndentation(lines []string, nearLine int) string {
 			for j := 0; j < len(line) && line[j] == ' '; j++ {
 				spaces++
 			}
+
 			if spaces > 0 {
 				return strings.Repeat(" ", spaces)
 			}
@@ -960,14 +980,16 @@ func GenerateSourceActions(doc *server.Document, uri string, context protocol.Co
 	// If only specific kinds are requested, check if source actions are included
 	if context.Only != nil && len(context.Only) > 0 {
 		hasSourceKind := false
+
 		for _, kind := range context.Only {
 			if kind == protocol.CodeActionKindSource ||
-			   kind == protocol.CodeActionKindSourceOrganizeImports ||
-			   strings.HasPrefix(string(kind), string(protocol.CodeActionKindSource)) {
+				kind == protocol.CodeActionKindSourceOrganizeImports ||
+				strings.HasPrefix(string(kind), string(protocol.CodeActionKindSource)) {
 				hasSourceKind = true
 				break
 			}
 		}
+
 		if !hasSourceKind {
 			return actions
 		}
@@ -986,7 +1008,7 @@ func GenerateSourceActions(doc *server.Document, uri string, context protocol.Co
 // For task 13.10, this implements:
 // - Removing unused unit references
 // - Adding missing unit references for undeclared identifiers
-// - Sorting units alphabetically
+// - Sorting units alphabetically.
 func createOrganizeUnitsAction(doc *server.Document, uri string) *protocol.CodeAction {
 	title := "Organize units"
 
@@ -1004,11 +1026,13 @@ func createOrganizeUnitsAction(doc *server.Document, uri string) *protocol.CodeA
 		if edit == nil {
 			return nil
 		}
+
 		action := protocol.CodeAction{
 			Title: title,
 			Kind:  stringPtr(string(protocol.CodeActionKindSourceOrganizeImports)),
 			Edit:  edit,
 		}
+
 		return &action
 	}
 
@@ -1026,6 +1050,7 @@ func createOrganizeUnitsAction(doc *server.Document, uri string) *protocol.CodeA
 	}
 
 	log.Printf("Created source action: %s\n", title)
+
 	return &action
 }
 
@@ -1053,6 +1078,7 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 					break
 				}
 			}
+
 			break
 		}
 	}
@@ -1065,6 +1091,7 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 			if len(missingUnits) > 0 {
 				// Create a new uses clause
 				insertLine := findUsesInsertionPoint(lines)
+
 				sortUnits(missingUnits)
 				newUsesClause := formatUsesClause(missingUnits)
 
@@ -1084,20 +1111,24 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 				}
 
 				log.Printf("Created new uses clause with %d units\n", len(missingUnits))
+
 				return &workspaceEdit
 			}
 		}
+
 		return nil
 	}
 
 	// Extract the uses clause text
 	usesText := ""
+	var usesTextSb1095 strings.Builder
 	for i := usesStart; i <= usesEnd; i++ {
-		usesText += lines[i]
+		usesTextSb1095.WriteString(lines[i])
 		if i < usesEnd {
-			usesText += "\n"
+			usesTextSb1095.WriteString("\n")
 		}
 	}
+	usesText += usesTextSb1095.String()
 
 	// Parse unit names from the uses clause
 	units := parseUnitsFromUsesClause(usesText)
@@ -1107,9 +1138,7 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 
 	// Create a set of units to keep
 	finalUnits := make([]string, 0, len(units))
-	for _, unit := range units {
-		finalUnits = append(finalUnits, unit)
-	}
+	finalUnits = append(finalUnits, units...)
 
 	// Remove unused units if workspace index is available and populated
 	if workspaceIndex != nil && workspaceIndex.GetSymbolCount() > 0 && doc != nil {
@@ -1123,6 +1152,7 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 					filteredUnits = append(filteredUnits, unit)
 				}
 			}
+
 			finalUnits = filteredUnits
 		}
 
@@ -1167,6 +1197,7 @@ func organizeUsesClause(text string, uri string, workspaceIndex *workspace.Symbo
 	}
 
 	log.Printf("Organized %d units in uses clause (from %d original)\n", len(sortedUnits), len(units))
+
 	return &workspaceEdit
 }
 
@@ -1196,8 +1227,8 @@ func parseUnitsFromUsesClause(usesText string) []string {
 func sortUnits(units []string) {
 	// Simple bubble sort for small lists
 	n := len(units)
-	for i := 0; i < n-1; i++ {
-		for j := 0; j < n-i-1; j++ {
+	for i := range n - 1 {
+		for j := range n - i - 1 {
 			if strings.ToLower(units[j]) > strings.ToLower(units[j+1]) {
 				units[j], units[j+1] = units[j+1], units[j]
 			}
@@ -1210,11 +1241,13 @@ func unitsEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
+
 	for i := range a {
 		if a[i] != b[i] {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -1229,7 +1262,7 @@ func formatUsesClause(units []string) string {
 }
 
 // findUnusedUnits identifies units in the uses clause that are not actually referenced in the document.
-// For task 13.10 and 13.11: Remove unused unit references
+// For task 13.10 and 13.11: Remove unused unit references.
 func findUnusedUnits(units []string, text string, workspaceIndex *workspace.SymbolIndex, doc *server.Document) []string {
 	var unused []string
 
@@ -1271,13 +1304,14 @@ func isUnitUsed(unitName string, text string, workspaceIndex *workspace.SymbolIn
 }
 
 // findMissingUnits identifies symbols that are used but not declared and their defining units.
-// For task 13.10 and 13.12: Add missing unit references for used symbols
+// For task 13.10 and 13.12: Add missing unit references for used symbols.
 func findMissingUnits(text string, workspaceIndex *workspace.SymbolIndex, doc *server.Document) []string {
 	var missing []string
 	seenUnits := make(map[string]bool)
 
 	// Get current units from uses clause (if any)
 	currentUnits := parseUnitsFromUsesClause(text)
+
 	currentUnitsMap := make(map[string]bool)
 	for _, unit := range currentUnits {
 		currentUnitsMap[unit] = true
@@ -1341,6 +1375,7 @@ func extractIdentifiersFromText(text string) map[string]bool {
 		if isKeyword(lower) {
 			continue
 		}
+
 		identifiers[match] = true
 	}
 
@@ -1464,6 +1499,7 @@ func getUsedIdentifiers(programAST *ast.Program) map[string]bool {
 
 		case *ast.CallExpression:
 			traverse(n.Function)
+
 			for _, arg := range n.Arguments {
 				traverse(arg)
 			}
@@ -1475,6 +1511,7 @@ func getUsedIdentifiers(programAST *ast.Program) map[string]bool {
 		case *ast.IfStatement:
 			traverse(n.Condition)
 			traverse(n.Consequence)
+
 			if n.Alternative != nil {
 				traverse(n.Alternative)
 			}
@@ -1508,7 +1545,7 @@ func getUsedIdentifiers(programAST *ast.Program) map[string]bool {
 }
 
 // getUnitNameFromURI extracts the unit name from a file URI.
-// For example, "file:///path/to/MyUnit.dws" returns "MyUnit"
+// For example, "file:///path/to/MyUnit.dws" returns "MyUnit".
 func getUnitNameFromURI(uri string) string {
 	// Extract filename from URI
 	path := uri
@@ -1522,6 +1559,7 @@ func getUnitNameFromURI(uri string) string {
 
 	// Get base filename without extension
 	filename := filepath.Base(path)
+
 	ext := filepath.Ext(filename)
 	if ext != "" {
 		filename = filename[:len(filename)-len(ext)]
@@ -1552,6 +1590,7 @@ func containsString(slice []string, str string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -1571,6 +1610,7 @@ func isKeyword(word string) bool {
 		"try": true, "type": true, "unit": true, "until": true, "uses": true,
 		"var": true, "while": true, "with": true, "xor": true,
 	}
+
 	return keywords[word]
 }
 
@@ -1584,5 +1624,6 @@ func isBuiltinIdentifier(identifier string) bool {
 		"Insert": true, "Chr": true, "Ord": true, "Inc": true, "Dec": true,
 		"High": true, "Low": true, "SetLength": true,
 	}
+
 	return builtins[identifier]
 }

@@ -216,6 +216,7 @@ func TestUTF16CharOffsetToByteOffset_ASCII(t *testing.T) {
 			t.Errorf("utf16CharOffsetToByteOffset(%q, %d) returned error: %v", line, tt.utf16Offset, err)
 			continue
 		}
+
 		if got != tt.wantByte {
 			t.Errorf("utf16CharOffsetToByteOffset(%q, %d) = %d, want %d", line, tt.utf16Offset, got, tt.wantByte)
 		}
@@ -241,8 +242,10 @@ func TestUTF16CharOffsetToByteOffset_Emoji(t *testing.T) {
 		if err != nil {
 			t.Errorf("utf16CharOffsetToByteOffset(%q, %d) [%s] returned error: %v",
 				line, tt.utf16Offset, tt.description, err)
+
 			continue
 		}
+
 		if got != tt.wantByte {
 			t.Errorf("utf16CharOffsetToByteOffset(%q, %d) [%s] = %d, want %d",
 				line, tt.utf16Offset, tt.description, got, tt.wantByte)
@@ -273,6 +276,7 @@ func TestUTF16CharOffsetToByteOffset_MultiByteChars(t *testing.T) {
 			t.Errorf("utf16CharOffsetToByteOffset(%q, %d) returned error: %v", line, tt.utf16Offset, err)
 			continue
 		}
+
 		if got != tt.wantByte {
 			t.Errorf("utf16CharOffsetToByteOffset(%q, %d) = %d, want %d", line, tt.utf16Offset, got, tt.wantByte)
 		}
@@ -301,6 +305,7 @@ func TestPositionToOffset(t *testing.T) {
 			t.Errorf("PositionToOffset(line=%d, char=%d) returned error: %v", tt.line, tt.character, err)
 			continue
 		}
+
 		if got != tt.wantOffset {
 			t.Errorf("PositionToOffset(line=%d, char=%d) = %d, want %d", tt.line, tt.character, got, tt.wantOffset)
 		}
@@ -329,6 +334,7 @@ func TestOffsetToPosition(t *testing.T) {
 			t.Errorf("OffsetToPosition(offset=%d) returned error: %v", tt.offset, err)
 			continue
 		}
+
 		if gotLine != tt.wantLine || gotChar != tt.wantChar {
 			t.Errorf("OffsetToPosition(offset=%d) = (line=%d, char=%d), want (line=%d, char=%d)",
 				tt.offset, gotLine, gotChar, tt.wantLine, tt.wantChar)
@@ -354,6 +360,7 @@ func TestByteOffsetToUTF16Offset_ASCII(t *testing.T) {
 			t.Errorf("byteOffsetToUTF16Offset(%q, %d) returned error: %v", line, tt.byteOffset, err)
 			continue
 		}
+
 		if got != tt.wantUTF16 {
 			t.Errorf("byteOffsetToUTF16Offset(%q, %d) = %d, want %d", line, tt.byteOffset, got, tt.wantUTF16)
 		}
@@ -379,8 +386,10 @@ func TestByteOffsetToUTF16Offset_Emoji(t *testing.T) {
 		if err != nil {
 			t.Errorf("byteOffsetToUTF16Offset(%q, %d) [%s] returned error: %v",
 				line, tt.byteOffset, tt.description, err)
+
 			continue
 		}
+
 		if got != tt.wantUTF16 {
 			t.Errorf("byteOffsetToUTF16Offset(%q, %d) [%s] = %d, want %d",
 				line, tt.byteOffset, tt.description, got, tt.wantUTF16)
@@ -413,6 +422,7 @@ func TestRoundTripConversion(t *testing.T) {
 			if err != nil {
 				t.Errorf("Round trip failed for %q at UTF-16 offset %d: byteOffsetToUTF16Offset returned error: %v",
 					line, utf16Offset, err)
+
 				continue
 			}
 

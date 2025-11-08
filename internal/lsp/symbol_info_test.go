@@ -381,7 +381,7 @@ func TestSymbolInfo_String_Nil(t *testing.T) {
 
 func TestGetSymbolContext_MemberExpression(t *testing.T) {
 	memberExpr := &ast.MemberAccessExpression{
-		Object:   &ast.Identifier{Value: "obj"},
+		Object: &ast.Identifier{Value: "obj"},
 		Member: &ast.Identifier{Value: "field"},
 	}
 

@@ -3,12 +3,11 @@ package lsp
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // parseCodeToDocument is a helper function to compile DWScript code for testing.
@@ -70,7 +69,7 @@ var y: String = "hello";`
 	require.NotNil(t, result)
 	assert.NotNil(t, result.ResultID, "ResultID should be set for delta support")
 	assert.NotNil(t, result.Data)
-	assert.Greater(t, len(result.Data), 0, "Should have semantic tokens")
+	assert.NotEmpty(t, result.Data, "Should have semantic tokens")
 
 	// Verify tokens are multiples of 5 (LSP delta encoding)
 	assert.Equal(t, 0, len(result.Data)%5, "Token data should be multiple of 5")
@@ -109,7 +108,7 @@ func TestSemanticTokensFull_EmptyDocument(t *testing.T) {
 }
 
 func TestSemanticTokensFull_DocumentNotFound(t *testing.T) {
-	_= setupTestServer(t)
+	_ = setupTestServer(t)
 
 	uri := protocol.URI("file:///nonexistent.dws")
 
@@ -215,7 +214,7 @@ func TestSemanticTokensFullDelta_InvalidPreviousResultID(t *testing.T) {
 	require.True(t, ok, "Should return full tokens when previous resultID not found")
 	assert.NotNil(t, fullResult.ResultID)
 	assert.NotNil(t, fullResult.Data)
-	assert.Greater(t, len(fullResult.Data), 0)
+	assert.NotEmpty(t, fullResult.Data)
 }
 
 func TestSemanticTokensFullDelta_NoPreviousResultID(t *testing.T) {
@@ -287,7 +286,7 @@ func TestSemanticTokensFullDelta_NoChanges(t *testing.T) {
 	require.True(t, ok, "Should return delta for no changes")
 	assert.NotNil(t, delta.ResultId)
 	assert.NotNil(t, delta.Edits)
-	assert.Equal(t, 0, len(delta.Edits), "Should have empty edits for no changes")
+	assert.Empty(t, delta.Edits, "Should have empty edits for no changes")
 }
 
 func TestSemanticTokensFullDelta_LargeChanges(t *testing.T) {
@@ -511,7 +510,7 @@ end;`
 	require.NotNil(t, result)
 	assert.NotNil(t, result.ResultID)
 	assert.NotNil(t, result.Data)
-	assert.Greater(t, len(result.Data), 0, "Complex document should have many tokens")
+	assert.NotEmpty(t, result.Data, "Complex document should have many tokens")
 	assert.Equal(t, 0, len(result.Data)%5, "Token data should be multiple of 5")
 
 	// Verify cache

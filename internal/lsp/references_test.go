@@ -3,11 +3,10 @@ package lsp
 import (
 	"testing"
 
-	"github.com/cwbudde/go-dws/pkg/dwscript"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/cwbudde/go-dws/pkg/dwscript"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // TestSortLocationsByFileAndPosition verifies that locations are sorted
@@ -110,10 +109,12 @@ func TestSortLocationsByFileAndPosition(t *testing.T) {
 					t.Errorf("location[%d]: expected URI %s, got %s",
 						i, tt.expected[i].URI, locations[i].URI)
 				}
+
 				if locations[i].Range.Start.Line != tt.expected[i].Range.Start.Line {
 					t.Errorf("location[%d]: expected line %d, got %d",
 						i, tt.expected[i].Range.Start.Line, locations[i].Range.Start.Line)
 				}
+
 				if locations[i].Range.Start.Character != tt.expected[i].Range.Start.Character {
 					t.Errorf("location[%d]: expected character %d, got %d",
 						i, tt.expected[i].Range.Start.Character, locations[i].Range.Start.Character)
@@ -267,14 +268,15 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 	}
 }
 
-
-// Helper function to parse DWScript code for testing
+// Helper function to parse DWScript code for testing.
 func parseCodeForReferenceTest(t *testing.T, code string) (*dwscript.Program, error) {
 	t.Helper()
+
 	program, _, err := analysis.ParseDocument(code, "test.dws")
 	if err != nil {
 		return nil, err
 	}
+
 	return program, nil
 }
 
@@ -331,6 +333,7 @@ end;`
 	}
 
 	t.Logf("Found %d references for myVar", len(locations))
+
 	for i, loc := range locations {
 		t.Logf("  [%d] line %d, char %d", i, loc.Range.Start.Line, loc.Range.Start.Character)
 	}
@@ -484,16 +487,7 @@ end;`
 // TestGlobalReferences_GlobalFunction tests finding references for a global function.
 // This validates task 6.13 requirements.
 func TestGlobalReferences_GlobalFunction(t *testing.T) {
-	source := `function GlobalFunc(): Integer;
-begin
-  Result := 42;
-end;
-
-procedure TestProc;
-begin
-  GlobalFunc();
-  GlobalFunc();
-end;`
+	source := "function GlobalFunc(): Integer;\nbegin\n  Result := 42;\nend;\n\nprocedure TestProc;\nbegin\n  GlobalFunc();\n  end;"
 
 	// Set up server and document
 	srv := server.New()
@@ -537,6 +531,7 @@ end;`
 	}
 
 	t.Logf("Found %d references for GlobalFunc", len(locations))
+
 	for i, loc := range locations {
 		t.Logf("  [%d] line %d, char %d", i, loc.Range.Start.Line, loc.Range.Start.Character)
 	}
@@ -610,6 +605,7 @@ end;`
 	}
 
 	t.Logf("Found %d references for GlobalVar across multiple functions", len(locations))
+
 	for i, loc := range locations {
 		t.Logf("  [%d] line %d, char %d", i, loc.Range.Start.Line, loc.Range.Start.Character)
 	}
@@ -674,6 +670,7 @@ var obj2: TMyClass;`
 	}
 
 	t.Logf("Found %d references for TMyClass", len(locations))
+
 	for i, loc := range locations {
 		t.Logf("  [%d] line %d, char %d", i, loc.Range.Start.Line, loc.Range.Start.Character)
 	}
@@ -740,18 +737,20 @@ end;`
 
 	// Verify locations are sorted by line (regardless of procedure order)
 	t.Logf("Verifying %d locations are sorted by line", len(locations))
+
 	for i := 1; i < len(locations); i++ {
 		prevLine := locations[i-1].Range.Start.Line
 		currLine := locations[i].Range.Start.Line
-		
+
 		if currLine < prevLine {
 			t.Errorf("Locations not sorted: location[%d] at line %d comes before location[%d] at line %d",
 				i, currLine, i-1, prevLine)
 		}
-		
+
 		// Also check character position when on same line
 		if currLine == prevLine {
 			prevChar := locations[i-1].Range.Start.Character
+
 			currChar := locations[i].Range.Start.Character
 			if currChar < prevChar {
 				t.Errorf("Locations on same line not sorted by character: location[%d] char %d comes before location[%d] char %d",

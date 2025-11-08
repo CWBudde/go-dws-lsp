@@ -4,10 +4,9 @@ package lsp
 import (
 	"log"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // DidChangeConfiguration handles workspace configuration changes from the client.
@@ -32,9 +31,9 @@ func DidChangeConfiguration(context *glsp.Context, params *protocol.DidChangeCon
 
 	if params.Settings != nil {
 		// Try to parse settings as a map
-		if settingsMap, ok := params.Settings.(map[string]interface{}); ok {
+		if settingsMap, ok := params.Settings.(map[string]any); ok {
 			// Look for our namespace
-			if dwsSettings, ok := settingsMap["go-dws-lsp"].(map[string]interface{}); ok {
+			if dwsSettings, ok := settingsMap["go-dws-lsp"].(map[string]any); ok {
 				// Update maxProblems if present
 				if maxProblems, ok := dwsSettings["maxProblems"].(float64); ok {
 					srv.UpdateConfig(func(cfg *server.Config) {

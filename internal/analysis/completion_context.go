@@ -5,9 +5,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/cwbudde/go-dws/pkg/ast"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/cwbudde/go-dws/pkg/ast"
 )
 
 // CompletionContextType represents the type of completion context.
@@ -17,10 +16,10 @@ const (
 	// CompletionContextGeneral represents general code completion (identifiers, keywords, etc.)
 	CompletionContextGeneral CompletionContextType = iota
 
-	// CompletionContextMember represents member access completion (after a dot)
+	// CompletionContextMember represents member access completion (after a dot).
 	CompletionContextMember
 
-	// CompletionContextKeyword represents keyword-specific completion
+	// CompletionContextKeyword represents keyword-specific completion.
 	CompletionContextKeyword
 )
 
@@ -101,7 +100,7 @@ func getTextBeforeCursor(text string, line, character int) string {
 
 	// Get all lines before the cursor line
 	var beforeLines []string
-	for i := 0; i < line; i++ {
+	for i := range line {
 		beforeLines = append(beforeLines, lines[i])
 	}
 
@@ -110,6 +109,7 @@ func getTextBeforeCursor(text string, line, character int) string {
 	if character > len(currentLine) {
 		character = len(currentLine)
 	}
+
 	beforeLines = append(beforeLines, currentLine[:character])
 
 	return strings.Join(beforeLines, "\n")
@@ -147,6 +147,7 @@ func isInsideString(textBeforeCursor string) bool {
 	// Count single quotes that are not escaped
 	// In DWScript, strings use single quotes
 	quoteCount := 0
+
 	for i := 0; i < len(textBeforeCursor); i++ {
 		if textBeforeCursor[i] == '\'' {
 			// Check if it's escaped (doubled single quote in DWScript)
@@ -154,6 +155,7 @@ func isInsideString(textBeforeCursor string) bool {
 				i++ // Skip the next quote
 				continue
 			}
+
 			quoteCount++
 		}
 	}
@@ -185,6 +187,7 @@ func extractParentIdentifier(textBeforeCursor string) string {
 		if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' {
 			break
 		}
+
 		i--
 	}
 
@@ -227,6 +230,7 @@ func findScopeAtPosition(node ast.Node, line, column int) ast.Node {
 				return childScope
 			}
 		}
+
 		return node
 
 	case *ast.ClassDecl:
@@ -242,11 +246,13 @@ func findScopeAtPosition(node ast.Node, line, column int) ast.Node {
 				return childScope
 			}
 		}
+
 		if n.Destructor != nil {
 			if childScope := findScopeAtPosition(n.Destructor, line, column); childScope != nil {
 				return childScope
 			}
 		}
+
 		return node
 
 	case *ast.BlockStatement:
@@ -255,6 +261,7 @@ func findScopeAtPosition(node ast.Node, line, column int) ast.Node {
 				return childScope
 			}
 		}
+
 		return node
 
 	default:
@@ -292,7 +299,7 @@ func isPositionInNode(node ast.Node, line, column int) bool {
 // Task 9.18: Used for early prefix filtering to reduce processing.
 // Example: "var myVa" -> "myVa"
 // Example: "person." -> "" (no prefix after dot)
-// Example: "person.Na" -> "Na"
+// Example: "person.Na" -> "Na".
 func extractPartialIdentifier(textBeforeCursor string) string {
 	// Get the text on the current line only (faster than processing full text)
 	lines := strings.Split(textBeforeCursor, "\n")
@@ -322,6 +329,7 @@ func extractPartialIdentifier(textBeforeCursor string) string {
 		if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' {
 			break
 		}
+
 		i--
 	}
 

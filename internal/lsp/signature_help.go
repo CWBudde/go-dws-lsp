@@ -4,16 +4,15 @@ import (
 	"log"
 	"strings"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/builtins"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // SignatureHelp handles textDocument/signatureHelp requests
-// Shows function signatures and parameter hints during function calls
+// Shows function signatures and parameter hints during function calls.
 func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) (*protocol.SignatureHelp, error) {
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
@@ -74,11 +73,12 @@ func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) 
 			log.Printf("Signature help triggered by character: '%s'\n", triggerChar)
 
 			// Validate trigger character
-			if triggerChar == "(" {
+			switch triggerChar {
+			case "(":
 				log.Println("Start of function call")
-			} else if triggerChar == "," {
+			case ",":
 				log.Println("Moving to next parameter")
-			} else {
+			default:
 				log.Printf("Warning: Unexpected trigger character: '%s'\n", triggerChar)
 			}
 
@@ -95,10 +95,11 @@ func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) 
 
 	// Compute signature help using implemented functions
 	signatureHelp := computeSignatureHelp(doc, int(position.Line), int(position.Character), srv)
+
 	return signatureHelp, nil
 }
 
-// computeSignatureHelp implements the core signature help logic
+// computeSignatureHelp implements the core signature help logic.
 func computeSignatureHelp(doc *server.Document, line, character int, srv *server.Server) *protocol.SignatureHelp {
 	// Task 10.3 & 10.6: Determine call context (with incomplete AST support)
 	callCtx, err := analysis.DetermineCallContextWithTempAST(doc, line, character)
@@ -123,6 +124,7 @@ func computeSignatureHelp(doc *server.Document, line, character int, srv *server
 		builtinSig := builtins.GetBuiltinSignature(callCtx.FunctionName)
 		if builtinSig != nil {
 			log.Printf("computeSignatureHelp: Found built-in function '%s'\n", callCtx.FunctionName)
+
 			funcSignatures = []*analysis.FunctionSignature{builtinSig}
 		}
 	}
@@ -136,6 +138,7 @@ func computeSignatureHelp(doc *server.Document, line, character int, srv *server
 
 	// Tasks 10.10-10.12 & 10.15: Construct SignatureHelp response with all signatures
 	var signatureInfos []protocol.SignatureInformation
+
 	for _, sig := range funcSignatures {
 		sigInfo := buildSignatureInformation(sig)
 		if sigInfo != nil {
@@ -176,7 +179,7 @@ func computeSignatureHelp(doc *server.Document, line, character int, srv *server
 }
 
 // determineActiveSignature selects the best matching signature based on parameter index
-// Task 10.15: Match by parameter count - select signature where paramIndex is valid
+// Task 10.15: Match by parameter count - select signature where paramIndex is valid.
 func determineActiveSignature(signatures []*analysis.FunctionSignature, paramIndex int) uint32 {
 	if len(signatures) == 0 {
 		return 0
@@ -202,7 +205,7 @@ func determineActiveSignature(signatures []*analysis.FunctionSignature, paramInd
 }
 
 // buildSignatureInformation constructs a SignatureInformation from a FunctionSignature
-// Implements tasks 10.10, 10.11, and 10.12
+// Implements tasks 10.10, 10.11, and 10.12.
 func buildSignatureInformation(funcSig *analysis.FunctionSignature) *protocol.SignatureInformation {
 	if funcSig == nil {
 		return nil
@@ -234,7 +237,7 @@ func buildSignatureInformation(funcSig *analysis.FunctionSignature) *protocol.Si
 
 // formatSignatureLabel formats a function signature label
 // Implements task 10.11
-// Example: "function Calculate(x: Integer, y: Integer): Integer"
+// Example: "function Calculate(x: Integer, y: Integer): Integer".
 func formatSignatureLabel(funcSig *analysis.FunctionSignature) string {
 	var sb strings.Builder
 
@@ -259,6 +262,7 @@ func formatSignatureLabel(funcSig *analysis.FunctionSignature) string {
 
 		// Format parameter: name: Type
 		sb.WriteString(param.Name)
+
 		if param.Type != "" {
 			sb.WriteString(": ")
 			sb.WriteString(param.Type)
@@ -284,7 +288,7 @@ func formatSignatureLabel(funcSig *analysis.FunctionSignature) string {
 }
 
 // buildParameterInformation builds an array of ParameterInformation
-// Implements task 10.12
+// Implements task 10.12.
 func buildParameterInformation(funcSig *analysis.FunctionSignature, label string) []protocol.ParameterInformation {
 	if len(funcSig.Parameters) == 0 {
 		return nil

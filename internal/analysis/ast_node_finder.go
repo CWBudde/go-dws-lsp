@@ -42,6 +42,7 @@ func FindNodeAtPosition(program *ast.Program, line, col int) ast.Node {
 		// This node contains the position, so it's a candidate
 		// Keep traversing to find more specific (deeper) nodes
 		found = node
+
 		return true
 	})
 
@@ -55,6 +56,7 @@ func positionInRange(pos, start, end token.Position) bool {
 	if pos.Line < start.Line {
 		return false
 	}
+
 	if pos.Line == start.Line && pos.Column < start.Column {
 		return false
 	}
@@ -63,6 +65,7 @@ func positionInRange(pos, start, end token.Position) bool {
 	if pos.Line > end.Line {
 		return false
 	}
+
 	if pos.Line == end.Line && pos.Column > end.Column {
 		return false
 	}

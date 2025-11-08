@@ -4,12 +4,12 @@ package lsp
 import (
 	"fmt"
 	"log"
+	"strings"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // DocumentSymbol handles the textDocument/documentSymbol request.
@@ -45,6 +45,7 @@ func DocumentSymbol(context *glsp.Context, params *protocol.DocumentSymbolParams
 	symbols := collectDocumentSymbols(programAST)
 
 	log.Printf("Found %d top-level symbols in %s\n", len(symbols), uri)
+
 	return symbols, nil
 }
 
@@ -71,9 +72,8 @@ func collectDocumentSymbols(program *ast.Program) []protocol.DocumentSymbol {
 
 		case *ast.VarDeclStatement:
 			// For variable declarations, create a symbol for each variable
-			for _, varSym := range createVariableSymbols(node) {
-				symbols = append(symbols, varSym)
-			}
+			symbols = append(symbols, createVariableSymbols(node)...)
+
 			continue
 
 		case *ast.ConstDecl:
@@ -101,7 +101,7 @@ func collectDocumentSymbols(program *ast.Program) []protocol.DocumentSymbol {
 	return symbols
 }
 
-// createFunctionSymbol creates a DocumentSymbol for a function declaration
+// createFunctionSymbol creates a DocumentSymbol for a function declaration.
 func createFunctionSymbol(fn *ast.FunctionDecl) *protocol.DocumentSymbol {
 	if fn == nil || fn.Name == nil {
 		return nil
@@ -145,7 +145,7 @@ func createFunctionSymbol(fn *ast.FunctionDecl) *protocol.DocumentSymbol {
 	}
 }
 
-// buildFunctionSignature builds a function signature string for the detail field
+// buildFunctionSignature builds a function signature string for the detail field.
 func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	if fn == nil || fn.Name == nil {
 		return ""
@@ -154,32 +154,36 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	sig := "function " + fn.Name.Value + "("
 
 	// Add parameters
+	var sigSb157 strings.Builder
 	for i, param := range fn.Parameters {
 		if i > 0 {
-			sig += ", "
+			sigSb157.WriteString(", ")
 		}
 
 		if param.IsConst {
-			sig += "const "
+			sigSb157.WriteString("const ")
 		}
+
 		if param.IsLazy {
-			sig += "lazy "
+			sigSb157.WriteString("lazy ")
 		}
+
 		if param.ByRef {
-			sig += "var "
+			sigSb157.WriteString("var ")
 		}
 
 		if param.Name != nil {
-			sig += param.Name.Value
+			sigSb157.WriteString(param.Name.Value)
 			if param.Type != nil {
-				sig += ": " + param.Type.Name
+				sigSb157.WriteString(": " + param.Type.Name)
 			}
 		}
 
 		if param.DefaultValue != nil {
-			sig += " = " + param.DefaultValue.String()
+			sigSb157.WriteString(" = " + param.DefaultValue.String())
 		}
 	}
+	sig += sigSb157.String()
 
 	sig += ")"
 
@@ -191,7 +195,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	return sig
 }
 
-// createVariableSymbols creates DocumentSymbols for variable declarations
+// createVariableSymbols creates DocumentSymbols for variable declarations.
 func createVariableSymbols(varDecl *ast.VarDeclStatement) []protocol.DocumentSymbol {
 	if varDecl == nil || len(varDecl.Names) == 0 {
 		return nil
@@ -247,7 +251,7 @@ func createVariableSymbols(varDecl *ast.VarDeclStatement) []protocol.DocumentSym
 	return symbols
 }
 
-// createConstSymbol creates a DocumentSymbol for a constant declaration
+// createConstSymbol creates a DocumentSymbol for a constant declaration.
 func createConstSymbol(constDecl *ast.ConstDecl) *protocol.DocumentSymbol {
 	if constDecl == nil || constDecl.Name == nil {
 		return nil
@@ -257,6 +261,7 @@ func createConstSymbol(constDecl *ast.ConstDecl) *protocol.DocumentSymbol {
 	if constDecl.Type != nil && constDecl.Type.Name != "" {
 		detail += ": " + constDecl.Type.Name
 	}
+
 	if constDecl.Value != nil {
 		detail += " = " + constDecl.Value.String()
 	}
@@ -294,7 +299,7 @@ func createConstSymbol(constDecl *ast.ConstDecl) *protocol.DocumentSymbol {
 	}
 }
 
-// createClassSymbol creates a DocumentSymbol for a class declaration
+// createClassSymbol creates a DocumentSymbol for a class declaration.
 func createClassSymbol(classDecl *ast.ClassDecl) *protocol.DocumentSymbol {
 	if classDecl == nil || classDecl.Name == nil {
 		return nil
@@ -347,6 +352,7 @@ func createClassSymbol(classDecl *ast.ClassDecl) *protocol.DocumentSymbol {
 		}
 
 		fieldDetail := "field"
+
 		if field.Type != nil {
 			// TypeExpression is an interface, try to get type name
 			if typeAnnot, ok := field.Type.(*ast.TypeAnnotation); ok && typeAnnot.Name != "" {
@@ -476,7 +482,7 @@ func createClassSymbol(classDecl *ast.ClassDecl) *protocol.DocumentSymbol {
 	return symbol
 }
 
-// createRecordSymbol creates a DocumentSymbol for a record declaration
+// createRecordSymbol creates a DocumentSymbol for a record declaration.
 func createRecordSymbol(recordDecl *ast.RecordDecl) *protocol.DocumentSymbol {
 	if recordDecl == nil || recordDecl.Name == nil {
 		return nil
@@ -570,7 +576,7 @@ func createRecordSymbol(recordDecl *ast.RecordDecl) *protocol.DocumentSymbol {
 	return symbol
 }
 
-// createEnumSymbol creates a DocumentSymbol for an enum declaration
+// createEnumSymbol creates a DocumentSymbol for an enum declaration.
 func createEnumSymbol(enumDecl *ast.EnumDecl) *protocol.DocumentSymbol {
 	if enumDecl == nil || enumDecl.Name == nil {
 		return nil

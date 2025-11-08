@@ -4,11 +4,10 @@ package lsp
 import (
 	"log"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // SemanticTokensFull handles textDocument/semanticTokens/full requests.
@@ -81,7 +80,7 @@ func SemanticTokensFull(context *glsp.Context, params *protocol.SemanticTokensPa
 
 // SemanticTokensFullDelta handles textDocument/semanticTokens/full/delta requests.
 // It returns incremental changes to semantic tokens since the previous request.
-func SemanticTokensFullDelta(context *glsp.Context, params *protocol.SemanticTokensDeltaParams) (interface{}, error) {
+func SemanticTokensFullDelta(context *glsp.Context, params *protocol.SemanticTokensDeltaParams) (any, error) {
 	log.Printf("SemanticTokensFullDelta request for: %s (previousResultId: %s)\n",
 		params.TextDocument.URI, params.PreviousResultID)
 
@@ -132,10 +131,12 @@ func SemanticTokensFullDelta(context *glsp.Context, params *protocol.SemanticTok
 
 	// Try to retrieve old tokens from cache
 	var oldTokens []server.SemanticToken
+
 	cache := srv.SemanticTokensCache()
 	if cache != nil && params.PreviousResultID != "" {
 		if cached, found := cache.Retrieve(params.TextDocument.URI, params.PreviousResultID); found {
 			oldTokens = cached.Tokens
+
 			log.Printf("Found cached tokens for previousResultId: %s\n", params.PreviousResultID)
 		} else {
 			log.Printf("Previous resultId not found in cache: %s\n", params.PreviousResultID)

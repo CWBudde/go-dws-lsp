@@ -45,11 +45,13 @@ func FindSymbolDefinitionAtPosition(program *dwscript.Program, pos token.Positio
 			// is not always reliable (often returns 0:0)
 			log.Printf("Found semantic symbol: %s (kind=%s, scope=%s)",
 				sym.Name, sym.Kind, sym.Scope)
+
 			return sym
 		}
 	}
 
 	log.Printf("No semantic symbol found for '%s' at position %d:%d", identSym.Name, pos.Line, pos.Column)
+
 	return nil
 }
 
@@ -78,7 +80,7 @@ func ResolveIdentifierToDefinition(
 	// (we take the first one as it's the most relevant based on scope rules)
 	loc := locations[0]
 	defPos := token.Position{
-		Line:   int(loc.Range.Start.Line) + 1,   // Convert from 0-based to 1-based
+		Line:   int(loc.Range.Start.Line) + 1,      // Convert from 0-based to 1-based
 		Column: int(loc.Range.Start.Character) + 1, // Convert from 0-based to 1-based
 	}
 
@@ -120,6 +122,7 @@ func FindSemanticReferences(
 	}
 
 	var ranges []protocol.Range
+
 	log.Printf("Finding semantic references for %s defined at %d:%d",
 		targetName, targetDefPos.Line, targetDefPos.Column)
 
@@ -163,6 +166,7 @@ func FindSemanticReferences(
 			}
 
 			ranges = append(ranges, lspRange)
+
 			log.Printf("  Found reference at %d:%d", identPos.Line, identPos.Column)
 		}
 
@@ -170,5 +174,6 @@ func FindSemanticReferences(
 	})
 
 	log.Printf("Found %d semantic references for %s", len(ranges), targetName)
+
 	return ranges
 }

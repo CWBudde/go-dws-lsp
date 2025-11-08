@@ -3,10 +3,9 @@ package analysis
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // setupTestLegend creates a standard semantic tokens legend for testing.
@@ -47,6 +46,7 @@ func findToken(tokens []server.SemanticToken, line, startChar uint32) *server.Se
 			return &tokens[i]
 		}
 	}
+
 	return nil
 }
 
@@ -57,6 +57,7 @@ func findTokenByType(tokens []server.SemanticToken, tokenType uint32) *server.Se
 			return &tokens[i]
 		}
 	}
+
 	return nil
 }
 
@@ -69,7 +70,7 @@ func TestCollectSemanticTokens_SimpleVariableDeclaration(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, tokens)
-	assert.Greater(t, len(tokens), 0, "Should have tokens")
+	assert.NotEmpty(t, tokens, "Should have tokens")
 
 	// Find the variable 'x' token (should be at line 0, column 4)
 	varToken := findToken(tokens, 0, 4)
@@ -378,9 +379,7 @@ end;`
 }
 
 func TestCollectSemanticTokens_StaticField(t *testing.T) {
-	code := `type TMyClass = class
-  class var FCounter: Integer;
-end;`
+	code := "type TMyClass = class\n  var FCounter: Integer;\nend;"
 	doc := parseTestCode(t, code)
 	legend := setupTestLegend()
 
@@ -499,7 +498,7 @@ func TestCollectSemanticTokens_EmptyProgram(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, tokens)
-	assert.Equal(t, 0, len(tokens), "Empty program should have no tokens")
+	assert.Empty(t, tokens, "Empty program should have no tokens")
 }
 
 func TestCollectSemanticTokens_NilProgram(t *testing.T) {
@@ -531,7 +530,7 @@ var z: Boolean;`
 	tokens, err := CollectSemanticTokens(doc.Program.AST(), legend)
 
 	require.NoError(t, err)
-	require.Greater(t, len(tokens), 0)
+	require.NotEmpty(t, tokens)
 
 	// Verify tokens are sorted by line, then by character
 	for i := 1; i < len(tokens); i++ {
@@ -585,12 +584,14 @@ const MAX_VALUE = 100;`
 	// Constant MAX_VALUE at line 11
 	constToken := findToken(tokens, 11, 6)
 	require.NotNil(t, constToken, "Should find constant MAX_VALUE")
+
 	readonlyMask := legend.GetModifierMask(server.TokenModifierReadonly)
 	assert.NotEqual(t, uint32(0), constToken.Modifiers&readonlyMask, "Constant should have readonly modifier")
 
 	// Verify tokens are sorted
 	for i := 1; i < len(tokens); i++ {
 		prev := tokens[i-1]
+
 		curr := tokens[i]
 		if prev.Line == curr.Line {
 			assert.LessOrEqual(t, prev.StartChar, curr.StartChar)
@@ -599,6 +600,7 @@ const MAX_VALUE = 100;`
 		}
 	}
 }
+
 // ============================================================================
 // Task 12.23: Verify correct classification of various constructs
 // ============================================================================
@@ -760,12 +762,14 @@ const MAX_SIZE = 100;`
 	// Verify constant (line 5, column 6)
 	constToken := findToken(tokens, 5, 6)
 	require.NotNil(t, constToken, "Should find constant 'MAX_SIZE'")
+
 	readonlyMask := legend.GetModifierMask(server.TokenModifierReadonly)
 	assert.NotEqual(t, uint32(0), constToken.Modifiers&readonlyMask)
 
 	// Verify tokens are sorted
 	for i := 1; i < len(tokens); i++ {
 		prev := tokens[i-1]
+
 		curr := tokens[i]
 		if prev.Line == curr.Line {
 			assert.LessOrEqual(t, prev.StartChar, curr.StartChar,

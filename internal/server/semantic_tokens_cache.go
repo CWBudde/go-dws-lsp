@@ -3,6 +3,7 @@ package server
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
@@ -45,8 +46,9 @@ func GenerateResultID(uri protocol.DocumentUri, version int) string {
 	// Create a hash based on URI, version, and timestamp for uniqueness
 	hash := sha256.New()
 	hash.Write([]byte(uri))
-	hash.Write([]byte(fmt.Sprintf(":%d:%d", version, time.Now().UnixNano())))
-	return fmt.Sprintf("%x", hash.Sum(nil))[:16] // Use first 16 hex chars
+	fmt.Fprintf(hash, ":%d:%d", version, time.Now().UnixNano())
+
+	return hex.EncodeToString(hash.Sum(nil))[:16] // Use first 16 hex chars
 }
 
 // Store saves a set of semantic tokens in the cache with the given resultId.
@@ -73,6 +75,7 @@ func (c *SemanticTokensCache) Retrieve(uri protocol.DocumentUri, resultID string
 
 	key := c.makeKey(uri, resultID)
 	cached, found := c.cache[key]
+
 	return cached, found
 }
 

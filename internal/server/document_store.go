@@ -35,6 +35,7 @@ func NewDocumentStore() *DocumentStore {
 func (ds *DocumentStore) Set(uri string, doc *Document) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+
 	ds.documents[uri] = doc
 }
 
@@ -42,7 +43,9 @@ func (ds *DocumentStore) Set(uri string, doc *Document) {
 func (ds *DocumentStore) Get(uri string) (*Document, bool) {
 	ds.mu.RLock()
 	defer ds.mu.RUnlock()
+
 	doc, ok := ds.documents[uri]
+
 	return doc, ok
 }
 
@@ -50,6 +53,7 @@ func (ds *DocumentStore) Get(uri string) (*Document, bool) {
 func (ds *DocumentStore) Delete(uri string) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+
 	delete(ds.documents, uri)
 }
 
@@ -62,6 +66,7 @@ func (ds *DocumentStore) List() []string {
 	for uri := range ds.documents {
 		uris = append(uris, uri)
 	}
+
 	return uris
 }
 
@@ -69,5 +74,6 @@ func (ds *DocumentStore) List() []string {
 func (ds *DocumentStore) Clear() {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+
 	ds.documents = make(map[string]*Document)
 }

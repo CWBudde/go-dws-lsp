@@ -6,12 +6,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/CWBudde/go-dws-lsp/internal/lsp"
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	glspserver "github.com/tliron/glsp/server"
-
-	"github.com/CWBudde/go-dws-lsp/internal/lsp"
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 const (
@@ -31,6 +30,7 @@ func init() {
 	flag.IntVar(&tcpPort, "port", 8765, "TCP port to listen on (used with -tcp)")
 	flag.StringVar(&logLevel, "log-level", "error", "Log level: debug, info, warn, error")
 	flag.StringVar(&logFile, "log-file", "", "Log file path (default: stderr)")
+
 	flag.Usage = usage
 }
 
@@ -53,11 +53,13 @@ func main() {
 
 	fmt.Fprintf(os.Stderr, "go-dws-lsp version %s starting...\n", version)
 	fmt.Fprintf(os.Stderr, "Transport: ")
+
 	if tcpMode {
 		fmt.Fprintf(os.Stderr, "TCP (port %d)\n", tcpPort)
 	} else {
 		fmt.Fprintf(os.Stderr, "STDIO\n")
 	}
+
 	fmt.Fprintf(os.Stderr, "Log level: %s\n", logLevel)
 
 	// Initialize server state
@@ -74,7 +76,7 @@ func main() {
 		SetTrace:    func(context *glsp.Context, params *protocol.SetTraceParams) error { return nil },
 
 		// Workspace notifications
-		WorkspaceDidChangeConfiguration:   lsp.DidChangeConfiguration,
+		WorkspaceDidChangeConfiguration:    lsp.DidChangeConfiguration,
 		WorkspaceDidChangeWorkspaceFolders: lsp.DidChangeWorkspaceFolders,
 
 		// Text document notifications (Phase 1: Document Synchronization)
@@ -124,12 +126,14 @@ func main() {
 	// Start server with appropriate transport
 	if tcpMode {
 		fmt.Fprintf(os.Stderr, "Starting TCP server on port %d...\n", tcpPort)
-		if err := glspServer.RunTCP(fmt.Sprintf("127.0.0.1:%d", tcpPort)); err != nil {
+		err := glspServer.RunTCP(fmt.Sprintf("127.0.0.1:%d", tcpPort))
+		if err != nil {
 			log.Fatalf("TCP server error: %v", err)
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Starting STDIO server...\n")
-		if err := glspServer.RunStdio(); err != nil {
+		err := glspServer.RunStdio()
+		if err != nil {
 			log.Fatalf("STDIO server error: %v", err)
 		}
 	}
@@ -139,11 +143,12 @@ func main() {
 func setupLogging() {
 	// Set log output
 	if logFile != "" {
-		f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
 			os.Exit(1)
 		}
+
 		log.SetOutput(f)
 	} else {
 		log.SetOutput(os.Stderr)

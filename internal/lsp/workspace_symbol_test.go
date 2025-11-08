@@ -3,10 +3,9 @@ package lsp
 import (
 	"testing"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestWorkspaceSymbol_EmptyIndex(t *testing.T) {
@@ -18,7 +17,6 @@ func TestWorkspaceSymbol_EmptyIndex(t *testing.T) {
 	result, err := WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 		Query: "test",
 	})
-
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -60,7 +58,6 @@ func TestWorkspaceSymbol_WithSymbols(t *testing.T) {
 	result, err := WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 		Query: "test",
 	})
-
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -77,7 +74,6 @@ func TestWorkspaceSymbol_WithSymbols(t *testing.T) {
 	result, err = WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 		Query: "Class",
 	})
-
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -111,7 +107,6 @@ func TestWorkspaceSymbol_CaseInsensitive(t *testing.T) {
 		result, err := WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 			Query: query,
 		})
-
 		if err != nil {
 			t.Errorf("Expected no error for query %q, got: %v", query, err)
 		}
@@ -156,7 +151,6 @@ func TestWorkspaceSymbol_EmptyQuery(t *testing.T) {
 	result, err := WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 		Query: "",
 	})
-
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -184,7 +178,6 @@ func TestWorkspaceSymbol_WithContainerName(t *testing.T) {
 	result, err := WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 		Query: "myMethod",
 	})
-
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -237,7 +230,6 @@ func TestWorkspaceSymbol_MultipleFiles(t *testing.T) {
 	result, err := WorkspaceSymbol(nil, &protocol.WorkspaceSymbolParams{
 		Query: "func",
 	})
-
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}

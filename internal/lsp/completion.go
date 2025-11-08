@@ -5,11 +5,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Completion handles the textDocument/completion request.
@@ -17,6 +16,7 @@ import (
 func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, error) {
 	// Task 9.18: Add timing measurements for performance tracking
 	startTime := time.Now()
+
 	defer func() {
 		elapsed := time.Since(startTime)
 		log.Printf("Completion took %v (target: <100ms)", elapsed)
@@ -57,6 +57,7 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	programAST := doc.Program.AST()
 	if programAST == nil {
 		log.Printf("AST is nil for document: %s\n", uri)
+
 		return &protocol.CompletionList{
 			IsIncomplete: false,
 			Items:        []protocol.CompletionItem{},
@@ -67,6 +68,7 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	completionContext, err := analysis.DetermineContext(doc, int(position.Line), int(position.Character))
 	if err != nil {
 		log.Printf("Error determining completion context: %v\n", err)
+
 		return &protocol.CompletionList{
 			IsIncomplete: false,
 			Items:        []protocol.CompletionItem{},
@@ -77,6 +79,7 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	// (e.g., inside a comment or string)
 	if completionContext == nil {
 		log.Println("Completion suppressed (inside comment or string)")
+
 		return &protocol.CompletionList{
 			IsIncomplete: false,
 			Items:        []protocol.CompletionItem{},
@@ -120,7 +123,6 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 
 			typeInfo, err := analysis.ResolveMemberType(doc, completionContext.ParentIdentifier,
 				int(position.Line), int(position.Character))
-
 			if err != nil {
 				log.Printf("Error resolving member type: %v", err)
 			} else if typeInfo != nil {
@@ -167,6 +169,7 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 		items, err := analysis.CollectScopeCompletions(doc, cache, int(position.Line), int(position.Character))
 		if err != nil {
 			log.Printf("Error collecting scope completions: %v", err)
+
 			items = []protocol.CompletionItem{}
 		}
 

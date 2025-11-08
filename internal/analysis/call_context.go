@@ -4,14 +4,13 @@ import (
 	"log"
 	"strings"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/dwscript"
 	"github.com/cwbudde/go-dws/pkg/token"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
-// CallContext holds information about a function call at the cursor position
+// CallContext holds information about a function call at the cursor position.
 type CallContext struct {
 	// The call expression node (CallExpression or MethodCallExpression)
 	CallNode ast.Node
@@ -30,7 +29,7 @@ type CallContext struct {
 }
 
 // DetermineCallContext analyzes the cursor position to determine if it's inside a function call
-// Returns nil if the cursor is not inside a function call
+// Returns nil if the cursor is not inside a function call.
 func DetermineCallContext(doc *server.Document, line, character int) (*CallContext, error) {
 	if doc.Program == nil {
 		return nil, nil
@@ -79,7 +78,7 @@ func DetermineCallContext(doc *server.Document, line, character int) (*CallConte
 }
 
 // findEnclosingCallExpression traverses the AST to find the innermost CallExpression
-// or MethodCallExpression that contains the given position
+// or MethodCallExpression that contains the given position.
 func findEnclosingCallExpression(program *ast.Program, line, col int) ast.Node {
 	var enclosingCall ast.Node
 
@@ -131,7 +130,7 @@ func findEnclosingCallExpression(program *ast.Program, line, col int) ast.Node {
 }
 
 // findParameterIndex counts commas from the opening parenthesis to the cursor
-// to determine which parameter the cursor is on (0-based index)
+// to determine which parameter the cursor is on (0-based index).
 func findParameterIndex(text string, line, character int, callNode ast.Node) int {
 	// Convert positions to text offset
 	lines := strings.Split(text, "\n")
@@ -149,10 +148,11 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 	var textBeforeCursor strings.Builder
 
 	// Get all text from start of document up to cursor
-	for i := 0; i < line; i++ {
+	for i := range line {
 		textBeforeCursor.WriteString(lines[i])
 		textBeforeCursor.WriteString("\n")
 	}
+
 	textBeforeCursor.WriteString(currentLine[:character])
 
 	textBefore := textBeforeCursor.String()
@@ -170,6 +170,7 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 
 	// Scan backward
 	foundOpenParen := false
+
 	for i := len(runes) - 1; i >= 0; i-- {
 		r := runes[i]
 
@@ -184,6 +185,7 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 					stringChar = r
 				}
 			}
+
 			continue
 		}
 
@@ -200,6 +202,7 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 				foundOpenParen = true
 				break
 			}
+
 			parenDepth--
 		} else if r == ']' {
 			bracketDepth++
@@ -228,7 +231,7 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 }
 
 // extractFunctionName extracts the function or method name from a call expression node
-// Returns the name and optionally the object expression (for method calls)
+// Returns the name and optionally the object expression (for method calls).
 func extractFunctionName(callNode ast.Node) (string, ast.Expression) {
 	switch node := callNode.(type) {
 	case *ast.CallExpression:
@@ -256,7 +259,7 @@ func extractFunctionName(callNode ast.Node) (string, ast.Expression) {
 
 // FindFunctionAtCall scans backward from the cursor position to find the function being called
 // This is a text-based approach that works even when the AST is incomplete
-// Returns the function name or an error if not found
+// Returns the function name or an error if not found.
 func FindFunctionAtCall(doc *server.Document, line, character int) (string, error) {
 	if doc.Text == "" {
 		return "", nil
@@ -274,10 +277,11 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 
 	// Build the text before the cursor
 	var textBeforeCursor strings.Builder
-	for i := 0; i < line; i++ {
+	for i := range line {
 		textBeforeCursor.WriteString(lines[i])
 		textBeforeCursor.WriteString("\n")
 	}
+
 	textBeforeCursor.WriteString(currentLine[:character])
 
 	textBefore := textBeforeCursor.String()
@@ -302,6 +306,7 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 					stringChar = r
 				}
 			}
+
 			continue
 		}
 
@@ -318,6 +323,7 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 				openParenIndex = i
 				break
 			}
+
 			parenDepth--
 		}
 	}
@@ -340,6 +346,7 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 
 	// Collect the function name (may include dots for qualified names)
 	var functionNameRunes []rune
+
 	for i >= 0 {
 		r := runes[i]
 		if isIdentifierChar(r) || r == '.' {
@@ -361,12 +368,12 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 	return functionName, nil
 }
 
-// isWhitespace checks if a rune is whitespace
+// isWhitespace checks if a rune is whitespace.
 func isWhitespace(r rune) bool {
 	return r == ' ' || r == '\t' || r == '\n' || r == '\r'
 }
 
-// isIdentifierChar checks if a rune can be part of an identifier
+// isIdentifierChar checks if a rune can be part of an identifier.
 func isIdentifierChar(r rune) bool {
 	return (r >= 'a' && r <= 'z') ||
 		(r >= 'A' && r <= 'Z') ||
@@ -377,7 +384,7 @@ func isIdentifierChar(r rune) bool {
 // ParseWithTemporaryClosingParen handles incomplete AST by temporarily inserting a closing parenthesis
 // This helps parse incomplete function calls like `foo(x, ` to get a complete AST
 // Returns the temporary AST or nil if parsing fails
-// The temporary AST should be discarded after use and not stored
+// The temporary AST should be discarded after use and not stored.
 func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Program {
 	if text == "" {
 		return nil
@@ -397,7 +404,7 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 	var modifiedText strings.Builder
 
 	// Add all lines before the cursor line
-	for i := 0; i < line; i++ {
+	for i := range line {
 		modifiedText.WriteString(lines[i])
 		modifiedText.WriteString("\n")
 	}
@@ -449,7 +456,7 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 
 // DetermineCallContextWithTempAST uses a temporary AST with closing paren inserted
 // This is useful for incomplete function calls during typing
-// Falls back to token-based analysis if temporary parsing fails
+// Falls back to token-based analysis if temporary parsing fails.
 func DetermineCallContextWithTempAST(doc *server.Document, line, character int) (*CallContext, error) {
 	buildFallbackContext := func() (*CallContext, error) {
 		functionName, err := FindFunctionAtCall(doc, line, character)
@@ -517,7 +524,7 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 
 // CountParameterIndex traverses tokens backward to count commas and determine parameter index
 // This implements task 10.7 - it scans backward from cursor position character-by-character
-// to count commas at the same parenthesis nesting level and returns the active parameter index (0-based)
+// to count commas at the same parenthesis nesting level and returns the active parameter index (0-based).
 func CountParameterIndex(text string, line, character int) (int, error) {
 	if text == "" {
 		return 0, nil
@@ -535,10 +542,11 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 
 	// Build text before cursor
 	var textBeforeCursor strings.Builder
-	for i := 0; i < line; i++ {
+	for i := range line {
 		textBeforeCursor.WriteString(lines[i])
 		textBeforeCursor.WriteString("\n")
 	}
+
 	textBeforeCursor.WriteString(currentLine[:character])
 
 	textBefore := textBeforeCursor.String()
@@ -567,6 +575,7 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 					stringChar = r
 				}
 			}
+
 			continue
 		}
 
@@ -584,6 +593,7 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 				foundOpenParen = true
 				break
 			}
+
 			parenDepth--
 		} else if r == ']' {
 			// Track array indexing depth
@@ -615,7 +625,7 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 	return commaCount, nil
 }
 
-// findParameterIndexFromText is a simplified version that just counts commas
+// findParameterIndexFromText is a simplified version that just counts commas.
 func findParameterIndexFromText(text string, line, character int) int {
 	lines := strings.Split(text, "\n")
 	if line < 0 || line >= len(lines) {
@@ -629,10 +639,11 @@ func findParameterIndexFromText(text string, line, character int) int {
 
 	// Get text before cursor
 	var textBefore strings.Builder
-	for i := 0; i < line; i++ {
+	for i := range line {
 		textBefore.WriteString(lines[i])
 		textBefore.WriteString("\n")
 	}
+
 	textBefore.WriteString(currentLine[:character])
 
 	text = textBefore.String()
@@ -657,6 +668,7 @@ func findParameterIndexFromText(text string, line, character int) int {
 					stringChar = r
 				}
 			}
+
 			continue
 		}
 
@@ -671,6 +683,7 @@ func findParameterIndexFromText(text string, line, character int) int {
 			if parenDepth == 0 {
 				break
 			}
+
 			parenDepth--
 		} else if r == ',' && parenDepth == 0 {
 			commaCount++

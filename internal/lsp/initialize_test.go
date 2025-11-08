@@ -3,10 +3,9 @@ package lsp
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 func TestInitialize(t *testing.T) {
@@ -24,7 +23,7 @@ func TestInitialize(t *testing.T) {
 			Name:    clientName,
 			Version: &clientVersion,
 		},
-		RootURI: &rootURI,
+		RootURI:      &rootURI,
 		Capabilities: protocol.ClientCapabilities{
 			// Add basic client capabilities
 		},
@@ -58,6 +57,7 @@ func TestInitialize(t *testing.T) {
 		if initResult.ServerInfo.Name != "go-dws-lsp" {
 			t.Errorf("ServerInfo.Name = %q, want %q", initResult.ServerInfo.Name, "go-dws-lsp")
 		}
+
 		if initResult.ServerInfo.Version == nil {
 			t.Error("ServerInfo.Version is nil")
 		} else if *initResult.ServerInfo.Version != "0.1.0" {
@@ -73,6 +73,7 @@ func TestInitialize(t *testing.T) {
 		if syncOpts.OpenClose == nil || !*syncOpts.OpenClose {
 			t.Error("TextDocumentSync.OpenClose should be true")
 		}
+
 		if syncOpts.Change == nil || *syncOpts.Change != protocol.TextDocumentSyncKindIncremental {
 			t.Error("TextDocumentSync.Change should be Incremental")
 		}
@@ -115,12 +116,14 @@ func TestInitialize(t *testing.T) {
 		}
 		// Check for expected triggers
 		hasDot := false
+
 		for _, trigger := range triggers {
 			if trigger == "." {
 				hasDot = true
 				break
 			}
 		}
+
 		if !hasDot {
 			t.Error("CompletionProvider should have '.' as trigger character")
 		}
@@ -136,12 +139,14 @@ func TestInitialize(t *testing.T) {
 		}
 		// Check for expected triggers
 		hasParen := false
+
 		for _, trigger := range triggers {
 			if trigger == "(" {
 				hasParen = true
 				break
 			}
 		}
+
 		if !hasParen {
 			t.Error("SignatureHelpProvider should have '(' as trigger character")
 		}
@@ -162,6 +167,7 @@ func TestInitialize(t *testing.T) {
 			if len(legend.TokenTypes) == 0 {
 				t.Error("SemanticTokensProvider should have token types in legend")
 			}
+
 			if len(legend.TokenModifiers) == 0 {
 				t.Error("SemanticTokensProvider should have token modifiers in legend")
 			}
@@ -243,4 +249,3 @@ func TestShutdown(t *testing.T) {
 		t.Error("Semantic tokens cache should be cleared after shutdown")
 	}
 }
-

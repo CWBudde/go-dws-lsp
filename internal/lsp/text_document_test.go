@@ -3,10 +3,9 @@ package lsp
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 func TestDidOpen(t *testing.T) {
@@ -48,12 +47,15 @@ func TestDidOpen(t *testing.T) {
 	if doc.URI != uri {
 		t.Errorf("Document URI = %q, want %q", doc.URI, uri)
 	}
+
 	if doc.Text != text {
 		t.Errorf("Document Text = %q, want %q", doc.Text, text)
 	}
+
 	if doc.Version != int(version) {
 		t.Errorf("Document Version = %d, want %d", doc.Version, int(version))
 	}
+
 	if doc.LanguageID != languageID {
 		t.Errorf("Document LanguageID = %q, want %q", doc.LanguageID, languageID)
 	}
@@ -130,7 +132,7 @@ func TestDidChange_FullSync(t *testing.T) {
 			},
 			Version: newVersion,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			protocol.TextDocumentContentChangeEvent{
 				Range: nil, // nil range means full sync
 				Text:  newText,
@@ -191,7 +193,7 @@ func TestDidChange_IncrementalSync_SingleLine(t *testing.T) {
 			},
 			Version: newVersion,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			protocol.TextDocumentContentChangeEvent{
 				Range: &protocol.Range{
 					Start: protocol.Position{Line: 0, Character: 7},
@@ -256,7 +258,7 @@ func TestDidChange_IncrementalSync_MultiLine(t *testing.T) {
 			},
 			Version: newVersion,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			protocol.TextDocumentContentChangeEvent{
 				Range: &protocol.Range{
 					Start: protocol.Position{Line: 1, Character: 0},
@@ -315,7 +317,7 @@ func TestDidChange_IncrementalSync_Insertion(t *testing.T) {
 			},
 			Version: newVersion,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			protocol.TextDocumentContentChangeEvent{
 				Range: &protocol.Range{
 					Start: protocol.Position{Line: 0, Character: 15}, // End of first line
@@ -376,7 +378,7 @@ func TestDidChange_VersionTracking(t *testing.T) {
 				},
 				Version: version,
 			},
-			ContentChanges: []interface{}{
+			ContentChanges: []any{
 				protocol.TextDocumentContentChangeEvent{
 					Range: nil,
 					Text:  "var x: Integer; // version " + string(rune(version)),
@@ -427,7 +429,7 @@ func TestDidChange_MultipleChanges(t *testing.T) {
 			},
 			Version: newVersion,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			// Change 1: Replace "Integer" with "String" on line 1
 			protocol.TextDocumentContentChangeEvent{
 				Range: &protocol.Range{
@@ -508,7 +510,7 @@ func TestDidChange_NonexistentDocument(t *testing.T) {
 			},
 			Version: 1,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			protocol.TextDocumentContentChangeEvent{
 				Range: nil,
 				Text:  "var x: Integer;",

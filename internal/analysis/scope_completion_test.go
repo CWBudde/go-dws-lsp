@@ -17,6 +17,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -30,13 +31,13 @@ end.`
 
 	// Get completions at line 1 (inside begin/end block)
 	items, err := CollectScopeCompletions(doc, nil, 1, 0)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
 
 	// Should include keywords
 	hasKeyword := false
+
 	for _, item := range items {
 		if item.Label == "if" || item.Label == "while" || item.Label == "for" {
 			if *item.Kind == protocol.CompletionItemKindKeyword {
@@ -65,6 +66,7 @@ end;`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -78,7 +80,6 @@ end;`
 
 	// Get completions inside the function (line 5, where comment is)
 	items, err := CollectScopeCompletions(doc, nil, 5, 2)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -91,13 +92,16 @@ end;`
 	for _, item := range items {
 		if item.Label == "x" {
 			foundX = true
+
 			if *item.Kind != protocol.CompletionItemKindVariable {
 				t.Errorf("Expected 'x' to be a Variable, got kind %d", *item.Kind)
 			}
 		}
+
 		if item.Label == "y" {
 			foundY = true
 		}
+
 		if item.Label == "s" {
 			foundS = true
 		}
@@ -120,6 +124,7 @@ end;`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -133,7 +138,6 @@ end;`
 
 	// Get completions inside the function
 	items, err := CollectScopeCompletions(doc, nil, 3, 2)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -145,10 +149,12 @@ end;`
 	for _, item := range items {
 		if item.Label == "a" {
 			foundA = true
+
 			if *item.Kind != protocol.CompletionItemKindVariable {
 				t.Errorf("Expected 'a' to be a Variable, got kind %d", *item.Kind)
 			}
 		}
+
 		if item.Label == "b" {
 			foundB = true
 		}
@@ -178,6 +184,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -191,7 +198,6 @@ end.`
 
 	// Get completions in main begin/end block
 	items, err := CollectScopeCompletions(doc, nil, 11, 2)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -203,10 +209,12 @@ end.`
 	for _, item := range items {
 		if item.Label == "MyGlobalFunc" {
 			foundFunc = true
+
 			if *item.Kind != protocol.CompletionItemKindFunction {
 				t.Errorf("Expected 'MyGlobalFunc' to be a Function, got kind %d", *item.Kind)
 			}
 		}
+
 		if item.Label == "MyGlobalProc" {
 			foundProc = true
 		}
@@ -230,6 +238,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -243,7 +252,6 @@ end.`
 
 	// Get completions
 	items, err := CollectScopeCompletions(doc, nil, 6, 0)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -254,9 +262,11 @@ end.`
 	for _, item := range items {
 		if item.Label == "TMyClass" {
 			foundClass = true
+
 			if *item.Kind != protocol.CompletionItemKindClass {
 				t.Errorf("Expected 'TMyClass' to be a Class, got kind %d", *item.Kind)
 			}
+
 			break
 		}
 	}
@@ -275,6 +285,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -288,7 +299,6 @@ end.`
 
 	// Get completions
 	items, err := CollectScopeCompletions(doc, nil, 1, 0)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -301,13 +311,16 @@ end.`
 	for _, item := range items {
 		if item.Label == "PrintLn" {
 			foundPrintLn = true
+
 			if *item.Kind != protocol.CompletionItemKindFunction {
 				t.Errorf("Expected 'PrintLn' to be a Function, got kind %d", *item.Kind)
 			}
 		}
+
 		if item.Label == "Length" {
 			foundLength = true
 		}
+
 		if item.Label == "IntToStr" {
 			foundIntToStr = true
 		}
@@ -328,6 +341,7 @@ end.`
 	if err != nil {
 		t.Fatalf("Failed to create engine: %v", err)
 	}
+
 	program, err := engine.Compile(source)
 	if err != nil {
 		t.Fatalf("Failed to parse source: %v", err)
@@ -341,7 +355,6 @@ end.`
 
 	// Get completions
 	items, err := CollectScopeCompletions(doc, nil, 1, 0)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -355,9 +368,11 @@ end.`
 		if item.Label == "Integer" {
 			foundInteger = true
 		}
+
 		if item.Label == "String" {
 			foundString = true
 		}
+
 		if item.Label == "Boolean" {
 			foundBoolean = true
 		}
@@ -393,6 +408,7 @@ func TestFilterCompletionsByPrefix(t *testing.T) {
 		if item.Label == "Apple" {
 			foundApple = true
 		}
+
 		if item.Label == "Apricot" {
 			foundApricot = true
 		}
@@ -419,7 +435,6 @@ func TestCollectScopeCompletions_NoAST(t *testing.T) {
 
 	// Should still return keywords
 	items, err := CollectScopeCompletions(doc, nil, 0, 0)
-
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
 	}
@@ -431,6 +446,7 @@ func TestCollectScopeCompletions_NoAST(t *testing.T) {
 
 	// Verify we have keywords
 	hasKeyword := false
+
 	for _, item := range items {
 		if *item.Kind == protocol.CompletionItemKindKeyword {
 			hasKeyword = true

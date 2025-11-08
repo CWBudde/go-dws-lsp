@@ -3,12 +3,11 @@ package lsp
 import (
 	"testing"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// Test diagnostic pattern recognition functions
+// Test diagnostic pattern recognition functions.
 func TestIsUndeclaredIdentifier(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -282,6 +281,7 @@ func TestParseUnitsFromUsesClause(t *testing.T) {
 				t.Errorf("parseUnitsFromUsesClause() returned %d units, want %d", len(got), len(tt.wantUnits))
 				return
 			}
+
 			for i, unit := range got {
 				if unit != tt.wantUnits[i] {
 					t.Errorf("parseUnitsFromUsesClause()[%d] = %v, want %v", i, unit, tt.wantUnits[i])
@@ -336,6 +336,7 @@ func TestSortUnits(t *testing.T) {
 				t.Errorf("sortUnits() resulted in %d units, want %d", len(units), len(tt.want))
 				return
 			}
+
 			for i, unit := range units {
 				if unit != tt.want[i] {
 					t.Errorf("sortUnits()[%d] = %v, want %v", i, unit, tt.want[i])
@@ -562,6 +563,7 @@ func TestIsFunctionCall(t *testing.T) {
 					Start: protocol.Position{Line: 0, Character: 0},
 				},
 			}
+
 			got := isFunctionCall(tt.identifierName, diagnostic, doc)
 			if got != tt.want {
 				t.Errorf("isFunctionCall() = %v, want %v", got, tt.want)
@@ -620,11 +622,13 @@ func TestExtractCallArguments(t *testing.T) {
 					Start: protocol.Position{Line: 0, Character: 0},
 				},
 			}
+
 			got := extractCallArguments(tt.identifierName, diagnostic, doc)
 			if len(got) != len(tt.want) {
 				t.Errorf("extractCallArguments() returned %d args, want %d", len(got), len(tt.want))
 				return
 			}
+
 			for i, arg := range got {
 				if arg != tt.want[i] {
 					t.Errorf("extractCallArguments()[%d] = %v, want %v", i, arg, tt.want[i])

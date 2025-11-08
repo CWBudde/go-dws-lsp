@@ -4,11 +4,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/dwscript"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // FilterByScope removes references whose scope does not match the target scope.
@@ -58,6 +57,7 @@ func programForURI(uri string, docStore *server.DocumentStore, cache map[string]
 
 	prog := parseProgramFromDisk(uri)
 	cache[uri] = prog
+
 	return prog
 }
 
@@ -79,6 +79,7 @@ func parseProgramFromDisk(uri string) *dwscript.Program {
 		log.Printf("FilterByScope: unable to parse %s: %v", uri, err)
 		return nil
 	}
+
 	return program
 }
 
@@ -86,6 +87,7 @@ func scopeMatches(target, candidate *ScopeInfo) bool {
 	if candidate == nil {
 		return false
 	}
+
 	if target.Type != candidate.Type {
 		return false
 	}
@@ -104,9 +106,11 @@ func sameFunction(a, b *ast.FunctionDecl) bool {
 	if a == nil || b == nil {
 		return false
 	}
+
 	if a.Name == nil || b.Name == nil {
 		return false
 	}
+
 	return a.Name.Value == b.Name.Value
 }
 
@@ -114,8 +118,10 @@ func sameClass(a, b *ast.ClassDecl) bool {
 	if a == nil || b == nil {
 		return false
 	}
+
 	if a.Name == nil || b.Name == nil {
 		return false
 	}
+
 	return a.Name.Value == b.Name.Value
 }

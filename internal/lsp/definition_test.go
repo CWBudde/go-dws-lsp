@@ -3,12 +3,11 @@ package lsp
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
-	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 )
 
 func TestNodeToLocation(t *testing.T) {
@@ -663,6 +662,7 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 		Value: "global",
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
+
 	globalLoc := findIdentifierDefinition(globalRef, programAST, uri)
 	if globalLoc == nil {
 		t.Error("Expected to find global variable")
@@ -673,6 +673,7 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 		Value: "param",
 		Token: token.Token{Pos: token.Position{Line: 6, Column: 5}},
 	}
+
 	paramLoc := findIdentifierDefinition(paramRef, programAST, uri)
 	if paramLoc == nil {
 		t.Error("Expected to find parameter")
@@ -683,6 +684,7 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 		Value: "local",
 		Token: token.Token{Pos: token.Position{Line: 7, Column: 5}},
 	}
+
 	localLoc := findIdentifierDefinition(localRef, programAST, uri)
 	if localLoc == nil {
 		t.Error("Expected to find local variable")
@@ -692,11 +694,11 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 func TestNodeToLocation_CorrectRangeConversion(t *testing.T) {
 	// Verify that Location has correct URI and Range with proper coordinate conversion
 	tests := []struct {
-		name     string
-		node     ast.Node
-		uri      string
-		expLine  uint32 // Expected 0-based line
-		expChar  uint32 // Expected 0-based character
+		name    string
+		node    ast.Node
+		uri     string
+		expLine uint32 // Expected 0-based line
+		expChar uint32 // Expected 0-based character
 	}{
 		{
 			name: "identifier at line 1, column 1",
@@ -757,22 +759,27 @@ func TestNodeToLocation_CorrectRangeConversion(t *testing.T) {
 
 // Integration tests for global symbol definitions (Task 5.13)
 
-// parseCode is a helper function to parse DWScript code for testing
+// parseCode is a helper function to parse DWScript code for testing.
 func parseCode(t *testing.T, code string) *ast.Program {
 	t.Helper()
+
 	program, compileMsgs, err := analysis.ParseDocument(code, "test.dws")
 	if err != nil {
 		t.Fatalf("Failed to parse test code: %v", err)
 	}
+
 	if program == nil {
 		if compileMsgs != nil && len(compileMsgs) > 0 {
 			t.Logf("Compilation errors:")
+
 			for _, msg := range compileMsgs {
 				t.Logf("  - %s", msg.Message)
 			}
 		}
+
 		t.Fatal("ParseDocument returned nil program")
 	}
+
 	return program.AST()
 }
 
@@ -788,11 +795,13 @@ end;
 
 	// Find the function declaration
 	var funcDecl *ast.FunctionDecl
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if fn, ok := node.(*ast.FunctionDecl); ok {
 			funcDecl = fn
 			return false
 		}
+
 		return true
 	})
 
@@ -832,6 +841,7 @@ var x := GlobalFunc();
 
 	// Find the identifier "GlobalFunc" in the call expression
 	var callIdent *ast.Identifier
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if ident, ok := node.(*ast.Identifier); ok {
 			// Skip the function name in the declaration
@@ -847,6 +857,7 @@ var x := GlobalFunc();
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -885,6 +896,7 @@ end;
 	// Find the identifier "globalVar" in the assignment (not the declaration)
 	var varIdent *ast.Identifier
 	foundDecl := false
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if ident, ok := node.(*ast.Identifier); ok {
 			if ident.Value == "globalVar" {
@@ -896,6 +908,7 @@ end;
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -935,6 +948,7 @@ var obj: TMyClass;
 	// Find the identifier "TMyClass" in the variable declaration (not in the class decl)
 	var classIdent *ast.Identifier
 	foundDecl := false
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		// Look for TMyClass in type annotations
 		if typeAnnot, ok := node.(*ast.TypeAnnotation); ok {
@@ -944,14 +958,17 @@ var obj: TMyClass;
 					Value: "TMyClass",
 					Token: token.Token{Pos: token.Position{Line: 7, Column: 10}},
 				}
+
 				return false
 			}
 		}
+
 		if classDecl, ok := node.(*ast.ClassDecl); ok {
 			if classDecl.Name != nil && classDecl.Name.Value == "TMyClass" {
 				foundDecl = true
 			}
 		}
+
 		return true
 	})
 
@@ -998,6 +1015,7 @@ end;
 
 	// Find the field declaration "FValue"
 	var fieldDecl *ast.FieldDecl
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if field, ok := node.(*ast.FieldDecl); ok {
 			if field.Name != nil && field.Name.Value == "FValue" {
@@ -1005,6 +1023,7 @@ end;
 				return false
 			}
 		}
+
 		return true
 	})
 
@@ -1041,6 +1060,7 @@ end;
 
 	// Find the method implementation
 	var methodDecl *ast.FunctionDecl
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if fn, ok := node.(*ast.FunctionDecl); ok {
 			if fn.Name != nil && fn.Name.Value == "GetValue" {
@@ -1051,6 +1071,7 @@ end;
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -1112,6 +1133,7 @@ var x := Add(1, 2);
 	// Find the function call
 	var callIdent *ast.Identifier
 	foundDecl := false
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if ident, ok := node.(*ast.Identifier); ok {
 			if ident.Value == "Add" {
@@ -1123,6 +1145,7 @@ var x := Add(1, 2);
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -1188,6 +1211,7 @@ var y := GlobalFunc();
 		Line:   7,
 		Column: 10,
 	})
+
 	varLocs := varResolver.ResolveSymbol("globalVar")
 	if len(varLocs) < 1 {
 		t.Error("Expected to find global variable definition")
@@ -1198,6 +1222,7 @@ var y := GlobalFunc();
 		Line:   8,
 		Column: 10,
 	})
+
 	funcLocs := funcResolver.ResolveSymbol("GlobalFunc")
 	if len(funcLocs) < 1 {
 		t.Error("Expected to find global function definition")
@@ -1218,6 +1243,7 @@ var size := MAX_SIZE;
 	// Find the constant usage
 	var constIdent *ast.Identifier
 	foundDecl := false
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if ident, ok := node.(*ast.Identifier); ok {
 			if ident.Value == "MAX_SIZE" {
@@ -1229,6 +1255,7 @@ var size := MAX_SIZE;
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -1262,6 +1289,7 @@ color := clRed;
 	// Find the enum type usage
 	var enumIdent *ast.Identifier
 	foundDecl := false
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		// Look for TColor usage in type annotation
 		if typeAnnot, ok := node.(*ast.TypeAnnotation); ok {
@@ -1270,14 +1298,17 @@ color := clRed;
 					Value: "TColor",
 					Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
 				}
+
 				return false
 			}
 		}
+
 		if enumDecl, ok := node.(*ast.EnumDecl); ok {
 			if enumDecl.Name != nil && enumDecl.Name.Value == "TColor" {
 				foundDecl = true
 			}
 		}
+
 		return true
 	})
 
@@ -1301,6 +1332,7 @@ color := clRed;
 	// Test finding enum value definition
 	var enumValueIdent *ast.Identifier
 	foundValue := false
+
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		if ident, ok := node.(*ast.Identifier); ok {
 			if ident.Value == "clRed" {
@@ -1312,6 +1344,7 @@ color := clRed;
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -1339,6 +1372,7 @@ func setupTestWorkspace(t *testing.T, files map[string]string) (*workspace.Symbo
 		if err != nil {
 			t.Fatalf("Failed to parse %s: %v", uri, err)
 		}
+
 		if program == nil {
 			t.Fatalf("ParseDocument returned nil program for %s", uri)
 		}
@@ -1404,6 +1438,7 @@ func addSymbolsToIndex(t *testing.T, index *workspace.SymbolIndex, uri string, p
 				index.AddSymbol(n.Name.Value, protocol.SymbolKindConstant, uri, symbolRange, "", "constant")
 			}
 		}
+
 		return true
 	})
 }
@@ -1574,6 +1609,7 @@ end;
 		token.Position{Line: 1, Column: 10},
 		index,
 	)
+
 	addLocs := resolverAdd.ResolveSymbol("Add")
 	if len(addLocs) == 0 {
 		t.Error("Expected to find Add function")

@@ -92,6 +92,7 @@ func (idx *Indexer) indexDirectory(dirPath string, depth int) {
 
 			// Recursively index subdirectory
 			idx.indexDirectory(fullPath, depth+1)
+
 			continue
 		}
 
@@ -260,6 +261,7 @@ func (idx *Indexer) addConstSymbol(uri string, constDecl *ast.ConstDecl, contain
 	if constDecl.Type != nil && constDecl.Type.Name != "" {
 		detail += ": " + constDecl.Type.Name
 	}
+
 	if constDecl.Value != nil {
 		detail += " = " + constDecl.Value.String()
 	}
@@ -323,6 +325,7 @@ func (idx *Indexer) addClassSymbol(uri string, classDecl *ast.ClassDecl) {
 		}
 
 		fieldDetail := "field"
+
 		if field.Type != nil {
 			if typeAnnot, ok := field.Type.(*ast.TypeAnnotation); ok && typeAnnot.Name != "" {
 				fieldDetail += ": " + typeAnnot.Name
@@ -480,32 +483,36 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 	sig := "function " + fn.Name.Value + "("
 
+	var sigSb483 strings.Builder
 	for i, param := range fn.Parameters {
 		if i > 0 {
-			sig += ", "
+			sigSb483.WriteString(", ")
 		}
 
 		if param.IsConst {
-			sig += "const "
+			sigSb483.WriteString("const ")
 		}
+
 		if param.IsLazy {
-			sig += "lazy "
+			sigSb483.WriteString("lazy ")
 		}
+
 		if param.ByRef {
-			sig += "var "
+			sigSb483.WriteString("var ")
 		}
 
 		if param.Name != nil {
-			sig += param.Name.Value
+			sigSb483.WriteString(param.Name.Value)
 			if param.Type != nil {
-				sig += ": " + param.Type.Name
+				sigSb483.WriteString(": " + param.Type.Name)
 			}
 		}
 
 		if param.DefaultValue != nil {
-			sig += " = " + param.DefaultValue.String()
+			sigSb483.WriteString(" = " + param.DefaultValue.String())
 		}
 	}
+	sig += sigSb483.String()
 
 	sig += ")"
 
@@ -525,8 +532,10 @@ func uriToPath(uri string) string {
 		if len(path) > 2 && path[0] == '/' && path[2] == ':' {
 			path = path[1:] // Remove leading slash for Windows paths
 		}
+
 		return path
 	}
+
 	return uri
 }
 
@@ -548,6 +557,7 @@ func max(a, b int) int {
 	if a > b {
 		return a
 	}
+
 	return b
 }
 
@@ -604,10 +614,12 @@ func FallbackSearch(workspaceFolders []string, query string, maxResults int) []S
 				if strings.HasPrefix(name, ".") {
 					return filepath.SkipDir
 				}
+
 				switch name {
 				case "node_modules", "vendor", "bin", "obj", "dist", "build", "out", "__pycache__":
 					return filepath.SkipDir
 				}
+
 				return nil
 			}
 
@@ -633,7 +645,6 @@ func FallbackSearch(workspaceFolders []string, query string, maxResults int) []S
 
 			return nil
 		})
-
 		if err != nil {
 			log.Printf("Warning: Error walking workspace folder %s: %v\n", folder, err)
 		}
@@ -681,6 +692,7 @@ func searchFileForSymbols(filePath string, queryLower string) []SymbolLocation {
 
 	// Filter symbols by query
 	var matchingSymbols []SymbolLocation
+
 	for _, sym := range allSymbols {
 		nameLower := strings.ToLower(sym.Name)
 
@@ -862,5 +874,5 @@ func extractSymbolsForSearch(uri string, programAST *ast.Program, results *[]Sym
 	}
 }
 
-// Compile-time check to ensure io.Reader is implemented if needed
+// Compile-time check to ensure io.Reader is implemented if needed.
 var _ io.Reader

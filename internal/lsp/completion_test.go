@@ -4,11 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestCompletion_EmptyListForValidDocument(t *testing.T) {
@@ -27,6 +26,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -57,7 +57,6 @@ end.`
 	// Call Completion handler
 	ctx := &glsp.Context{}
 	result, err := Completion(ctx, params)
-
 	// Should return without error
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
@@ -102,6 +101,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -138,7 +138,6 @@ end.`
 	// Call Completion handler
 	ctx := &glsp.Context{}
 	result, err := Completion(ctx, params)
-
 	// Should return without error
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
@@ -183,7 +182,6 @@ func TestCompletion_NonExistentDocument(t *testing.T) {
 	// Call Completion handler
 	ctx := &glsp.Context{}
 	result, err := Completion(ctx, params)
-
 	// Should return nil without error (graceful handling)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
@@ -236,7 +234,6 @@ end.`
 	// Call Completion handler
 	ctx := &glsp.Context{}
 	result, err := Completion(ctx, params)
-
 	// Should return empty list without error (graceful handling)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
@@ -257,7 +254,7 @@ end.`
 	}
 }
 
-// Task 9.19: Test partial variable name completion
+// Task 9.19: Test partial variable name completion.
 func TestCompletion_PartialVariableName(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -276,6 +273,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -298,7 +296,7 @@ end.`
 				URI: uri,
 			},
 			Position: protocol.Position{
-				Line:      7,  // On the "alpha := 1;" line
+				Line:      7, // On the "alpha := 1;" line
 				Character: 5, // After "alp" (position 5 is after the 'p')
 			},
 		},
@@ -306,8 +304,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -324,12 +322,15 @@ end.`
 
 	for _, item := range completionList.Items {
 		t.Logf("Found completion item: %s", item.Label)
+
 		if item.Label == "alpha" {
 			foundAlpha = true
 		}
+
 		if item.Label == "alphabet" {
 			foundAlphabet = true
 		}
+
 		if item.Label == "beta" {
 			foundBeta = true
 		}
@@ -339,6 +340,7 @@ end.`
 	if !foundAlpha {
 		t.Error("Expected 'alpha' to be in completion results")
 	}
+
 	if !foundAlphabet {
 		t.Error("Expected 'alphabet' to be in completion results")
 	}
@@ -352,7 +354,7 @@ end.`
 		foundAlpha, foundAlphabet, foundBeta)
 }
 
-// Task 9.19: Test parameter completion in function
+// Task 9.19: Test parameter completion in function.
 func TestCompletion_ParameterCompletion(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -374,6 +376,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -396,7 +399,7 @@ end.`
 				URI: uri,
 			},
 			Position: protocol.Position{
-				Line:      6,   // On the line with "temp := firstParam;"
+				Line:      6,  // On the line with "temp := firstParam;"
 				Character: 13, // After "fir" in "firstParam"
 			},
 		},
@@ -404,8 +407,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -421,6 +424,7 @@ end.`
 
 	for _, item := range completionList.Items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
+
 		if item.Label == "firstParam" {
 			foundFirstParam = true
 			// Verify it's marked as a parameter
@@ -428,6 +432,7 @@ end.`
 				t.Logf("Warning: firstParam has kind %v, expected Variable", *item.Kind)
 			}
 		}
+
 		if item.Label == "secondParam" {
 			foundSecondParam = true
 		}
@@ -447,7 +452,7 @@ end.`
 		foundFirstParam, foundSecondParam)
 }
 
-// Task 9.19: Test local variable shadowing global
+// Task 9.19: Test local variable shadowing global.
 func TestCompletion_LocalVariableShadowsGlobal(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -469,6 +474,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -491,7 +497,7 @@ end.`
 				URI: uri,
 			},
 			Position: protocol.Position{
-				Line:      7,  // On the "value := 'test';" line
+				Line:      7, // On the "value := 'test';" line
 				Character: 5, // After "value" (position 5 is after 'e')
 			},
 		},
@@ -499,8 +505,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -514,11 +520,12 @@ end.`
 	// Note: Both local and global "value" might appear, but local should have higher priority
 	foundValue := false
 	valueCount := 0
-	var localValueIndex, globalValueIndex int = -1, -1
+	localValueIndex, globalValueIndex := -1, -1
 
 	for i, item := range completionList.Items {
 		t.Logf("Found completion item: %s (kind: %v, sortText: %v, detail: %v)",
 			item.Label, item.Kind, item.SortText, item.Detail)
+
 		if item.Label == "value" {
 			foundValue = true
 			valueCount++
@@ -559,7 +566,7 @@ end.`
 	t.Logf("Shadowing test passed: found 'value' in results (count=%d)", valueCount)
 }
 
-// Task 9.20: Test member access on class instance
+// Task 9.20: Test member access on class instance.
 func TestCompletion_MemberAccessOnClass(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -588,6 +595,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -623,8 +631,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -643,14 +651,17 @@ end.`
 	for _, item := range completionList.Items {
 		t.Logf("Found completion item: %s (kind: %v, detail: %v)",
 			item.Label, item.Kind, item.Detail)
+
 		if item.Label == "Name" {
 			foundName = true
 			nameKind = item.Kind
 		}
+
 		if item.Label == "Age" {
 			foundAge = true
 			ageKind = item.Kind
 		}
+
 		if item.Label == "GetInfo" {
 			foundGetInfo = true
 			getInfoKind = item.Kind
@@ -661,9 +672,11 @@ end.`
 	if !foundName {
 		t.Error("Expected 'Name' to be in completion results")
 	}
+
 	if !foundAge {
 		t.Error("Expected 'Age' to be in completion results")
 	}
+
 	if !foundGetInfo {
 		t.Error("Expected 'GetInfo' to be in completion results")
 	}
@@ -673,10 +686,12 @@ end.`
 		t.Errorf("Expected 'Name' to have kind Field (%d), got %d",
 			protocol.CompletionItemKindField, *nameKind)
 	}
+
 	if ageKind != nil && *ageKind != protocol.CompletionItemKindField {
 		t.Errorf("Expected 'Age' to have kind Field (%d), got %d",
 			protocol.CompletionItemKindField, *ageKind)
 	}
+
 	if getInfoKind != nil && *getInfoKind != protocol.CompletionItemKindMethod {
 		t.Errorf("Expected 'GetInfo' to have kind Method (%d), got %d",
 			protocol.CompletionItemKindMethod, *getInfoKind)
@@ -686,7 +701,7 @@ end.`
 		foundName, foundAge, foundGetInfo)
 }
 
-// Task 9.20: Test member access on record type
+// Task 9.20: Test member access on record type.
 func TestCompletion_MemberAccessOnRecord(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -708,6 +723,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -743,8 +759,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -760,9 +776,11 @@ end.`
 
 	for _, item := range completionList.Items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
+
 		if item.Label == "X" {
 			foundX = true
 		}
+
 		if item.Label == "Y" {
 			foundY = true
 		}
@@ -772,6 +790,7 @@ end.`
 	if !foundX {
 		t.Error("Expected 'X' to be in completion results for record member access")
 	}
+
 	if !foundY {
 		t.Error("Expected 'Y' to be in completion results for record member access")
 	}
@@ -779,7 +798,7 @@ end.`
 	t.Logf("Record member access test passed: found X=%v, Y=%v", foundX, foundY)
 }
 
-// Task 9.20: Test member access returns all members (no prefix)
+// Task 9.20: Test member access returns all members (no prefix).
 func TestCompletion_MemberAccessAllMembers(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -803,6 +822,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -838,8 +858,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -857,15 +877,19 @@ end.`
 
 	for _, item := range completionList.Items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
+
 		if item.Label == "GetValue" {
 			foundGetValue = true
 		}
+
 		if item.Label == "GetName" {
 			foundGetName = true
 		}
+
 		if item.Label == "SetValue" {
 			foundSetValue = true
 		}
+
 		if item.Label == "Count" {
 			foundCount = true
 		}
@@ -875,12 +899,15 @@ end.`
 	if !foundGetValue {
 		t.Error("Expected 'GetValue' to be in completion results")
 	}
+
 	if !foundGetName {
 		t.Error("Expected 'GetName' to be in completion results")
 	}
+
 	if !foundSetValue {
 		t.Error("Expected 'SetValue' to be in completion results")
 	}
+
 	if !foundCount {
 		t.Error("Expected 'Count' to be in completion results")
 	}
@@ -889,7 +916,7 @@ end.`
 		foundGetValue, foundGetName, foundSetValue, foundCount)
 }
 
-// Task 9.21: Test keyword completion at statement start
+// Task 9.21: Test keyword completion at statement start.
 func TestCompletion_KeywordsAtStatementStart(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -908,6 +935,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -930,7 +958,7 @@ end.`
 				URI: uri,
 			},
 			Position: protocol.Position{
-				Line:      4,  // On the "  Result := 0;" line (0-indexed)
+				Line:      4, // On the "  Result := 0;" line (0-indexed)
 				Character: 2, // At the beginning after indent
 			},
 		},
@@ -938,8 +966,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -961,6 +989,7 @@ end.`
 	for _, item := range completionList.Items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindKeyword {
 			keywordCount++
+
 			switch item.Label {
 			case "if":
 				foundIf = true
@@ -980,9 +1009,11 @@ end.`
 	if !foundIf {
 		t.Error("Expected 'if' keyword to be in completion results")
 	}
+
 	if !foundWhile {
 		t.Error("Expected 'while' keyword to be in completion results")
 	}
+
 	if !foundFor {
 		t.Error("Expected 'for' keyword to be in completion results")
 	}
@@ -996,7 +1027,7 @@ end.`
 		keywordCount, foundIf, foundWhile, foundFor, foundVar, foundBegin)
 }
 
-// Task 9.21: Test built-in function completion
+// Task 9.21: Test built-in function completion.
 func TestCompletion_BuiltInFunctions(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -1011,6 +1042,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -1033,7 +1065,7 @@ end.`
 				URI: uri,
 			},
 			Position: protocol.Position{
-				Line:      3,  // On the "  PrintLn('test');" line (0-indexed)
+				Line:      3, // On the "  PrintLn('test');" line (0-indexed)
 				Character: 2, // At the beginning after indent
 			},
 		},
@@ -1041,8 +1073,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -1090,9 +1122,11 @@ end.`
 	if !foundPrintLn {
 		t.Error("Expected 'PrintLn' built-in function to be in completion results")
 	}
+
 	if !foundIntToStr {
 		t.Error("Expected 'IntToStr' built-in function to be in completion results")
 	}
+
 	if !foundLength {
 		t.Error("Expected 'Length' built-in function to be in completion results")
 	}
@@ -1106,7 +1140,7 @@ end.`
 		builtinFuncCount, foundPrintLn, foundPrint, foundIntToStr, foundLength)
 }
 
-// Task 9.21: Test built-in types completion
+// Task 9.21: Test built-in types completion.
 func TestCompletion_BuiltInTypes(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -1122,6 +1156,7 @@ end.`
 
 	// Add document to server
 	uri := "file:///test.dws"
+
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
 		t.Fatalf("Failed to parse document: %v", err)
@@ -1144,7 +1179,7 @@ end.`
 				URI: uri,
 			},
 			Position: protocol.Position{
-				Line:      4,  // Inside begin/end (0-indexed)
+				Line:      4, // Inside begin/end (0-indexed)
 				Character: 0, // At the beginning
 			},
 		},
@@ -1152,8 +1187,8 @@ end.`
 
 	// Call Completion handler
 	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
 
+	result, err := Completion(ctx, params)
 	if err != nil {
 		t.Fatalf("Completion returned error: %v", err)
 	}
@@ -1195,9 +1230,11 @@ end.`
 	if !foundInteger {
 		t.Error("Expected 'Integer' built-in type to be in completion results")
 	}
+
 	if !foundString {
 		t.Error("Expected 'String' built-in type to be in completion results")
 	}
+
 	if !foundBoolean {
 		t.Error("Expected 'Boolean' built-in type to be in completion results")
 	}

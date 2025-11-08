@@ -50,6 +50,7 @@ end.`,
 
 			if len(diagnostics) > 0 {
 				t.Errorf("Expected no diagnostics for valid code, got %d:", len(diagnostics))
+
 				for i, diag := range diagnostics {
 					t.Errorf("  [%d] Line %d: %s", i+1, diag.Range.Start.Line, diag.Message)
 				}
@@ -112,9 +113,11 @@ end.`,
 				if diag.Message == "" {
 					t.Errorf("Diagnostic %d has empty message", i)
 				}
+
 				if diag.Severity == nil {
 					t.Errorf("Diagnostic %d has nil severity", i)
 				}
+
 				if diag.Source == nil || *diag.Source == "" {
 					t.Errorf("Diagnostic %d has empty source", i)
 				}
@@ -191,9 +194,11 @@ func TestConvertStructuredErrors(t *testing.T) {
 				if diag.Message == "" {
 					t.Errorf("Diagnostic %d has empty message", i)
 				}
+
 				if diag.Severity == nil {
 					t.Errorf("Diagnostic %d has nil severity", i)
 				}
+
 				if diag.Source == nil || *diag.Source != "go-dws" {
 					t.Errorf("Diagnostic %d has incorrect source", i)
 				}
@@ -244,9 +249,11 @@ func TestConvertStructuredError(t *testing.T) {
 			if diagnostic.Range.Start.Line != tt.expectedLine {
 				t.Errorf("Expected line %d, got %d", tt.expectedLine, diagnostic.Range.Start.Line)
 			}
+
 			if diagnostic.Range.Start.Character != tt.expectedCol {
 				t.Errorf("Expected column %d, got %d", tt.expectedCol, diagnostic.Range.Start.Character)
 			}
+
 			if diagnostic.Message != tt.error.Message {
 				t.Errorf("Expected message '%s', got '%s'", tt.error.Message, diagnostic.Message)
 			}
@@ -385,6 +392,7 @@ end.`,
 			if len(diagnostics) < tt.expectedErrorsMin {
 				t.Errorf("Expected at least %d diagnostic(s), got %d",
 					tt.expectedErrorsMin, len(diagnostics))
+
 				for i, diag := range diagnostics {
 					t.Logf("  [%d] Line %d: %s", i+1, diag.Range.Start.Line, diag.Message)
 				}

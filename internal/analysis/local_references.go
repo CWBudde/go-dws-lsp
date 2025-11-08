@@ -17,6 +17,7 @@ func FindLocalReferences(program *ast.Program, symbolName string, scopeNode ast.
 
 	// Determine traversal root
 	var root ast.Node
+
 	switch n := scopeNode.(type) {
 	case *ast.FunctionDecl:
 		root = n.Body
@@ -25,6 +26,7 @@ func FindLocalReferences(program *ast.Program, symbolName string, scopeNode ast.
 	default:
 		root = scopeNode
 	}
+
 	if root == nil {
 		return nil
 	}
@@ -72,10 +74,12 @@ func FindLocalReferences(program *ast.Program, symbolName string, scopeNode ast.
 						b := blockStack[len(blockStack)-1]
 						shadowBlocks = append(shadowBlocks, b)
 					}
+
 					break
 				}
 			}
 		}
+
 		return true
 	})
 
@@ -86,11 +90,13 @@ func FindLocalReferences(program *ast.Program, symbolName string, scopeNode ast.
 				return true
 			}
 		}
+
 		return false
 	}
 
 	// Second pass: collect identifiers matching the name, excluding shadowed blocks
 	var ranges []protocol.Range
+
 	ast.Inspect(root, func(node ast.Node) bool {
 		if node == nil {
 			return false
@@ -106,6 +112,7 @@ func FindLocalReferences(program *ast.Program, symbolName string, scopeNode ast.
 				if inShadow(pos) {
 					return true
 				}
+
 				end := ident.End()
 				ranges = append(ranges, protocol.Range{
 					Start: protocol.Position{Line: uint32(max(0, pos.Line-1)), Character: uint32(max(0, pos.Column-1))},
@@ -113,6 +120,7 @@ func FindLocalReferences(program *ast.Program, symbolName string, scopeNode ast.
 				})
 			}
 		}
+
 		return true
 	})
 

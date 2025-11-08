@@ -3,10 +3,9 @@ package analysis
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 func TestComputeSemanticTokensDelta_NoChanges(t *testing.T) {
@@ -24,7 +23,7 @@ func TestComputeSemanticTokensDelta_NoChanges(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Equal(t, 0, len(result.Delta.Edits), "Expected empty edits for no changes")
+	assert.Empty(t, result.Delta.Edits, "Expected empty edits for no changes")
 }
 
 func TestComputeSemanticTokensDelta_SingleTokenModified(t *testing.T) {
@@ -48,7 +47,7 @@ func TestComputeSemanticTokensDelta_SingleTokenModified(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Greater(t, len(result.Delta.Edits), 0, "Expected edits for modified token")
+	assert.NotEmpty(t, result.Delta.Edits, "Expected edits for modified token")
 
 	// Verify edit affects the changed values in the encoded array
 	// The algorithm works on encoded values and only replaces what changed
@@ -58,7 +57,7 @@ func TestComputeSemanticTokensDelta_SingleTokenModified(t *testing.T) {
 	// Changed in new: [3,1] at indices 8-9
 	assert.Equal(t, uint32(8), edit.Start, "Edit should start where values differ")
 	assert.Equal(t, uint32(2), edit.DeleteCount, "Should delete 2 changed values")
-	assert.Equal(t, 2, len(edit.Data), "Should insert 2 new values")
+	assert.Len(t, edit.Data, 2, "Should insert 2 new values")
 }
 
 func TestComputeSemanticTokensDelta_TokensAddedAtEnd(t *testing.T) {
@@ -82,13 +81,13 @@ func TestComputeSemanticTokensDelta_TokensAddedAtEnd(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Greater(t, len(result.Delta.Edits), 0, "Expected edits for added tokens")
+	assert.NotEmpty(t, result.Delta.Edits, "Expected edits for added tokens")
 
 	// Verify edit adds tokens at the end
 	edit := result.Delta.Edits[0]
 	assert.Equal(t, uint32(10), edit.Start, "Edit should start after existing tokens (10 values)")
 	assert.Equal(t, uint32(0), edit.DeleteCount, "Should not delete anything")
-	assert.Equal(t, 10, len(edit.Data), "Should insert two tokens (10 values)")
+	assert.Len(t, edit.Data, 10, "Should insert two tokens (10 values)")
 }
 
 func TestComputeSemanticTokensDelta_TokensRemovedFromStart(t *testing.T) {
@@ -112,7 +111,7 @@ func TestComputeSemanticTokensDelta_TokensRemovedFromStart(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Greater(t, len(result.Delta.Edits), 0, "Expected edits for removed tokens")
+	assert.NotEmpty(t, result.Delta.Edits, "Expected edits for removed tokens")
 
 	// Verify edit removes tokens from start
 	edit := result.Delta.Edits[0]
@@ -145,7 +144,7 @@ func TestComputeSemanticTokensDelta_MultipleScatteredChanges(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Greater(t, len(result.Delta.Edits), 0, "Expected edits for scattered changes")
+	assert.NotEmpty(t, result.Delta.Edits, "Expected edits for scattered changes")
 }
 
 func TestComputeSemanticTokensDelta_AllTokensChanged(t *testing.T) {
@@ -176,7 +175,7 @@ func TestComputeSemanticTokensDelta_AllTokensChanged(t *testing.T) {
 		require.NotNil(t, result.Full)
 		assert.Equal(t, "new-result-id", *result.Full.ResultID)
 		assert.NotNil(t, result.Full.Data)
-		assert.Greater(t, len(result.Full.Data), 0)
+		assert.NotEmpty(t, result.Full.Data)
 	}
 }
 
@@ -196,7 +195,7 @@ func TestComputeSemanticTokensDelta_EmptyOldTokens(t *testing.T) {
 	require.NotNil(t, result.Full)
 	assert.Equal(t, "new-result-id", *result.Full.ResultID)
 	assert.NotNil(t, result.Full.Data)
-	assert.Equal(t, 10, len(result.Full.Data), "Should have 2 tokens * 5 values")
+	assert.Len(t, result.Full.Data, 10, "Should have 2 tokens * 5 values")
 }
 
 func TestComputeSemanticTokensDelta_NilOldTokens(t *testing.T) {
@@ -213,7 +212,7 @@ func TestComputeSemanticTokensDelta_NilOldTokens(t *testing.T) {
 	require.NotNil(t, result.Full)
 	assert.Equal(t, "new-result-id", *result.Full.ResultID)
 	assert.NotNil(t, result.Full.Data)
-	assert.Equal(t, 10, len(result.Full.Data))
+	assert.Len(t, result.Full.Data, 10)
 }
 
 func TestComputeSemanticTokensDelta_EmptyNewTokens(t *testing.T) {
@@ -232,13 +231,13 @@ func TestComputeSemanticTokensDelta_EmptyNewTokens(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Greater(t, len(result.Delta.Edits), 0, "Expected edits for deletion")
+	assert.NotEmpty(t, result.Delta.Edits, "Expected edits for deletion")
 
 	// Should delete all tokens
 	edit := result.Delta.Edits[0]
 	assert.Equal(t, uint32(0), edit.Start)
 	assert.Equal(t, uint32(10), edit.DeleteCount, "Should delete all tokens (10 values)")
-	assert.Equal(t, 0, len(edit.Data), "Should not insert anything")
+	assert.Empty(t, edit.Data, "Should not insert anything")
 }
 
 func TestComputeSemanticTokensDelta_BothEmpty(t *testing.T) {
@@ -253,7 +252,7 @@ func TestComputeSemanticTokensDelta_BothEmpty(t *testing.T) {
 	require.NotNil(t, result.Full)
 	assert.Equal(t, "new-result-id", *result.Full.ResultID)
 	assert.NotNil(t, result.Full.Data)
-	assert.Equal(t, 0, len(result.Full.Data))
+	assert.Empty(t, result.Full.Data)
 }
 
 func TestComputeSemanticTokensDelta_BothNil(t *testing.T) {
@@ -265,7 +264,7 @@ func TestComputeSemanticTokensDelta_BothNil(t *testing.T) {
 	require.NotNil(t, result.Full)
 	assert.Equal(t, "new-result-id", *result.Full.ResultID)
 	assert.NotNil(t, result.Full.Data)
-	assert.Equal(t, 0, len(result.Full.Data))
+	assert.Empty(t, result.Full.Data)
 }
 
 func TestComputeSemanticTokensDelta_TokensAddedInMiddle(t *testing.T) {
@@ -288,7 +287,7 @@ func TestComputeSemanticTokensDelta_TokensAddedInMiddle(t *testing.T) {
 	require.NotNil(t, result.Delta)
 	assert.Equal(t, "new-result-id", *result.Delta.ResultId)
 	assert.NotNil(t, result.Delta.Edits)
-	assert.Greater(t, len(result.Delta.Edits), 0, "Expected edits for added token in middle")
+	assert.NotEmpty(t, result.Delta.Edits, "Expected edits for added token in middle")
 }
 
 func TestComputeSemanticTokensDelta_LargeDocument(t *testing.T) {
@@ -297,13 +296,13 @@ func TestComputeSemanticTokensDelta_LargeDocument(t *testing.T) {
 	oldTokens := make([]server.SemanticToken, numTokens)
 	newTokens := make([]server.SemanticToken, numTokens)
 
-	for i := 0; i < numTokens; i++ {
+	for i := range numTokens {
 		oldTokens[i] = server.SemanticToken{
-			Line:       uint32(i),
-			StartChar:  0,
-			Length:     5,
-			TokenType:  uint32(i % 10),
-			Modifiers:  0,
+			Line:      uint32(i),
+			StartChar: 0,
+			Length:    5,
+			TokenType: uint32(i % 10),
+			Modifiers: 0,
 		}
 		newTokens[i] = oldTokens[i] // Same tokens
 	}
@@ -326,21 +325,21 @@ func TestComputeSemanticTokensDelta_FallbackThreshold(t *testing.T) {
 	oldTokens := make([]server.SemanticToken, 100)
 	newTokens := make([]server.SemanticToken, 100)
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		oldTokens[i] = server.SemanticToken{
-			Line:       uint32(i),
-			StartChar:  0,
-			Length:     5,
-			TokenType:  uint32(i % 10),
-			Modifiers:  0,
+			Line:      uint32(i),
+			StartChar: 0,
+			Length:    5,
+			TokenType: uint32(i % 10),
+			Modifiers: 0,
 		}
 		// Change most tokens to trigger fallback
 		newTokens[i] = server.SemanticToken{
-			Line:       uint32(i),
-			StartChar:  0,
-			Length:     5,
-			TokenType:  uint32((i + 1) % 10), // Different token type
-			Modifiers:  1,                     // Different modifier
+			Line:      uint32(i),
+			StartChar: 0,
+			Length:    5,
+			TokenType: uint32((i + 1) % 10), // Different token type
+			Modifiers: 1,                    // Different modifier
 		}
 	}
 
@@ -358,7 +357,7 @@ func TestComputeSemanticTokensDelta_FallbackThreshold(t *testing.T) {
 		require.NotNil(t, result.Full)
 		assert.Equal(t, "new-result-id", *result.Full.ResultID)
 		assert.NotNil(t, result.Full.Data)
-		assert.Greater(t, len(result.Full.Data), 0)
+		assert.NotEmpty(t, result.Full.Data)
 	}
 }
 
@@ -372,7 +371,7 @@ func TestEncodeSemanticTokens_ConsistentWithDelta(t *testing.T) {
 
 	encoded := EncodeSemanticTokens(tokens)
 	require.NotNil(t, encoded)
-	require.Equal(t, 15, len(encoded), "Expected 3 tokens * 5 values")
+	require.Len(t, encoded, 15, "Expected 3 tokens * 5 values")
 
 	// Verify delta encoding (relative positions)
 	// First token: line=0, startChar=5, length=3, tokenType=1, modifiers=0
@@ -383,16 +382,16 @@ func TestEncodeSemanticTokens_ConsistentWithDelta(t *testing.T) {
 	assert.Equal(t, uint32(0), encoded[4]) // Modifiers
 
 	// Second token: line=0 (same line), startChar=10
-	assert.Equal(t, uint32(0), encoded[5])  // Line delta (same line)
-	assert.Equal(t, uint32(5), encoded[6])  // StartChar delta (10 - 5 = 5)
-	assert.Equal(t, uint32(4), encoded[7])  // Length
-	assert.Equal(t, uint32(2), encoded[8])  // TokenType
-	assert.Equal(t, uint32(1), encoded[9])  // Modifiers
+	assert.Equal(t, uint32(0), encoded[5]) // Line delta (same line)
+	assert.Equal(t, uint32(5), encoded[6]) // StartChar delta (10 - 5 = 5)
+	assert.Equal(t, uint32(4), encoded[7]) // Length
+	assert.Equal(t, uint32(2), encoded[8]) // TokenType
+	assert.Equal(t, uint32(1), encoded[9]) // Modifiers
 
 	// Third token: line=2 (delta=2), startChar=0
-	assert.Equal(t, uint32(2), encoded[10])  // Line delta (2 - 0 = 2)
-	assert.Equal(t, uint32(0), encoded[11])  // StartChar (absolute for first token on new line)
-	assert.Equal(t, uint32(6), encoded[12])  // Length
-	assert.Equal(t, uint32(3), encoded[13])  // TokenType
-	assert.Equal(t, uint32(0), encoded[14])  // Modifiers
+	assert.Equal(t, uint32(2), encoded[10]) // Line delta (2 - 0 = 2)
+	assert.Equal(t, uint32(0), encoded[11]) // StartChar (absolute for first token on new line)
+	assert.Equal(t, uint32(6), encoded[12]) // Length
+	assert.Equal(t, uint32(3), encoded[13]) // TokenType
+	assert.Equal(t, uint32(0), encoded[14]) // Modifiers
 }

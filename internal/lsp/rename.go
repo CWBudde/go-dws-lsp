@@ -2,15 +2,15 @@
 package lsp
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // DWScript keywords that cannot be renamed.
@@ -77,7 +77,7 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in Rename")
-		return nil, fmt.Errorf("server instance not available")
+		return nil, errors.New("server instance not available")
 	}
 
 	// Extract request details
@@ -98,7 +98,7 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 	// Ensure we have a parsed program/AST
 	if doc.Program == nil || doc.Program.AST() == nil {
 		log.Printf("No AST available for rename (document has parse errors): %s\n", uri)
-		return nil, fmt.Errorf("cannot rename in document with parse errors")
+		return nil, errors.New("cannot rename in document with parse errors")
 	}
 
 	// Convert LSP (0-based) to AST (1-based)
@@ -111,7 +111,7 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 	sym := analysis.IdentifySymbolAtPosition(programAST, astLine, astColumn)
 	if sym == nil || sym.Name == "" {
 		log.Printf("No symbol at position %d:%d for rename\n", astLine, astColumn)
-		return nil, fmt.Errorf("no symbol found at cursor position")
+		return nil, errors.New("no symbol found at cursor position")
 	}
 
 	oldName := sym.Name
@@ -125,7 +125,7 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 
 	// Validate the new name is valid
 	if newName == "" {
-		return nil, fmt.Errorf("new name cannot be empty")
+		return nil, errors.New("new name cannot be empty")
 	}
 
 	// Find all references to the symbol (including declaration)
@@ -140,7 +140,7 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 	locations, err := References(context, refParams)
 	if err != nil {
 		log.Printf("Error finding references for rename: %v\n", err)
-		return nil, fmt.Errorf("failed to find references: %v", err)
+		return nil, fmt.Errorf("failed to find references: %w", err)
 	}
 
 	if len(locations) == 0 {
@@ -160,12 +160,12 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 // It validates whether a symbol can be renamed and returns the range and placeholder text.
 //
 // This handler is called before the actual rename to provide early feedback to the user.
-func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) (interface{}, error) {
+func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) (any, error) {
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in PrepareRename")
-		return nil, fmt.Errorf("server instance not available")
+		return nil, errors.New("server instance not available")
 	}
 
 	// Extract request details
@@ -185,7 +185,7 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 	// Ensure we have a parsed program/AST
 	if doc.Program == nil || doc.Program.AST() == nil {
 		log.Printf("No AST available for prepareRename (document has parse errors): %s\n", uri)
-		return nil, fmt.Errorf("cannot rename in document with parse errors")
+		return nil, errors.New("cannot rename in document with parse errors")
 	}
 
 	// Convert LSP (0-based) to AST (1-based)
@@ -198,7 +198,7 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 	sym := analysis.IdentifySymbolAtPosition(programAST, astLine, astColumn)
 	if sym == nil || sym.Name == "" {
 		log.Printf("No symbol at position %d:%d for prepareRename\n", astLine, astColumn)
-		return nil, fmt.Errorf("no symbol found at cursor position")
+		return nil, errors.New("no symbol found at cursor position")
 	}
 
 	symbolName := sym.Name
@@ -215,11 +215,12 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 	node := analysis.FindNodeAtPosition(programAST, astLine, astColumn)
 	if node == nil {
 		log.Printf("No AST node at position %d:%d for prepareRename\n", astLine, astColumn)
-		return nil, fmt.Errorf("no symbol found at cursor position")
+		return nil, errors.New("no symbol found at cursor position")
 	}
 
 	// Get the identifier node
 	var identNode *ast.Identifier
+
 	switch n := node.(type) {
 	case *ast.Identifier:
 		identNode = n
@@ -232,13 +233,14 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 					return false
 				}
 			}
+
 			return true
 		})
 	}
 
 	if identNode == nil {
 		log.Printf("No identifier node found for symbol %s\n", symbolName)
-		return nil, fmt.Errorf("cannot determine symbol range")
+		return nil, errors.New("cannot determine symbol range")
 	}
 
 	// Convert AST positions (1-based) to LSP positions (0-based)
@@ -258,12 +260,13 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 
 	// Return range with placeholder
 	// According to LSP spec, we can return either a Range or a RangeWithPlaceholder
-	result := map[string]interface{}{
+	result := map[string]any{
 		"range":       symbolRange,
 		"placeholder": symbolName,
 	}
 
 	log.Printf("PrepareRename successful for symbol %s at range %v\n", symbolName, symbolRange)
+
 	return result, nil
 }
 
@@ -307,11 +310,12 @@ func buildWorkspaceEdit(locations []protocol.Location, newName string, docs *ser
 	}
 
 	// Build DocumentChanges (preferred over Changes for versioned edits)
-	var documentChanges []interface{}
+	var documentChanges []any
 
 	for uri, edits := range editsByURI {
 		// Get document version from DocumentStore
 		var version *int32
+
 		if doc, exists := docs.Get(uri); exists {
 			v := int32(doc.Version)
 			version = &v
@@ -342,10 +346,11 @@ func buildWorkspaceEdit(locations []protocol.Location, newName string, docs *ser
 }
 
 // convertToEdits converts []protocol.TextEdit to []interface{} as required by the protocol.
-func convertToEdits(textEdits []protocol.TextEdit) []interface{} {
-	edits := make([]interface{}, len(textEdits))
+func convertToEdits(textEdits []protocol.TextEdit) []any {
+	edits := make([]any, len(textEdits))
 	for i, edit := range textEdits {
 		edits[i] = edit
 	}
+
 	return edits
 }

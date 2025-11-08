@@ -5,13 +5,12 @@ import (
 	"log"
 	"sort"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // References handles the textDocument/references request.
@@ -61,6 +60,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 		log.Printf("No symbol at position %d:%d for references\n", astLine, astColumn)
 		return []protocol.Location{}, nil
 	}
+
 	targetName := sym.Name
 	log.Printf("References target symbol: %s (kind=%s)", sym.Name, sym.Kind)
 
@@ -81,6 +81,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 	if len(ranges) > 0 {
 		// Semantic analysis succeeded
 		log.Printf("Using semantic analysis for references: found %d references", len(ranges))
+
 		locations := make([]protocol.Location, 0, len(ranges))
 		for _, r := range ranges {
 			locations = append(locations, protocol.Location{URI: uri, Range: r})
@@ -89,6 +90,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 		locations = applyIncludeDeclaration(locations, defLocation, includeDecl)
 		// Sort by file then position (task 6.10)
 		sortLocationsByFileAndPosition(locations)
+
 		return locations, nil
 	}
 
@@ -104,6 +106,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 	// If scope is local or parameter, limit search to the same function/block
 	if scope != nil && (scope.Type == analysis.ScopeLocal || scope.Type == analysis.ScopeParameter) && scope.Function != nil {
 		ranges := analysis.FindLocalReferences(programAST, targetName, scope.Function)
+
 		locations := make([]protocol.Location, 0, len(ranges))
 		for _, r := range ranges {
 			locations = append(locations, protocol.Location{URI: uri, Range: r})
@@ -112,12 +115,14 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 		locations = applyIncludeDeclaration(locations, defLocation, includeDecl)
 		// Sort by file then position (task 6.10)
 		sortLocationsByFileAndPosition(locations)
+
 		return locations, nil
 	}
 
 	// For global symbols, search across all open documents
 	if scope != nil && scope.Type == analysis.ScopeGlobal {
 		openLocations := analysis.FindGlobalReferences(targetName, srv.Documents())
+
 		indexLocations := []protocol.Location{}
 		if srv.Symbols() != nil {
 			indexLocations = srv.Symbols().FindReferences(targetName, srv.Documents())
@@ -131,6 +136,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 		filtered = applyIncludeDeclaration(filtered, defLocation, includeDecl)
 		// Sort by file then position (task 6.10)
 		sortLocationsByFileAndPosition(filtered)
+
 		return filtered, nil
 	}
 
@@ -143,6 +149,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 		if !ok || ident == nil {
 			return true
 		}
+
 		if ident.Value != targetName {
 			return true
 		}
@@ -175,6 +182,7 @@ func References(context *glsp.Context, params *protocol.ReferenceParams) ([]prot
 	filtered = applyIncludeDeclaration(filtered, defLocation, includeDecl)
 	// Sort by file then position (task 6.10)
 	sortLocationsByFileAndPosition(filtered)
+
 	return filtered, nil
 }
 
@@ -183,6 +191,7 @@ func max(a, b int) int {
 	if a > b {
 		return a
 	}
+
 	return b
 }
 
@@ -234,6 +243,7 @@ func applyIncludeDeclaration(locations []protocol.Location, defLocation *protoco
 
 	// Check if the definition is already in the results
 	defIndex := -1
+
 	for i, loc := range locations {
 		if loc.URI == defLocation.URI &&
 			loc.Range.Start.Line == defLocation.Range.Start.Line &&
@@ -249,6 +259,7 @@ func applyIncludeDeclaration(locations []protocol.Location, defLocation *protoco
 			result := make([]protocol.Location, 0, len(locations)+1)
 			result = append(result, *defLocation)
 			result = append(result, locations...)
+
 			return result
 		}
 		// Definition is already in the list
@@ -258,6 +269,7 @@ func applyIncludeDeclaration(locations []protocol.Location, defLocation *protoco
 			result[0] = locations[defIndex]
 			copy(result[1:defIndex+1], locations[0:defIndex])
 			copy(result[defIndex+1:], locations[defIndex+1:])
+
 			return result
 		}
 		// Definition is already at the beginning
@@ -269,6 +281,7 @@ func applyIncludeDeclaration(locations []protocol.Location, defLocation *protoco
 		result := make([]protocol.Location, 0, len(locations)-1)
 		result = append(result, locations[:defIndex]...)
 		result = append(result, locations[defIndex+1:]...)
+
 		return result
 	}
 

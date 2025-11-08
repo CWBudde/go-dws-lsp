@@ -6,12 +6,11 @@ import (
 	"log"
 	"strings"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // Hover handles the textDocument/hover request.
@@ -80,7 +79,7 @@ func Hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover
 	return hover, nil
 }
 
-// getHoverContent extracts hover information from an AST node
+// getHoverContent extracts hover information from an AST node.
 func getHoverContent(node ast.Node, doc *server.Document) string {
 	switch n := node.(type) {
 	case *ast.Identifier:
@@ -114,7 +113,7 @@ func getHoverContent(node ast.Node, doc *server.Document) string {
 	}
 }
 
-// getIdentifierHover returns hover info for an identifier
+// getIdentifierHover returns hover info for an identifier.
 func getIdentifierHover(ident *ast.Identifier) string {
 	var parts []string
 
@@ -129,7 +128,7 @@ func getIdentifierHover(ident *ast.Identifier) string {
 	return strings.Join(parts, "\n\n")
 }
 
-// getFunctionHover returns hover info for a function declaration
+// getFunctionHover returns hover info for a function declaration.
 func getFunctionHover(fn *ast.FunctionDecl) string {
 	var sig strings.Builder
 
@@ -146,9 +145,11 @@ func getFunctionHover(fn *ast.FunctionDecl) string {
 		if param.IsConst {
 			sig.WriteString("const ")
 		}
+
 		if param.IsLazy {
 			sig.WriteString("lazy ")
 		}
+
 		if param.ByRef {
 			sig.WriteString("var ")
 		}
@@ -179,13 +180,14 @@ func getFunctionHover(fn *ast.FunctionDecl) string {
 	return fmt.Sprintf("```dwscript\n%s\n```", sig.String())
 }
 
-// getVariableHover returns hover info for a variable declaration
+// getVariableHover returns hover info for a variable declaration.
 func getVariableHover(varDecl *ast.VarDeclStatement) string {
 	if len(varDecl.Names) == 0 {
 		return ""
 	}
 
 	var parts []string
+
 	for _, name := range varDecl.Names {
 		var decl strings.Builder
 		decl.WriteString("var ")
@@ -202,7 +204,7 @@ func getVariableHover(varDecl *ast.VarDeclStatement) string {
 	return fmt.Sprintf("```dwscript\n%s\n```", strings.Join(parts, "\n"))
 }
 
-// getConstHover returns hover info for a constant declaration
+// getConstHover returns hover info for a constant declaration.
 func getConstHover(constDecl *ast.ConstDecl) string {
 	var sig strings.Builder
 	sig.WriteString("const ")
@@ -221,7 +223,7 @@ func getConstHover(constDecl *ast.ConstDecl) string {
 	return fmt.Sprintf("```dwscript\n%s\n```", sig.String())
 }
 
-// getClassHover returns hover info for a class declaration
+// getClassHover returns hover info for a class declaration.
 func getClassHover(classDecl *ast.ClassDecl) string {
 	var sig strings.Builder
 	sig.WriteString("type ")
@@ -239,9 +241,11 @@ func getClassHover(classDecl *ast.ClassDecl) string {
 	if len(classDecl.Fields) > 0 {
 		info = append(info, fmt.Sprintf("%d field(s)", len(classDecl.Fields)))
 	}
+
 	if len(classDecl.Methods) > 0 {
 		info = append(info, fmt.Sprintf("%d method(s)", len(classDecl.Methods)))
 	}
+
 	if len(classDecl.Properties) > 0 {
 		info = append(info, fmt.Sprintf("%d property(ies)", len(classDecl.Properties)))
 	}
@@ -255,7 +259,7 @@ func getClassHover(classDecl *ast.ClassDecl) string {
 	return result
 }
 
-// getRecordHover returns hover info for a record declaration
+// getRecordHover returns hover info for a record declaration.
 func getRecordHover(recordDecl *ast.RecordDecl) string {
 	var sig strings.Builder
 	sig.WriteString("type ")
@@ -271,7 +275,7 @@ func getRecordHover(recordDecl *ast.RecordDecl) string {
 	return fmt.Sprintf("```dwscript\n%s\n```%s", sig.String(), info)
 }
 
-// getEnumHover returns hover info for an enum declaration
+// getEnumHover returns hover info for an enum declaration.
 func getEnumHover(enumDecl *ast.EnumDecl) string {
 	var sig strings.Builder
 	sig.WriteString("type ")
@@ -283,6 +287,7 @@ func getEnumHover(enumDecl *ast.EnumDecl) string {
 		if i > 0 {
 			sig.WriteString(", ")
 		}
+
 		sig.WriteString(value.Name)
 	}
 

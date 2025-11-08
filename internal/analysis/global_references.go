@@ -3,10 +3,9 @@ package analysis
 import (
 	"log"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // FindGlobalReferences scans all open documents for references to the given symbol name.
@@ -39,6 +38,7 @@ func FindGlobalReferences(symbolName string, docStore *server.DocumentStore) []p
 			if !ok || ident == nil {
 				return true
 			}
+
 			if ident.Value != symbolName {
 				return true
 			}
@@ -61,6 +61,7 @@ func FindGlobalReferences(symbolName string, docStore *server.DocumentStore) []p
 			}
 
 			locations = append(locations, loc)
+
 			return true
 		})
 	}

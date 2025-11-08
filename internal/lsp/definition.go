@@ -4,19 +4,18 @@ package lsp
 import (
 	"log"
 
+	"github.com/CWBudde/go-dws-lsp/internal/analysis"
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // Definition handles the textDocument/definition request.
 // This provides "go-to definition" functionality, allowing users to navigate
 // to where a symbol is defined.
-func Definition(context *glsp.Context, params *protocol.DefinitionParams) (interface{}, error) {
+func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
@@ -100,6 +99,7 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (inter
 
 	// Multiple definitions found (e.g., overloaded functions)
 	log.Printf("Found %d definitions for symbol %s", len(locations), symbolInfo.Name)
+
 	return locations, nil // Return array of locations
 }
 

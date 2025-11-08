@@ -6,10 +6,9 @@ import (
 	"sort"
 	"unicode/utf16"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/token"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // CollectSemanticTokens traverses the AST and collects semantic tokens.
@@ -31,6 +30,7 @@ func CollectSemanticTokens(astRoot *ast.Program, legend *server.SemanticTokensLe
 		if collector.tokens[i].Line != collector.tokens[j].Line {
 			return collector.tokens[i].Line < collector.tokens[j].Line
 		}
+
 		return collector.tokens[i].StartChar < collector.tokens[j].StartChar
 	})
 
@@ -101,6 +101,7 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 				if n.IsAbstract {
 					modifiers |= tc.legend.GetModifierMask(server.TokenModifierAbstract)
 				}
+
 				tc.addToken(namePos, utf16Length(n.Name.Value), server.TokenTypeMethod, modifiers)
 			} else {
 				// It's a function
@@ -138,10 +139,12 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 	case *ast.FieldDecl:
 		if n.Name != nil {
 			fieldPos := n.Name.Pos()
+
 			modifiers := tc.legend.GetModifierMask(server.TokenModifierDeclaration)
 			if n.IsClassVar {
 				modifiers |= tc.legend.GetModifierMask(server.TokenModifierStatic)
 			}
+
 			tc.addToken(fieldPos, utf16Length(n.Name.Value), server.TokenTypeProperty, modifiers)
 		}
 
@@ -154,6 +157,7 @@ func (tc *tokenCollector) visit(node ast.Node) bool {
 			if n.WriteSpec == nil {
 				modifiers |= tc.legend.GetModifierMask(server.TokenModifierReadonly)
 			}
+
 			tc.addToken(propPos, utf16Length(n.Name.Value), server.TokenTypeProperty, modifiers)
 		}
 
@@ -225,6 +229,7 @@ func (tc *tokenCollector) addToken(pos token.Position, length int, tokenType str
 	if line < 0 {
 		line = 0
 	}
+
 	startChar := uint32(pos.Column - 1)
 	if startChar < 0 {
 		startChar = 0
@@ -248,7 +253,7 @@ func (tc *tokenCollector) addToken(pos token.Position, length int, tokenType str
 
 // EncodeSemanticTokens encodes tokens in LSP delta format.
 // The LSP protocol uses a delta encoding where each token is represented as:
-// [deltaLine, deltaStartChar, length, tokenType, tokenModifiers]
+// [deltaLine, deltaStartChar, length, tokenType, tokenModifiers].
 func EncodeSemanticTokens(tokens []server.SemanticToken) []uint32 {
 	if len(tokens) == 0 {
 		return []uint32{}
@@ -259,6 +264,7 @@ func EncodeSemanticTokens(tokens []server.SemanticToken) []uint32 {
 
 	for _, token := range tokens {
 		deltaLine := token.Line - prevLine
+
 		deltaChar := token.StartChar
 		if deltaLine == 0 {
 			deltaChar = token.StartChar - prevChar

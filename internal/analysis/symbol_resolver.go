@@ -13,7 +13,7 @@ import (
 )
 
 // SymbolResolver provides symbol resolution with scope-based lookup.
-// It implements the resolution strategy: local → class → global → workspace
+// It implements the resolution strategy: local → class → global → workspace.
 type SymbolResolver struct {
 	// documentURI is the current document being resolved
 	documentURI string
@@ -70,14 +70,18 @@ func (sr *SymbolResolver) ResolveSymbol(symbolName string) []protocol.Location {
 	// Step 1: Try to resolve as a local symbol (variables, parameters in current scope)
 	if localLoc := sr.resolveLocal(symbolName); localLoc != nil {
 		log.Printf("Resolved '%s' as local symbol", symbolName)
+
 		locations = append(locations, *localLoc)
+
 		return locations // Local symbols take precedence, stop here
 	}
 
 	// Step 2: Try to resolve as a class member (if we're inside a class)
 	if classMemberLoc := sr.resolveClassMember(symbolName); classMemberLoc != nil {
 		log.Printf("Resolved '%s' as class member", symbolName)
+
 		locations = append(locations, *classMemberLoc)
+
 		return locations // Class members take precedence over globals
 	}
 
@@ -85,6 +89,7 @@ func (sr *SymbolResolver) ResolveSymbol(symbolName string) []protocol.Location {
 	if globalLocs := sr.resolveGlobal(symbolName); len(globalLocs) > 0 {
 		log.Printf("Resolved '%s' as global symbol (%d definition(s))", symbolName, len(globalLocs))
 		locations = append(locations, globalLocs...)
+
 		return locations
 	}
 
@@ -92,6 +97,7 @@ func (sr *SymbolResolver) ResolveSymbol(symbolName string) []protocol.Location {
 	if importedLocs := sr.resolveInImportedUnits(symbolName); len(importedLocs) > 0 {
 		log.Printf("Resolved '%s' in imported units (%d definition(s))", symbolName, len(importedLocs))
 		locations = append(locations, importedLocs...)
+
 		return locations
 	}
 
@@ -100,10 +106,12 @@ func (sr *SymbolResolver) ResolveSymbol(symbolName string) []protocol.Location {
 	if workspaceLocs := sr.resolveWorkspace(symbolName); len(workspaceLocs) > 0 {
 		log.Printf("Resolved '%s' in workspace (%d definition(s))", symbolName, len(workspaceLocs))
 		locations = append(locations, workspaceLocs...)
+
 		return locations
 	}
 
 	log.Printf("Could not resolve symbol '%s'", symbolName)
+
 	return locations // Empty if not found
 }
 
@@ -233,6 +241,7 @@ func (sr *SymbolResolver) findClassByName(className string) *ast.ClassDecl {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -268,11 +277,13 @@ func (sr *SymbolResolver) resolveWorkspace(symbolName string) []protocol.Locatio
 
 	// Convert workspace.SymbolLocation to protocol.Location
 	var locations []protocol.Location
+
 	for _, symLoc := range symbolLocations {
 		// Skip symbols from the current file (already handled by resolveGlobal)
 		if symLoc.Location.URI == sr.documentURI {
 			continue
 		}
+
 		locations = append(locations, symLoc.Location)
 	}
 
@@ -288,7 +299,7 @@ func (sr *SymbolResolver) resolveWorkspace(symbolName string) []protocol.Locatio
 // Relevance is determined by:
 // 1. Files in the same directory as the current document
 // 2. Files in parent directories
-// 3. Files in other directories (alphabetically)
+// 3. Files in other directories (alphabetically).
 func (sr *SymbolResolver) sortLocationsByRelevance(locations []protocol.Location) {
 	// Extract directory from current document URI
 	currentPath, err := uriToPath(sr.documentURI)
@@ -296,6 +307,7 @@ func (sr *SymbolResolver) sortLocationsByRelevance(locations []protocol.Location
 		log.Printf("sortLocationsByRelevance: unable to resolve current URI %s: %v", sr.documentURI, err)
 		return
 	}
+
 	currentDir := filepath.Dir(currentPath)
 
 	sort.Slice(locations, func(i, j int) bool {
@@ -312,6 +324,7 @@ func (sr *SymbolResolver) sortLocationsByRelevance(locations []protocol.Location
 		if isSameDirI && !isSameDirJ {
 			return true
 		}
+
 		if !isSameDirI && isSameDirJ {
 			return false
 		}
@@ -326,6 +339,7 @@ func resolvePathOrFallback(uri string) string {
 	if err != nil {
 		return uri
 	}
+
 	return path
 }
 
@@ -548,6 +562,7 @@ func (sr *SymbolResolver) extractUsesClause() []string {
 					unitNames = append(unitNames, unitIdent.Value)
 				}
 			}
+
 			return false // Stop traversing this branch
 		}
 
@@ -613,6 +628,7 @@ func (sr *SymbolResolver) resolveInImportedUnits(symbolName string) []protocol.L
 
 	// Collect all URIs from imported units
 	importedURIs := make(map[string]bool)
+
 	for _, uris := range unitToURIs {
 		for _, uri := range uris {
 			importedURIs[uri] = true
@@ -631,6 +647,7 @@ func (sr *SymbolResolver) resolveInImportedUnits(symbolName string) []protocol.L
 
 	// Filter to only include symbols from imported units
 	var locations []protocol.Location
+
 	for _, symLoc := range symbolLocations {
 		// Skip symbols from the current file (already handled by resolveGlobal)
 		if symLoc.Location.URI == sr.documentURI {
@@ -658,6 +675,7 @@ func (sr *SymbolResolver) GetResolutionScope() string {
 		if sr.findEnclosingClass() != nil {
 			return "method"
 		}
+
 		return "function"
 	}
 

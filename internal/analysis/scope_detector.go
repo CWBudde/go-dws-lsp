@@ -68,6 +68,7 @@ func DetermineScope(program *ast.Program, symbolName string, pos Position) *Scop
 		if n == nil {
 			return true
 		}
+
 		start, end := n.Pos(), n.End()
 		if !positionInRange(target, start, end) {
 			return false
@@ -111,7 +112,7 @@ func DetermineScope(program *ast.Program, symbolName string, pos Position) *Scop
 	return &ScopeInfo{Type: ScopeGlobal, Function: nil, Class: nil}
 }
 
-// Helper span structure used to choose the most specific enclosing node
+// Helper span structure used to choose the most specific enclosing node.
 type span struct {
 	start token.Position
 	end   token.Position
@@ -122,13 +123,15 @@ func spanLarge() span {
 	return span{start: token.Position{Line: 0, Column: 0}, end: token.Position{Line: 1<<30 - 1, Column: 1<<30 - 1}}
 }
 
-// moreSpecific returns true if span (aStart,aEnd) is strictly more specific (smaller) than (bStart,bEnd)
+// moreSpecific returns true if span (aStart,aEnd) is strictly more specific (smaller) than (bStart,bEnd).
 func moreSpecific(aStart, aEnd, bStart, bEnd token.Position) bool {
 	aLen := spanLength(aStart, aEnd)
+
 	bLen := spanLength(bStart, bEnd)
 	if aLen < bLen {
 		return true
 	}
+
 	if aLen > bLen {
 		return false
 	}
@@ -136,9 +139,11 @@ func moreSpecific(aStart, aEnd, bStart, bEnd token.Position) bool {
 	if aStart.Line > bStart.Line {
 		return true
 	}
+
 	if aStart.Line < bStart.Line {
 		return false
 	}
+
 	return aStart.Column > bStart.Column
 }
 
@@ -146,11 +151,14 @@ func spanLength(start, end token.Position) int {
 	// Rough span measure: line distance weighted + column distance
 	lineDelta := end.Line - start.Line
 	colDelta := end.Column - start.Column
+
 	if lineDelta < 0 {
 		lineDelta = 0
 	}
+
 	if colDelta < 0 {
 		colDelta = 0
 	}
+
 	return lineDelta*100000 + colDelta
 }

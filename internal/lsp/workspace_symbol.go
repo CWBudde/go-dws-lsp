@@ -4,11 +4,10 @@ package lsp
 import (
 	"log"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // WorkspaceSymbol handles the workspace/symbol request.
@@ -37,6 +36,7 @@ func WorkspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolPara
 
 	// Check if index has any symbols
 	var symbolLocations []workspace.SymbolLocation
+
 	if index.GetSymbolCount() == 0 {
 		// Index is empty, use fallback search
 		log.Println("Index is empty, using fallback search")
@@ -59,6 +59,7 @@ func WorkspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolPara
 
 	// Convert to SymbolInformation array
 	var symbols []protocol.SymbolInformation
+
 	for _, symLoc := range symbolLocations {
 		// Build SymbolInformation
 		symbolInfo := protocol.SymbolInformation{

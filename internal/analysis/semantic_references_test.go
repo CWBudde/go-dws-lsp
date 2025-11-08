@@ -7,22 +7,27 @@ import (
 	"github.com/cwbudde/go-dws/pkg/token"
 )
 
-// Helper function to compile DWScript code with semantic info for testing
+// Helper function to compile DWScript code with semantic info for testing.
 func compileCode(t *testing.T, code string) *dwscript.Program {
 	t.Helper()
+
 	program, compileMsgs, err := ParseDocument(code, "test.dws")
 	if err != nil {
 		t.Fatalf("Failed to compile test code: %v", err)
 	}
+
 	if program == nil {
 		if compileMsgs != nil && len(compileMsgs) > 0 {
 			t.Logf("Compilation errors:")
+
 			for _, msg := range compileMsgs {
 				t.Logf("  - %s", msg.Message)
 			}
 		}
+
 		t.Fatal("ParseDocument returned nil program")
 	}
+
 	return program
 }
 
@@ -114,6 +119,7 @@ end;`
 
 	if len(ranges) < expectedMin {
 		t.Errorf("Expected at least %d references, got %d", expectedMin, len(ranges))
+
 		for i, r := range ranges {
 			t.Logf("  Reference %d: line %d, char %d", i+1, r.Start.Line, r.Start.Character)
 		}
@@ -121,15 +127,7 @@ end;`
 }
 
 func TestFindSemanticReferences_GlobalFunction(t *testing.T) {
-	code := `function MyFunction(): Integer;
-begin
-  Result := 42;
-end;
-
-begin
-  var result := MyFunction();
-  MyFunction();
-end.`
+	code := "function MyFunction(): Integer;\nbegin\n  Result := 42;\nend;\n\nbegin\n  var result := MyFunction();\n  end."
 	program := compileCode(t, code)
 
 	// Position at the function definition 'MyFunction' (line 1)
@@ -147,6 +145,7 @@ end.`
 
 	if len(ranges) < expectedMin {
 		t.Errorf("Expected at least %d references, got %d", expectedMin, len(ranges))
+
 		for i, r := range ranges {
 			t.Logf("  Reference %d: line %d, char %d", i+1, r.Start.Line, r.Start.Character)
 		}
@@ -181,6 +180,7 @@ end;`
 
 	if len(ranges) > 2 {
 		t.Errorf("Expected at most 2 references (no false positives from FuncB), got %d", len(ranges))
+
 		for i, r := range ranges {
 			t.Logf("  Reference %d: line %d, char %d", i+1, r.Start.Line, r.Start.Character)
 		}

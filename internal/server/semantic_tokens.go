@@ -100,6 +100,7 @@ func (l *SemanticTokensLegend) GetTokenTypeIndex(tokenType string) int {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -107,6 +108,7 @@ func (l *SemanticTokensLegend) GetTokenTypeIndex(tokenType string) int {
 // Multiple modifiers can be combined using bitwise OR.
 func (l *SemanticTokensLegend) GetModifierMask(modifiers ...string) uint32 {
 	var mask uint32
+
 	for _, modifier := range modifiers {
 		for i, m := range l.TokenModifiers {
 			if m == modifier {
@@ -115,10 +117,11 @@ func (l *SemanticTokensLegend) GetModifierMask(modifiers ...string) uint32 {
 			}
 		}
 	}
+
 	return mask
 }
 
-// Token type constants for easier reference
+// Token type constants for easier reference.
 const (
 	TokenTypeNamespace     = "namespace"
 	TokenTypeType          = "type"
@@ -139,7 +142,7 @@ const (
 	TokenTypeComment       = "comment"
 )
 
-// Token modifier constants for easier reference
+// Token modifier constants for easier reference.
 const (
 	TokenModifierDeclaration   = "declaration"
 	TokenModifierReadonly      = "readonly"

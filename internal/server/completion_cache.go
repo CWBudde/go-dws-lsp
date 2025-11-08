@@ -93,12 +93,15 @@ func (c *CompletionCache) SetCachedItems(uri string, version int32, items *Cache
 	if items.Keywords != nil {
 		docCache.keywords = items.Keywords
 	}
+
 	if items.Builtins != nil {
 		docCache.builtins = items.Builtins
 	}
+
 	if items.GlobalSymbols != nil {
 		docCache.globalSymbols = items.GlobalSymbols
 	}
+
 	docCache.version = version
 	docCache.lastUpdate = time.Now()
 }

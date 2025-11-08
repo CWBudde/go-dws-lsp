@@ -3,16 +3,17 @@ package builtins
 import "github.com/CWBudde/go-dws-lsp/internal/analysis"
 
 // GetBuiltinSignature returns the signature for a built-in function if it exists
-// Returns nil if the function is not a known built-in
+// Returns nil if the function is not a known built-in.
 func GetBuiltinSignature(functionName string) *analysis.FunctionSignature {
 	// Check if this is a built-in function
 	if sig, exists := builtinSignatures[functionName]; exists {
 		return &sig
 	}
+
 	return nil
 }
 
-// builtinSignatures contains predefined signatures for DWScript built-in functions
+// builtinSignatures contains predefined signatures for DWScript built-in functions.
 var builtinSignatures = map[string]analysis.FunctionSignature{
 	// String functions
 	"PrintLn": {
@@ -279,7 +280,7 @@ var builtinSignatures = map[string]analysis.FunctionSignature{
 	},
 }
 
-// IsBuiltinFunction checks if a function name is a built-in function
+// IsBuiltinFunction checks if a function name is a built-in function.
 func IsBuiltinFunction(functionName string) bool {
 	_, exists := builtinSignatures[functionName]
 	return exists

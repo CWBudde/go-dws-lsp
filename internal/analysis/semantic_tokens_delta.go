@@ -14,9 +14,9 @@ const DeltaThreshold = 0.7 // 70%
 
 // SemanticTokensDeltaResult wraps either a delta or full response.
 type SemanticTokensDeltaResult struct {
-	IsDelta bool                              // true if delta, false if full
-	Delta   *protocol.SemanticTokensDelta    // set if IsDelta == true
-	Full    *protocol.SemanticTokens         // set if IsDelta == false
+	IsDelta bool                          // true if delta, false if full
+	Delta   *protocol.SemanticTokensDelta // set if IsDelta == true
+	Full    *protocol.SemanticTokens      // set if IsDelta == false
 }
 
 // ComputeSemanticTokensDelta computes the delta between old and new tokens.
@@ -25,6 +25,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 	// If no old tokens, return full
 	if oldTokens == nil || len(oldTokens) == 0 {
 		log.Println("No old tokens, returning full semantic tokens")
+
 		return &SemanticTokensDeltaResult{
 			IsDelta: false,
 			Full: &protocol.SemanticTokens{
@@ -37,6 +38,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 	// If no new tokens but had old tokens, it's a delete-all delta
 	if newTokens == nil || len(newTokens) == 0 {
 		log.Println("No new tokens, returning delete-all delta")
+
 		edits := []protocol.SemanticTokensEdit{
 			{
 				Start:       0,
@@ -44,6 +46,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 				Data:        []uint32{},
 			},
 		}
+
 		return &SemanticTokensDeltaResult{
 			IsDelta: true,
 			Delta: &protocol.SemanticTokensDelta{
@@ -64,6 +67,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 	// If delta is too large, return full instead
 	if float64(deltaSize) > float64(fullSize)*DeltaThreshold {
 		log.Printf("Delta too large (%d vs %d), returning full semantic tokens", deltaSize, fullSize)
+
 		return &SemanticTokensDeltaResult{
 			IsDelta: false,
 			Full: &protocol.SemanticTokens{
@@ -74,6 +78,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 	}
 
 	log.Printf("Returning delta with %d edits (delta size: %d, full size: %d)", len(edits), deltaSize, fullSize)
+
 	return &SemanticTokensDeltaResult{
 		IsDelta: true,
 		Delta: &protocol.SemanticTokensDelta{
@@ -94,6 +99,7 @@ func computeEdits(oldTokens, newTokens []server.SemanticToken) []protocol.Semant
 
 	// Find the common prefix (unchanged tokens at the start)
 	commonPrefixLen := 0
+
 	maxPrefix := min(len(oldEncoded), len(newEncoded))
 	for commonPrefixLen < maxPrefix && oldEncoded[commonPrefixLen] == newEncoded[commonPrefixLen] {
 		commonPrefixLen++
@@ -102,6 +108,7 @@ func computeEdits(oldTokens, newTokens []server.SemanticToken) []protocol.Semant
 	// Find the common suffix (unchanged tokens at the end)
 	commonSuffixLen := 0
 	oldSuffixStart := len(oldEncoded)
+
 	newSuffixStart := len(newEncoded)
 	for commonSuffixLen < len(oldEncoded)-commonPrefixLen &&
 		commonSuffixLen < len(newEncoded)-commonPrefixLen &&
@@ -132,6 +139,7 @@ func computeEdits(oldTokens, newTokens []server.SemanticToken) []protocol.Semant
 	}
 
 	edits = append(edits, edit)
+
 	return edits
 }
 
@@ -142,6 +150,7 @@ func calculateDeltaSize(edits []protocol.SemanticTokensEdit) int {
 		// Each edit has overhead (start + deleteCount) plus the data
 		size += 2 + len(edit.Data) // Simplified size calculation
 	}
+
 	return size
 }
 

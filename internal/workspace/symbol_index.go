@@ -11,11 +11,11 @@ import (
 
 // SymbolLocation represents a location where a symbol is defined.
 type SymbolLocation struct {
-	Name          string                  // Symbol name
-	Kind          protocol.SymbolKind     // Symbol kind (Function, Class, Variable, etc.)
-	Location      protocol.Location       // Full location with URI and range
-	ContainerName string                  // Name of containing scope (e.g., class name for methods)
-	Detail        string                  // Additional detail (e.g., signature)
+	Name          string              // Symbol name
+	Kind          protocol.SymbolKind // Symbol kind (Function, Class, Variable, etc.)
+	Location      protocol.Location   // Full location with URI and range
+	ContainerName string              // Name of containing scope (e.g., class name for methods)
+	Detail        string              // Additional detail (e.g., signature)
 }
 
 // FileInfo stores metadata about an indexed file.
@@ -97,6 +97,7 @@ func (si *SymbolIndex) FindSymbol(name string) []SymbolLocation {
 	// Return a copy to avoid external modifications
 	result := make([]SymbolLocation, len(locations))
 	copy(result, locations)
+
 	return result
 }
 
@@ -106,6 +107,7 @@ func (si *SymbolIndex) FindSymbolsByKind(kind protocol.SymbolKind) []SymbolLocat
 	defer si.mutex.RUnlock()
 
 	var result []SymbolLocation
+
 	for _, locations := range si.symbols {
 		for _, loc := range locations {
 			if loc.Kind == kind {
@@ -113,6 +115,7 @@ func (si *SymbolIndex) FindSymbolsByKind(kind protocol.SymbolKind) []SymbolLocat
 			}
 		}
 	}
+
 	return result
 }
 
@@ -127,6 +130,7 @@ func (si *SymbolIndex) FindSymbolsInFile(uri string) []SymbolLocation {
 	}
 
 	var result []SymbolLocation
+
 	for _, symbolName := range fileInfo.Symbols {
 		locations := si.symbols[symbolName]
 		for _, loc := range locations {
@@ -135,6 +139,7 @@ func (si *SymbolIndex) FindSymbolsInFile(uri string) []SymbolLocation {
 			}
 		}
 	}
+
 	return result
 }
 
@@ -155,6 +160,7 @@ func (si *SymbolIndex) RemoveFile(uri string) {
 
 		// Filter out locations from this file
 		var remaining []SymbolLocation
+
 		for _, loc := range locations {
 			if loc.Location.URI != uri {
 				remaining = append(remaining, loc)
@@ -189,6 +195,7 @@ func (si *SymbolIndex) UpdateFileVersion(uri string, version int32) {
 func (si *SymbolIndex) GetFileCount() int {
 	si.mutex.RLock()
 	defer si.mutex.RUnlock()
+
 	return len(si.files)
 }
 
@@ -196,6 +203,7 @@ func (si *SymbolIndex) GetFileCount() int {
 func (si *SymbolIndex) GetSymbolCount() int {
 	si.mutex.RLock()
 	defer si.mutex.RUnlock()
+
 	return len(si.symbols)
 }
 
@@ -208,6 +216,7 @@ func (si *SymbolIndex) GetTotalLocationCount() int {
 	for _, locations := range si.symbols {
 		count += len(locations)
 	}
+
 	return count
 }
 
@@ -226,9 +235,9 @@ func (si *SymbolIndex) Clear() {
 type matchType int
 
 const (
-	matchExact matchType = iota // Exact match (highest priority)
-	matchPrefix                 // Prefix match (medium priority)
-	matchSubstring              // Substring match (lowest priority)
+	matchExact     matchType = iota // Exact match (highest priority)
+	matchPrefix                     // Prefix match (medium priority)
+	matchSubstring                  // Substring match (lowest priority)
 )
 
 // searchResult holds a symbol location with its match type for sorting.
@@ -260,6 +269,7 @@ func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 				}
 			}
 		}
+
 		return results
 	}
 
@@ -296,7 +306,7 @@ func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 	copy(sortedResults, searchResults)
 
 	// Simple bubble sort by match type (sufficient for small result sets)
-	for i := 0; i < len(sortedResults); i++ {
+	for i := range sortedResults {
 		for j := i + 1; j < len(sortedResults); j++ {
 			if sortedResults[i].matchType > sortedResults[j].matchType {
 				sortedResults[i], sortedResults[j] = sortedResults[j], sortedResults[i]

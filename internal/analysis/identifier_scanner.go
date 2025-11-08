@@ -13,6 +13,7 @@ func ScanASTForIdentifier(program *ast.Program, name string) ([]Position, error)
 	if program == nil {
 		return nil, errors.New("analysis: program AST is nil")
 	}
+
 	if name == "" {
 		return nil, errors.New("analysis: identifier name is empty")
 	}
@@ -24,10 +25,12 @@ func ScanASTForIdentifier(program *ast.Program, name string) ([]Position, error)
 		if !ok || ident == nil {
 			return true
 		}
+
 		if ident.Value == name {
 			pos := ident.Pos()
 			positions = append(positions, Position{Line: pos.Line, Column: pos.Column})
 		}
+
 		return true
 	})
 

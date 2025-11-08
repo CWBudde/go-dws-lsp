@@ -3,13 +3,12 @@ package lsp
 import (
 	"testing"
 
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-
-	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
-// TestDocumentSymbol_Functions tests that function declarations are returned as symbols
+// TestDocumentSymbol_Functions tests that function declarations are returned as symbols.
 func TestDocumentSymbol_Functions(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -58,9 +57,11 @@ end;`
 	if symbols[0].Name != "Add" {
 		t.Errorf("Expected first symbol name 'Add', got '%s'", symbols[0].Name)
 	}
+
 	if symbols[0].Kind != protocol.SymbolKindFunction {
 		t.Errorf("Expected symbol kind Function, got %v", symbols[0].Kind)
 	}
+
 	if symbols[0].Detail == nil || *symbols[0].Detail == "" {
 		t.Errorf("Expected non-empty detail for function Add")
 	}
@@ -69,12 +70,13 @@ end;`
 	if symbols[1].Name != "PrintMessage" {
 		t.Errorf("Expected second symbol name 'PrintMessage', got '%s'", symbols[1].Name)
 	}
+
 	if symbols[1].Kind != protocol.SymbolKindFunction {
 		t.Errorf("Expected symbol kind Function, got %v", symbols[1].Kind)
 	}
 }
 
-// TestDocumentSymbol_Variables tests that variable declarations are returned as symbols
+// TestDocumentSymbol_Variables tests that variable declarations are returned as symbols.
 func TestDocumentSymbol_Variables(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -116,13 +118,14 @@ var y, z: String;`
 		if symbols[i].Name != expected {
 			t.Errorf("Expected symbol %d name '%s', got '%s'", i, expected, symbols[i].Name)
 		}
+
 		if symbols[i].Kind != protocol.SymbolKindVariable {
 			t.Errorf("Expected symbol %d kind Variable, got %v", i, symbols[i].Kind)
 		}
 	}
 }
 
-// TestDocumentSymbol_Constants tests that constant declarations are returned as symbols
+// TestDocumentSymbol_Constants tests that constant declarations are returned as symbols.
 func TestDocumentSymbol_Constants(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -162,6 +165,7 @@ const MAX_SIZE = 100;`
 	if symbols[0].Name != "PI" {
 		t.Errorf("Expected first symbol name 'PI', got '%s'", symbols[0].Name)
 	}
+
 	if symbols[0].Kind != protocol.SymbolKindConstant {
 		t.Errorf("Expected symbol kind Constant, got %v", symbols[0].Kind)
 	}
@@ -170,31 +174,19 @@ const MAX_SIZE = 100;`
 	if symbols[1].Name != "MAX_SIZE" {
 		t.Errorf("Expected second symbol name 'MAX_SIZE', got '%s'", symbols[1].Name)
 	}
+
 	if symbols[1].Kind != protocol.SymbolKindConstant {
 		t.Errorf("Expected symbol kind Constant, got %v", symbols[1].Kind)
 	}
 }
 
-// TestDocumentSymbol_Class tests that class declarations with members are returned as hierarchical symbols
+// TestDocumentSymbol_Class tests that class declarations with members are returned as hierarchical symbols.
 func TestDocumentSymbol_Class(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
 
 	uri := "file:///test_class.dws"
-	content := `type TPerson = class
-  FName: String;
-  FAge: Integer;
-
-  function GetName: String;
-  begin
-    Result := FName;
-  end;
-
-  procedure SetAge(value: Integer);
-  begin
-    FAge := value;
-  end;
-end;`
+	content := "type TPerson = class\n  FName: String;\n  FAge: Integer;\n\n  function GetName: String;\n  begin\n    Result := FName;\n  end;\n\n  procedure SetAge(value: Integer);\n  begin\n    FAge := value;\n  end;"
 
 	err := DidOpen(&glsp.Context{}, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
@@ -227,6 +219,7 @@ end;`
 	if classSymbol.Name != "TPerson" {
 		t.Errorf("Expected class name 'TPerson', got '%s'", classSymbol.Name)
 	}
+
 	if classSymbol.Kind != protocol.SymbolKindClass {
 		t.Errorf("Expected symbol kind Class, got %v", classSymbol.Kind)
 	}
@@ -240,6 +233,7 @@ end;`
 	if classSymbol.Children[0].Name != "FName" {
 		t.Errorf("Expected first child name 'FName', got '%s'", classSymbol.Children[0].Name)
 	}
+
 	if classSymbol.Children[0].Kind != protocol.SymbolKindField {
 		t.Errorf("Expected first child kind Field, got %v", classSymbol.Children[0].Kind)
 	}
@@ -248,6 +242,7 @@ end;`
 	if classSymbol.Children[1].Name != "FAge" {
 		t.Errorf("Expected second child name 'FAge', got '%s'", classSymbol.Children[1].Name)
 	}
+
 	if classSymbol.Children[1].Kind != protocol.SymbolKindField {
 		t.Errorf("Expected second child kind Field, got %v", classSymbol.Children[1].Kind)
 	}
@@ -256,6 +251,7 @@ end;`
 	if classSymbol.Children[2].Name != "GetName" {
 		t.Errorf("Expected third child name 'GetName', got '%s'", classSymbol.Children[2].Name)
 	}
+
 	if classSymbol.Children[2].Kind != protocol.SymbolKindMethod {
 		t.Errorf("Expected third child kind Method, got %v", classSymbol.Children[2].Kind)
 	}
@@ -264,12 +260,13 @@ end;`
 	if classSymbol.Children[3].Name != "SetAge" {
 		t.Errorf("Expected fourth child name 'SetAge', got '%s'", classSymbol.Children[3].Name)
 	}
+
 	if classSymbol.Children[3].Kind != protocol.SymbolKindMethod {
 		t.Errorf("Expected fourth child kind Method, got %v", classSymbol.Children[3].Kind)
 	}
 }
 
-// TestDocumentSymbol_Record tests that record declarations are returned as symbols
+// TestDocumentSymbol_Record tests that record declarations are returned as symbols.
 func TestDocumentSymbol_Record(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -311,6 +308,7 @@ end;`
 	if recordSymbol.Name != "TPoint" {
 		t.Errorf("Expected record name 'TPoint', got '%s'", recordSymbol.Name)
 	}
+
 	if recordSymbol.Kind != protocol.SymbolKindStruct {
 		t.Errorf("Expected symbol kind Struct, got %v", recordSymbol.Kind)
 	}
@@ -319,7 +317,7 @@ end;`
 	// This is a basic test to ensure the record itself is detected
 }
 
-// TestDocumentSymbol_Enum tests that enum declarations are returned as symbols
+// TestDocumentSymbol_Enum tests that enum declarations are returned as symbols.
 func TestDocumentSymbol_Enum(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -358,6 +356,7 @@ func TestDocumentSymbol_Enum(t *testing.T) {
 	if enumSymbol.Name != "TColor" {
 		t.Errorf("Expected enum name 'TColor', got '%s'", enumSymbol.Name)
 	}
+
 	if enumSymbol.Kind != protocol.SymbolKindEnum {
 		t.Errorf("Expected symbol kind Enum, got %v", enumSymbol.Kind)
 	}
@@ -372,13 +371,14 @@ func TestDocumentSymbol_Enum(t *testing.T) {
 		if enumSymbol.Children[i].Name != expected {
 			t.Errorf("Expected enum member %d name '%s', got '%s'", i, expected, enumSymbol.Children[i].Name)
 		}
+
 		if enumSymbol.Children[i].Kind != protocol.SymbolKindEnumMember {
 			t.Errorf("Expected enum member %d kind EnumMember, got %v", i, enumSymbol.Children[i].Kind)
 		}
 	}
 }
 
-// TestDocumentSymbol_Mixed tests a document with multiple symbol types
+// TestDocumentSymbol_Mixed tests a document with multiple symbol types.
 func TestDocumentSymbol_Mixed(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -437,7 +437,7 @@ type TStatus = (Ready, Running, Stopped);`
 	}
 }
 
-// TestDocumentSymbol_EmptyDocument tests that an empty document returns no symbols
+// TestDocumentSymbol_EmptyDocument tests that an empty document returns no symbols.
 func TestDocumentSymbol_EmptyDocument(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
@@ -473,7 +473,7 @@ func TestDocumentSymbol_EmptyDocument(t *testing.T) {
 	}
 }
 
-// TestDocumentSymbol_DocumentNotFound tests handling of non-existent document
+// TestDocumentSymbol_DocumentNotFound tests handling of non-existent document.
 func TestDocumentSymbol_DocumentNotFound(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)

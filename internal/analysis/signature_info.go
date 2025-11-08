@@ -9,7 +9,7 @@ import (
 	"github.com/cwbudde/go-dws/pkg/token"
 )
 
-// FunctionSignature holds information about a function's signature
+// FunctionSignature holds information about a function's signature.
 type FunctionSignature struct {
 	// Function name
 	Name string
@@ -30,7 +30,7 @@ type FunctionSignature struct {
 	ClassName string
 }
 
-// ParameterInfo holds information about a single parameter
+// ParameterInfo holds information about a single parameter.
 type ParameterInfo struct {
 	Name         string
 	Type         string
@@ -39,7 +39,7 @@ type ParameterInfo struct {
 }
 
 // GetFunctionSignature retrieves function definition to get parameters and documentation
-// This implements task 10.8 - it reuses symbol resolution from go-to-definition (Phase 5)
+// This implements task 10.8 - it reuses symbol resolution from go-to-definition (Phase 5).
 func GetFunctionSignature(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) (*FunctionSignature, error) {
 	signatures, err := GetFunctionSignatures(doc, functionName, line, character, workspaceIndex)
 	if err != nil || len(signatures) == 0 {
@@ -50,7 +50,7 @@ func GetFunctionSignature(doc *server.Document, functionName string, line, chara
 }
 
 // GetFunctionSignatures retrieves all function definitions (supports overloading)
-// This implements task 10.15 - it collects all overloaded signatures
+// This implements task 10.15 - it collects all overloaded signatures.
 func GetFunctionSignatures(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) ([]*FunctionSignature, error) {
 	if doc.Program == nil {
 		log.Printf("GetFunctionSignatures: No program available\n")
@@ -127,12 +127,12 @@ func GetFunctionSignatures(doc *server.Document, functionName string, line, char
 	return signatures, nil
 }
 
-// sortSignaturesByParameterCount sorts signatures by parameter count (ascending)
+// sortSignaturesByParameterCount sorts signatures by parameter count (ascending).
 func sortSignaturesByParameterCount(signatures []*FunctionSignature) {
 	// Simple bubble sort (fine for small number of overloads)
 	n := len(signatures)
-	for i := 0; i < n-1; i++ {
-		for j := 0; j < n-i-1; j++ {
+	for i := range n - 1 {
+		for j := range n - i - 1 {
 			if len(signatures[j].Parameters) > len(signatures[j+1].Parameters) {
 				signatures[j], signatures[j+1] = signatures[j+1], signatures[j]
 			}
@@ -140,7 +140,7 @@ func sortSignaturesByParameterCount(signatures []*FunctionSignature) {
 	}
 }
 
-// findFunctionDeclarationAtPosition finds a function or method declaration at the given position
+// findFunctionDeclarationAtPosition finds a function or method declaration at the given position.
 func findFunctionDeclarationAtPosition(program *ast.Program, pos token.Position) *ast.FunctionDecl {
 	var funcDecl *ast.FunctionDecl
 
@@ -166,7 +166,7 @@ func findFunctionDeclarationAtPosition(program *ast.Program, pos token.Position)
 	return funcDecl
 }
 
-// extractSignatureFromDeclaration extracts signature information from a function declaration
+// extractSignatureFromDeclaration extracts signature information from a function declaration.
 func extractSignatureFromDeclaration(funcDecl *ast.FunctionDecl) *FunctionSignature {
 	if funcDecl == nil {
 		return nil

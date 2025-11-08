@@ -4,12 +4,11 @@ package lsp
 import (
 	"log"
 
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/document"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // DidOpen handles the textDocument/didOpen notification.
@@ -44,6 +43,7 @@ func DidOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) 
 			Program:    nil,
 		}
 		srv.Documents().Set(uri, doc)
+
 		return nil
 	}
 
@@ -58,6 +58,7 @@ func DidOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) 
 
 	// Store document in DocumentStore
 	srv.Documents().Set(uri, doc)
+
 	if srv.Symbols() != nil {
 		srv.Symbols().UpdateDocument(doc)
 	}
@@ -135,6 +136,7 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 
 	// Apply all content changes
 	newText := doc.Text
+
 	for i, changeInterface := range params.ContentChanges {
 		// Type assert to TextDocumentContentChangeEvent
 		change, ok := changeInterface.(protocol.TextDocumentContentChangeEvent)
@@ -146,6 +148,7 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 		if change.Range == nil {
 			// Full sync mode: replace entire document text
 			newText = change.Text
+
 			log.Printf("Document changed (full sync): %s (version %d, change %d/%d)\n",
 				uri, version, i+1, len(params.ContentChanges))
 		} else {
@@ -156,7 +159,9 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 				// Continue with unchanged text to avoid corruption
 				continue
 			}
+
 			newText = updatedText
+
 			log.Printf("Document changed (incremental): %s (version %d, change %d/%d)\n",
 				uri, version, i+1, len(params.ContentChanges))
 		}
@@ -179,6 +184,7 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 		Program:    program,
 	}
 	srv.Documents().Set(uri, updatedDoc)
+
 	if srv.Symbols() != nil {
 		srv.Symbols().UpdateDocument(updatedDoc)
 	}

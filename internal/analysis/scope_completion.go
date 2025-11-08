@@ -28,6 +28,7 @@ func CollectScopeCompletions(doc *server.Document, cache *server.CompletionCache
 
 	if cached != nil && len(cached.Keywords) > 0 {
 		log.Printf("CollectScopeCompletions: using cached keywords, builtins, and global symbols")
+
 		keywords = cached.Keywords
 		builtins = cached.Builtins
 		globalItems = cached.GlobalSymbols
@@ -77,6 +78,7 @@ func CollectScopeCompletions(doc *server.Document, cache *server.CompletionCache
 	items = append(items, builtins...)
 
 	log.Printf("CollectScopeCompletions: found %d total completion items", len(items))
+
 	return items, nil
 }
 
@@ -158,6 +160,7 @@ func getKeywordCompletions() []protocol.CompletionItem {
 	}
 
 	plainTextFormat := protocol.InsertTextFormatPlainText
+
 	for _, keyword := range simpleKeywords {
 		detail := "DWScript keyword"
 		sortText := "~keyword~" + keyword
@@ -293,6 +296,7 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Name == nil {
 				continue
 			}
+
 			kind := protocol.CompletionItemKindFunction
 			signature := buildFunctionSignature(s)
 			sortText := "1global~" + s.Name.Value
@@ -314,6 +318,7 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Name == nil {
 				continue
 			}
+
 			kind := protocol.CompletionItemKindClass
 			detail := "Class"
 			sortText := "1global~" + s.Name.Value
@@ -331,6 +336,7 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Name == nil {
 				continue
 			}
+
 			kind := protocol.CompletionItemKindStruct
 			detail := "Record"
 			sortText := "1global~" + s.Name.Value
@@ -348,6 +354,7 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Name == nil {
 				continue
 			}
+
 			kind := protocol.CompletionItemKindInterface
 			detail := "Interface"
 			sortText := "1global~" + s.Name.Value
@@ -364,11 +371,13 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 		case *ast.VarDeclStatement:
 			kind := protocol.CompletionItemKindVariable
 			plainTextFormat := protocol.InsertTextFormatPlainText
+
 			for _, name := range s.Names {
 				detail := "Global variable"
 				if s.Type != nil {
 					detail = "Global variable: " + s.Type.String()
 				}
+
 				sortText := "1global~" + name.Value
 				item := protocol.CompletionItem{
 					Label:            name.Value,
@@ -384,14 +393,18 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Name == nil {
 				continue
 			}
+
 			kind := protocol.CompletionItemKindConstant
+
 			detail := "Constant"
 			if s.Type != nil {
 				detail = "Constant: " + s.Type.String()
 			}
+
 			if s.Value != nil {
 				detail += " = " + s.Value.String()
 			}
+
 			sortText := "1global~" + s.Name.Value
 			plainTextFormat := protocol.InsertTextFormatPlainText
 			item := protocol.CompletionItem{
@@ -407,6 +420,7 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			if s.Name == nil {
 				continue
 			}
+
 			kind := protocol.CompletionItemKindEnum
 			detail := "Enumeration"
 			sortText := "1global~" + s.Name.Value
@@ -422,6 +436,7 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 
 			// Also add enum values as constants
 			constKind := protocol.CompletionItemKindEnumMember
+
 			for _, enumVal := range s.Values {
 				enumDetail := "Enum value: " + s.Name.Value
 				enumSortText := "1global~" + enumVal.Name
@@ -448,13 +463,14 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 	signature := fn.Name.Value + "("
 
+	var signatureSb451 strings.Builder
 	for i, param := range fn.Parameters {
 		if i > 0 {
-			signature += ", "
+			signatureSb451.WriteString(", ")
 		}
 
 		if param.ByRef {
-			signature += "var "
+			signatureSb451.WriteString("var ")
 		} else if param.IsConst {
 			signature += "const "
 		} else if param.IsLazy {
@@ -462,12 +478,14 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		}
 
 		if param.Name != nil {
-			signature += param.Name.Value
+			signatureSb451.WriteString(param.Name.Value)
 		}
+
 		if param.Type != nil {
-			signature += ": " + param.Type.String()
+			signatureSb451.WriteString(": " + param.Type.String())
 		}
 	}
+	signature += signatureSb451.String()
 
 	signature += ")"
 
@@ -480,7 +498,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 // buildFunctionSnippet builds an LSP snippet string for function insertion.
 // Returns the snippet string and insertTextFormat.
-// Example: "MyFunc(${1:param1}, ${2:param2})$0"
+// Example: "MyFunc(${1:param1}, ${2:param2})$0".
 func buildFunctionSnippet(fn *ast.FunctionDecl) (string, protocol.InsertTextFormat) {
 	if fn.Name == nil {
 		return "", protocol.InsertTextFormatPlainText
@@ -493,21 +511,24 @@ func buildFunctionSnippet(fn *ast.FunctionDecl) (string, protocol.InsertTextForm
 
 	snippet := fn.Name.Value + "("
 
+	var snippetSb496 strings.Builder
 	for i, param := range fn.Parameters {
 		if i > 0 {
-			snippet += ", "
+			snippetSb496.WriteString(", ")
 		}
 
 		// Add tabstop with parameter name as placeholder
 		tabstopNum := i + 1
+
 		paramName := "param"
 		if param.Name != nil {
 			paramName = param.Name.Value
 		}
 
 		// Build tabstop: ${1:paramName}
-		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+		snippetSb496.WriteString("${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}")
 	}
+	snippet += snippetSb496.String()
 
 	snippet += ")$0" // $0 is the final cursor position
 
@@ -515,7 +536,7 @@ func buildFunctionSnippet(fn *ast.FunctionDecl) (string, protocol.InsertTextForm
 }
 
 // buildSnippetFromSignature builds a snippet from a signature string.
-// Example: "Print(value: Variant)" -> "Print(${1:value})$0"
+// Example: "Print(value: Variant)" -> "Print(${1:value})$0".
 func buildSnippetFromSignature(functionName, signature string) (string, protocol.InsertTextFormat) {
 	// Extract parameters from signature
 	// Find the parameter list between parentheses
@@ -539,9 +560,10 @@ func buildSnippetFromSignature(functionName, signature string) (string, protocol
 	params := strings.Split(paramsStr, ",")
 	snippet := functionName + "("
 
+	var snippetSb542 strings.Builder
 	for i, param := range params {
 		if i > 0 {
-			snippet += ", "
+			snippetSb542.WriteString(", ")
 		}
 
 		param = strings.TrimSpace(param)
@@ -564,8 +586,9 @@ func buildSnippetFromSignature(functionName, signature string) (string, protocol
 
 		// Build tabstop: ${1:paramName}
 		tabstopNum := i + 1
-		snippet += "${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}"
+		snippetSb542.WriteString("${" + strconv.Itoa(tabstopNum) + ":" + paramName + "}")
 	}
+	snippet += snippetSb542.String()
 
 	snippet += ")$0"
 
@@ -586,6 +609,7 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 
 	typeKind := protocol.CompletionItemKindClass
 	plainTextFormat := protocol.InsertTextFormatPlainText
+
 	for _, typeName := range builtInTypes {
 		detail := "Built-in type"
 		sortText := "2builtin~" + typeName
@@ -601,41 +625,42 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 
 	// Built-in functions
 	builtInFunctions := map[string]string{
-		"Print":     "Print(value: Variant)",
-		"PrintLn":   "PrintLn(value: Variant)",
-		"Length":    "Length(s: String): Integer",
-		"Copy":      "Copy(s: String, index, count: Integer): String",
-		"Pos":       "Pos(substr, str: String): Integer",
-		"UpperCase": "UpperCase(s: String): String",
-		"LowerCase": "LowerCase(s: String): String",
-		"Trim":      "Trim(s: String): String",
-		"IntToStr":  "IntToStr(value: Integer): String",
-		"StrToInt":  "StrToInt(s: String): Integer",
-		"FloatToStr": "FloatToStr(value: Float): String",
-		"StrToFloat": "StrToFloat(s: String): Float",
-		"Now":       "Now(): DateTime",
-		"Date":      "Date(): DateTime",
-		"Time":      "Time(): DateTime",
+		"Print":          "Print(value: Variant)",
+		"PrintLn":        "PrintLn(value: Variant)",
+		"Length":         "Length(s: String): Integer",
+		"Copy":           "Copy(s: String, index, count: Integer): String",
+		"Pos":            "Pos(substr, str: String): Integer",
+		"UpperCase":      "UpperCase(s: String): String",
+		"LowerCase":      "LowerCase(s: String): String",
+		"Trim":           "Trim(s: String): String",
+		"IntToStr":       "IntToStr(value: Integer): String",
+		"StrToInt":       "StrToInt(s: String): Integer",
+		"FloatToStr":     "FloatToStr(value: Float): String",
+		"StrToFloat":     "StrToFloat(s: String): Float",
+		"Now":            "Now(): DateTime",
+		"Date":           "Date(): DateTime",
+		"Time":           "Time(): DateTime",
 		"FormatDateTime": "FormatDateTime(format: String, dt: DateTime): String",
-		"Inc":       "Inc(var x: Integer; increment: Integer = 1)",
-		"Dec":       "Dec(var x: Integer; decrement: Integer = 1)",
-		"Chr":       "Chr(code: Integer): Char",
-		"Ord":       "Ord(ch: Char): Integer",
-		"Round":     "Round(value: Float): Integer",
-		"Trunc":     "Trunc(value: Float): Integer",
-		"Abs":       "Abs(value: Float): Float",
-		"Sqrt":      "Sqrt(value: Float): Float",
-		"Sqr":       "Sqr(value: Float): Float",
-		"Sin":       "Sin(angle: Float): Float",
-		"Cos":       "Cos(angle: Float): Float",
-		"Tan":       "Tan(angle: Float): Float",
-		"Exp":       "Exp(value: Float): Float",
-		"Ln":        "Ln(value: Float): Float",
-		"Random":    "Random(): Float",
-		"Randomize": "Randomize()",
+		"Inc":            "Inc(var x: Integer; increment: Integer = 1)",
+		"Dec":            "Dec(var x: Integer; decrement: Integer = 1)",
+		"Chr":            "Chr(code: Integer): Char",
+		"Ord":            "Ord(ch: Char): Integer",
+		"Round":          "Round(value: Float): Integer",
+		"Trunc":          "Trunc(value: Float): Integer",
+		"Abs":            "Abs(value: Float): Float",
+		"Sqrt":           "Sqrt(value: Float): Float",
+		"Sqr":            "Sqr(value: Float): Float",
+		"Sin":            "Sin(angle: Float): Float",
+		"Cos":            "Cos(angle: Float): Float",
+		"Tan":            "Tan(angle: Float): Float",
+		"Exp":            "Exp(value: Float): Float",
+		"Ln":             "Ln(value: Float): Float",
+		"Random":         "Random(): Float",
+		"Randomize":      "Randomize()",
 	}
 
 	funcKind := protocol.CompletionItemKindFunction
+
 	for name, signature := range builtInFunctions {
 		detail := signature
 		sortText := "2builtin~" + name

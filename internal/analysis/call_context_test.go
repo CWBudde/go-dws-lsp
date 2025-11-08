@@ -6,7 +6,7 @@ import (
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
-// TestCountParameterIndex tests parameter index counting at various positions
+// TestCountParameterIndex tests parameter index counting at various positions.
 func TestCountParameterIndex(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -102,7 +102,7 @@ func TestCountParameterIndex(t *testing.T) {
 	}
 }
 
-// TestFindFunctionAtCall tests finding function names from cursor position
+// TestFindFunctionAtCall tests finding function names from cursor position.
 func TestFindFunctionAtCall(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -174,7 +174,7 @@ func TestFindFunctionAtCall(t *testing.T) {
 	}
 }
 
-// TestFindParameterIndexFromText tests the simplified parameter counting
+// TestFindParameterIndexFromText tests the simplified parameter counting.
 func TestFindParameterIndexFromText(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -232,16 +232,16 @@ func TestFindParameterIndexFromText(t *testing.T) {
 	}
 }
 
-// TestDetermineCallContextWithTempAST tests call context determination with temporary AST
+// TestDetermineCallContextWithTempAST tests call context determination with temporary AST.
 func TestDetermineCallContextWithTempAST(t *testing.T) {
 	tests := []struct {
-		name              string
-		code              string
-		line              int
-		character         int
-		expectContext     bool
-		expectedFunction  string
-		expectedParamIdx  int
+		name             string
+		code             string
+		line             int
+		character        int
+		expectContext    bool
+		expectedFunction string
+		expectedParamIdx int
 	}{
 		{
 			name: "complete function call",
@@ -253,7 +253,7 @@ begin
   foo(42, 'test');
 end.`,
 			line:             5,
-			character:        7,  // After '('
+			character:        7, // After '('
 			expectContext:    true,
 			expectedFunction: "foo",
 			expectedParamIdx: 0,
@@ -268,7 +268,7 @@ begin
   bar(
 end.`,
 			line:             5,
-			character:        6,  // After '('
+			character:        6, // After '('
 			expectContext:    true,
 			expectedFunction: "bar",
 			expectedParamIdx: 0,
@@ -298,6 +298,7 @@ end.`,
 			if err != nil {
 				t.Logf("Warning: ParseDocument failed: %v (expected for incomplete code)", err)
 			}
+
 			doc.Program = program
 
 			ctx, err := DetermineCallContextWithTempAST(doc, tt.line, tt.character)

@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -38,7 +39,8 @@ func ParseDocument(text string, filename string) (*dwscript.Program, []protocol.
 
 	if err != nil {
 		// Check if it's a compile error with structured errors
-		if compileErr, ok := err.(*dwscript.CompileError); ok {
+		compileErr := &dwscript.CompileError{}
+		if errors.As(err, &compileErr) {
 			log.Printf("Compilation failed for %s: %d errors", filename, len(compileErr.Errors))
 			diagnostics = convertStructuredErrors(compileErr.Errors)
 		} else {
@@ -47,6 +49,7 @@ func ParseDocument(text string, filename string) (*dwscript.Program, []protocol.
 		}
 	} else {
 		log.Printf("Compilation successful for %s", filename)
+
 		diagnostics = []protocol.Diagnostic{}
 	}
 
@@ -98,6 +101,7 @@ func convertStructuredError(err *dwscript.Error) protocol.Diagnostic {
 	if length <= 0 {
 		length = 1 // Default to single character if no length specified
 	}
+
 	endCol := lspCol + uint32(length)
 
 	// Create the diagnostic range
@@ -143,7 +147,7 @@ func convertStructuredError(err *dwscript.Error) protocol.Diagnostic {
 	return diagnostic
 }
 
-// mapSeverity maps go-dws ErrorSeverity to LSP DiagnosticSeverity
+// mapSeverity maps go-dws ErrorSeverity to LSP DiagnosticSeverity.
 func mapSeverity(severity dwscript.ErrorSeverity) protocol.DiagnosticSeverity {
 	switch severity {
 	case dwscript.SeverityError:
@@ -159,7 +163,7 @@ func mapSeverity(severity dwscript.ErrorSeverity) protocol.DiagnosticSeverity {
 	}
 }
 
-// mapDiagnosticTags maps error codes to LSP DiagnosticTag values
+// mapDiagnosticTags maps error codes to LSP DiagnosticTag values.
 func mapDiagnosticTags(code string) []protocol.DiagnosticTag {
 	var tags []protocol.DiagnosticTag
 
@@ -210,6 +214,7 @@ func detectUnsupportedFunctionOverloads(program *dwscript.Program) []protocol.Di
 		}
 
 		seen[name] = struct{}{}
+
 		return true
 	})
 

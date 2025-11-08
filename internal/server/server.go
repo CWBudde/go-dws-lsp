@@ -73,6 +73,7 @@ func New() *Server {
 func (s *Server) IsShuttingDown() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.shuttingDown
 }
 
@@ -80,6 +81,7 @@ func (s *Server) IsShuttingDown() bool {
 func (s *Server) SetShuttingDown() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	s.shuttingDown = true
 }
 
@@ -102,6 +104,7 @@ func (s *Server) WorkspaceIndex() *workspace.SymbolIndex {
 func (s *Server) Config() *Config {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.config
 }
 
@@ -110,6 +113,7 @@ func (s *Server) Config() *Config {
 func (s *Server) UpdateConfig(update func(*Config)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	update(s.config)
 }
 
@@ -117,6 +121,7 @@ func (s *Server) UpdateConfig(update func(*Config)) {
 func (s *Server) SetWorkspaceFolders(folders []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	s.workspaceFolders = folders
 }
 
@@ -124,6 +129,7 @@ func (s *Server) SetWorkspaceFolders(folders []string) {
 func (s *Server) GetWorkspaceFolders() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.workspaceFolders
 }
 
@@ -131,6 +137,7 @@ func (s *Server) GetWorkspaceFolders() []string {
 func (s *Server) SetClientCapabilities(capabilities *protocol.ClientCapabilities) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	s.clientCapabilities = capabilities
 }
 
@@ -138,6 +145,7 @@ func (s *Server) SetClientCapabilities(capabilities *protocol.ClientCapabilities
 func (s *Server) GetClientCapabilities() *protocol.ClientCapabilities {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.clientCapabilities
 }
 
