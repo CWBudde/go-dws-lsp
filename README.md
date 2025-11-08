@@ -76,6 +76,7 @@ go-dws-lsp -log-level debug -log-file lsp.log
 ```
 
 **Options:**
+
 - `-tcp`: Enable TCP server mode (default: false, uses STDIO)
 - `-port <num>`: TCP port to listen on (default: 4389)
 - `-log-level <level>`: Logging level: off, error, warn, info, debug (default: info)
