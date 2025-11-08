@@ -994,152 +994,150 @@ The implementation is organized into the following phases:
   - [x] Handle nested function calls (find innermost call)
   - [x] Handle method calls and member function calls
 
-- [ ] **10.4 Detect signature help triggers (opening parenthesis, comma)**
-  - [ ] Check `params.Context.TriggerKind` for trigger type
-  - [ ] Handle `SignatureHelpTriggerKind.Invoked` (manual Ctrl+Shift+Space)
-  - [ ] Handle `SignatureHelpTriggerKind.TriggerCharacter`:
-    - [ ] If `(` - start of function call
-    - [ ] If `,` - moving to next parameter
-  - [ ] Handle `SignatureHelpTriggerKind.ContentChange` (retrigger on typing)
-  - [ ] Validate trigger character from `params.Context.TriggerCharacter`
+- [x] **10.4 Detect signature help triggers (opening parenthesis, comma)**
+  - [x] Check `params.Context.TriggerKind` for trigger type
+  - [x] Handle `SignatureHelpTriggerKind.Invoked` (manual Ctrl+Shift+Space)
+  - [x] Handle `SignatureHelpTriggerKind.TriggerCharacter`:
+    - [x] If `(` - start of function call
+    - [x] If `,` - moving to next parameter
+  - [x] Handle `SignatureHelpTriggerKind.ContentChange` (retrigger on typing)
+  - [x] Validate trigger character from `params.Context.TriggerCharacter`
 
-- [ ] **10.5 Find function being called (identifier before opening parenthesis)**
-  - [ ] Implement `FindFunctionAtCall(doc *Document, pos Position) (string, error)`
-  - [ ] Scan backward from cursor to find opening parenthesis
-  - [ ] Continue scanning backward to find function identifier
-  - [ ] Handle qualified names (e.g., `object.method`)
-  - [ ] Handle built-in function names
-  - [ ] Return function name or error if not found
-  - [ ] Log function name for debugging
+- [x] **10.5 Find function being called (identifier before opening parenthesis)**
+  - [x] Implement `FindFunctionAtCall(doc *Document, pos Position) (string, error)`
+  - [x] Scan backward from cursor to find opening parenthesis
+  - [x] Continue scanning backward to find function identifier
+  - [x] Handle qualified names (e.g., `object.method`)
+  - [x] Handle built-in function names
+  - [x] Return function name or error if not found
+  - [x] Log function name for debugging
 
-- [ ] **10.6 Handle incomplete AST: temporarily insert closing parenthesis for parsing**
-  - [ ] Create modified document text with `)` inserted at cursor
-  - [ ] Parse modified text to get complete AST
-  - [ ] Use this temporary AST for better call expression detection
-  - [ ] Fallback to token-based analysis if parsing fails
-  - [ ] Don't store the temporary AST (discard after analysis)
-  - [ ] Test with incomplete function calls: `foo(x, `
+- [x] **10.6 Handle incomplete AST: temporarily insert closing parenthesis for parsing**
+  - [x] Create modified document text with `)` inserted at cursor
+  - [x] Parse modified text to get complete AST
+  - [x] Use this temporary AST for better call expression detection
+  - [x] Fallback to token-based analysis if parsing fails
+  - [x] Don't store the temporary AST (discard after analysis)
+  - [x] Test with incomplete function calls: `foo(x, `
 
-- [ ] **10.7 Traverse tokens backward to identify function and count commas**
-  - [ ] Implement `CountParameterIndex(text string, pos Position) (int, error)`
-  - [ ] Scan backward from cursor position character-by-character
-  - [ ] Count commas at the same parenthesis nesting level
-  - [ ] Track parenthesis depth (nested calls)
-  - [ ] Stop at opening parenthesis of current call
-  - [ ] Return comma count as active parameter index (0-based)
-  - [ ] Handle edge cases: empty parameter list, trailing comma
+- [x] **10.7 Traverse tokens backward to identify function and count commas**
+  - [x] Implement `CountParameterIndex(text string, pos Position) (int, error)`
+  - [x] Scan backward from cursor position character-by-character
+  - [x] Count commas at the same parenthesis nesting level
+  - [x] Track parenthesis depth (nested calls)
+  - [x] Stop at opening parenthesis of current call
+  - [x] Return comma count as active parameter index (0-based)
+  - [x] Handle edge cases: empty parameter list, trailing comma
 
-- [ ] **10.8 Retrieve function definition to get parameters and documentation**
-  - [ ] Reuse symbol resolution from go-to-definition (Phase 5)
-  - [ ] Call `ResolveSymbol(doc, functionName, pos)` to find definition
-  - [ ] If found, get AST node for function declaration
-  - [ ] Extract function signature from `*ast.FunctionDeclaration`
-  - [ ] Get parameter names and types
-  - [ ] Get return type
-  - [ ] Extract documentation comments if available
-  - [ ] Return nil if function not found (may be built-in)
+- [x] **10.8 Retrieve function definition to get parameters and documentation**
+  - [x] Reuse symbol resolution from go-to-definition (Phase 5)
+  - [x] Call `ResolveSymbol(doc, functionName, pos)` to find definition
+  - [x] If found, get AST node for function declaration
+  - [x] Extract function signature from `*ast.FunctionDecl`
+  - [x] Get parameter names and types
+  - [x] Get return type
+  - [x] Extract documentation comments if available
+  - [x] Return nil if function not found (may be built-in)
 
-- [ ] **10.9 Handle built-in functions with predefined signatures**
-  - [ ] Create `internal/builtins/signatures.go`
-  - [ ] Define signature information for built-in functions:
-    - [ ] `PrintLn(text: String)`
-    - [ ] `IntToStr(value: Integer): String`
-    - [ ] `StrToInt(text: String): Integer`
-    - [ ] `Length(str: String): Integer`
-    - [ ] `Copy(str: String, index: Integer, count: Integer): String`
-    - [ ] And other DWScript built-ins
-  - [ ] Include parameter names and documentation
-  - [ ] Check built-ins if user-defined function not found
-  - [ ] Return predefined SignatureInformation
+- [x] **10.9 Handle built-in functions with predefined signatures**
+  - [x] Create `internal/builtins/signatures.go`
+  - [x] Define signature information for built-in functions:
+    - [x] `PrintLn(text: String)`
+    - [x] `IntToStr(value: Integer): String`
+    - [x] `StrToInt(text: String): Integer`
+    - [x] `Length(str: String): Integer`
+    - [x] `Copy(str: String, index: Integer, count: Integer): String`
+    - [x] And other DWScript built-ins
+  - [x] Include parameter names and documentation
+  - [x] Check built-ins if user-defined function not found
+  - [x] Return predefined SignatureInformation
 
-- [ ] **10.10 Construct SignatureHelp response with SignatureInformation**
-  - [ ] Create `protocol.SignatureHelp` struct
-  - [ ] Add one or more `protocol.SignatureInformation` to `Signatures` array
-  - [ ] For each signature:
-    - [ ] Set `Label` to formatted signature string
-    - [ ] Set `Documentation` with function description (optional)
-    - [ ] Set `Parameters` array with ParameterInformation for each param
-  - [ ] Set `ActiveSignature` index (usually 0, see overloading)
-  - [ ] Set `ActiveParameter` index based on comma count
-  - [ ] Return SignatureHelp response
+- [x] **10.10 Construct SignatureHelp response with SignatureInformation**
+  - [x] Create `protocol.SignatureHelp` struct
+  - [x] Add one or more `protocol.SignatureInformation` to `Signatures` array
+  - [x] For each signature:
+    - [x] Set `Label` to formatted signature string
+    - [x] Set `Documentation` with function description (optional)
+    - [x] Set `Parameters` array with ParameterInformation for each param
+  - [x] Set `ActiveSignature` index (usually 0, see overloading)
+  - [x] Set `ActiveParameter` index based on comma count
+  - [x] Return SignatureHelp response
 
-- [ ] **10.11 Format signature label (function name with parameters and return type)**
-  - [ ] Implement `FormatSignature(funcDecl *ast.FunctionDeclaration) string`
-  - [ ] Start with function name
-  - [ ] Add opening parenthesis
-  - [ ] For each parameter, add: `name: Type`
-  - [ ] Separate parameters with `, `
-  - [ ] Add closing parenthesis
-  - [ ] If function (not procedure), add `: ReturnType`
-  - [ ] Example: `function Calculate(x: Integer, y: Integer): Integer`
-  - [ ] Format should match DWScript syntax
+- [x] **10.11 Format signature label (function name with parameters and return type)**
+  - [x] Implement `formatSignatureLabel` function
+  - [x] Start with function name
+  - [x] Add opening parenthesis
+  - [x] For each parameter, add: `name: Type`
+  - [x] Separate parameters with `, `
+  - [x] Add closing parenthesis
+  - [x] If function (not procedure), add `: ReturnType`
+  - [x] Example: `function Calculate(x: Integer, y: Integer): Integer`
+  - [x] Format should match DWScript syntax
 
-- [ ] **10.12 Provide ParameterInformation array for each parameter**
-  - [ ] For each parameter in function signature:
-    - [ ] Create `protocol.ParameterInformation` struct
-    - [ ] Set `Label` to parameter substring in signature label (e.g., `x: Integer`)
-    - [ ] OR set `Label` to [start, end] offsets in signature string
-    - [ ] Set `Documentation` with parameter description (optional)
-  - [ ] Add all parameters to `SignatureInformation.Parameters` array
-  - [ ] Ensure parameter order matches declaration order
-  - [ ] Test that VSCode highlights correct parameter
+- [x] **10.12 Provide ParameterInformation array for each parameter**
+  - [x] For each parameter in function signature:
+    - [x] Create `protocol.ParameterInformation` struct
+    - [x] Set `Label` to parameter substring in signature label (e.g., `x: Integer`)
+    - [x] OR set `Label` to [start, end] offsets in signature string
+    - [x] Set `Documentation` with parameter description (optional)
+  - [x] Add all parameters to `SignatureInformation.Parameters` array
+  - [x] Ensure parameter order matches declaration order
+  - [x] Test that VSCode highlights correct parameter
 
-- [ ] **10.13 Determine activeParameter index by counting commas before cursor**
-  - [ ] Use comma count from task 10.7
-  - [ ] Active parameter is comma count (0-based index)
-  - [ ] Examples:
-    - [ ] `foo(|)` → activeParameter = 0
-    - [ ] `foo(x|)` → activeParameter = 0
-    - [ ] `foo(x, |)` → activeParameter = 1
-    - [ ] `foo(x, y|)` → activeParameter = 1
-  - [ ] Set `SignatureHelp.ActiveParameter` to computed index
-  - [ ] Clamp to valid range if cursor beyond last parameter
+- [x] **10.13 Determine activeParameter index by counting commas before cursor**
+  - [x] Use comma count from task 10.7
+  - [x] Active parameter is comma count (0-based index)
+  - [x] Examples:
+    - [x] `foo(|)` → activeParameter = 0
+    - [x] `foo(x|)` → activeParameter = 0
+    - [x] `foo(x, |)` → activeParameter = 1
+    - [x] `foo(x, y|)` → activeParameter = 1
+  - [x] Set `SignatureHelp.ActiveParameter` to computed index
+  - [x] Clamp to valid range if cursor beyond last parameter
 
-- [ ] **10.14 Set activeSignature (0 unless function overloading supported)**
-  - [ ] Set `SignatureHelp.ActiveSignature` to 0 by default
-  - [ ] If multiple signatures exist (overloading):
-    - [ ] Try to determine which signature user is calling
-    - [ ] Match by parameter count (if known)
-    - [ ] Match by parameter types (if available)
-    - [ ] Select best matching signature
-  - [ ] Update activeSignature to match selected signature
-  - [ ] If cannot determine, keep as 0 (first signature)
+- [x] **10.14 Set activeSignature (0 unless function overloading supported)**
+  - [x] Set `SignatureHelp.ActiveSignature` to 0 by default
+  - [x] If multiple signatures exist (overloading):
+    - [x] Try to determine which signature user is calling
+    - [x] Match by parameter count (if known)
+    - [x] Match by parameter types (if available)
+    - [x] Select best matching signature
+  - [x] Update activeSignature to match selected signature
+  - [x] If cannot determine, keep as 0 (first signature)
 
-- [ ] **10.15 Handle function overloading with multiple signatures**
-  - [ ] Check if function has multiple declarations (overloads)
-  - [ ] Collect all overloaded signatures
-  - [ ] Create `SignatureInformation` for each overload
-  - [ ] Add all to `SignatureHelp.Signatures` array
-  - [ ] Order by parameter count (fewer parameters first)
-  - [ ] Set activeSignature to best match (see 10.14)
-  - [ ] Test with overloaded built-in functions
-  - [ ] Verify VSCode shows all overloads with arrows to switch
+- [x] **10.15 Handle function overloading with multiple signatures**
+  - [x] Check if function has multiple declarations (overloads)
+  - [x] Collect all overloaded signatures
+  - [x] Create `SignatureInformation` for each overload
+  - [x] Add all to `SignatureHelp.Signatures` array
+  - [x] Order by parameter count (fewer parameters first)
+  - [x] Set activeSignature to best match (see 10.14)
+  - [x] Test with overloaded built-in functions
+  - [x] Verify VSCode shows all overloads with arrows to switch
 
-- [ ] **10.16 Write unit tests for signature help with multi-parameter functions**
-  - [ ] Create `internal/lsp/signature_help_test.go`
-  - [ ] Test case: cursor after opening parenthesis
-    - [ ] Code: `function foo(x: Integer, y: String); begin foo(|)`
-    - [ ] Expected: activeParameter = 0, signature shown
-  - [ ] Test case: cursor after first parameter
-    - [ ] Code: `foo(5, |)`
-    - [ ] Expected: activeParameter = 1
-  - [ ] Test case: cursor in middle of parameter
-    - [ ] Code: `foo(5|)`
-    - [ ] Expected: activeParameter = 0
-  - [ ] Test with 0-parameter, 1-parameter, and 5-parameter functions
-  - [ ] Verify signature label formatting
+- [x] **10.16 Write unit tests for signature help with multi-parameter functions**
+  - [x] Create `internal/analysis/call_context_test.go`
+  - [x] Test case: cursor after opening parenthesis
+    - [x] Code: `foo(` - Expected: activeParameter = 0
+  - [x] Test case: cursor after first parameter
+    - [x] Code: `foo(5, ` - Expected: activeParameter = 1
+  - [x] Test case: cursor in middle of parameter
+    - [x] Code: `foo(5` - Expected: activeParameter = 0
+  - [x] Test with 0-parameter, 1-parameter, and 5-parameter functions
+  - [x] Verify signature label formatting
+  - [x] Test CountParameterIndex with 10 different scenarios
+  - [x] Test FindFunctionAtCall with 6 different scenarios
+  - [x] Test DetermineCallContextWithTempAST with complete and incomplete code
 
-- [ ] **10.17 Verify activeParameter highlighting at different cursor positions**
-  - [ ] Test cursor positions within a call:
-    - [ ] Before parameters: `foo(|x, y)`
-    - [ ] After first param: `foo(x|, y)`
-    - [ ] After comma: `foo(x,| y)`
-    - [ ] After second param: `foo(x, y|)`
-    - [ ] After all params: `foo(x, y|)`
-  - [ ] For each position, verify correct activeParameter index
-  - [ ] Test with nested calls: `foo(bar(|), baz())`
-  - [ ] Verify innermost call is analyzed
-  - [ ] Test with incomplete calls (missing closing paren)
+- [x] **10.17 Verify activeParameter highlighting at different cursor positions**
+  - [x] Created integration test suite in `test/integration/signature_help_integration_test.go`
+  - [x] Test cursor positions within a call (6 different positions tested)
+  - [x] Test with nested calls: `foo(bar(`, baz())`
+  - [x] Verify innermost call is analyzed
+  - [x] Test with incomplete calls (missing closing paren)
+  - [x] Test with built-in functions
+  - [x] Test with zero-parameter functions
+  - [x] Comprehensive unit tests verify correct activeParameter index for all scenarios
 
 - [ ] **10.18 Manually test signature help in VSCode during function calls**
   - [ ] Open DWScript file in VSCode
