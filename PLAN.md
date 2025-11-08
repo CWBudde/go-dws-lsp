@@ -406,14 +406,14 @@ This document tracks the implementation status of the go-dws Language Server Pro
   - [ ] Reduce nesting complexity in workspace.go (1 issue)
   - [ ] Reduce nesting complexity in call_context_test.go (1 issue)
 
-- [ ] **15.15 Error Handling (nilerr - 1 issue)**
-  - [ ] Fix nil error return in indexer.go
+- [x] **15.15 Error Handling (nilerr - 1 issue)**
+  - [x] Fix nil error return in indexer.go
 
-- [ ] **15.16 Return Values (nilnil - 3 issues)**
-  - [ ] Fix nil error returns with invalid values in call_context.go
+- [ ] **15.16 Return Values (nilnil - 3 issues remaining)**
+  - [x] Fix nil error returns with invalid values in call_context.go, completion.go, code_action.go, definition.go, document_symbol.go
 
-- [ ] **15.17 Named Returns (nonamedreturns - 1 issue)**
-  - [ ] Remove named return in text_edit.go
+- [x] **15.17 Named Returns (nonamedreturns - 1 issue)**
+  - [x] Remove named return in text_edit.go
 
 - [ ] **15.18 Parallel Tests (paralleltest - 50 issues)**
   - [ ] Add t.Parallel() calls to all test functions missing them
@@ -427,23 +427,39 @@ This document tracks the implementation status of the go-dws Language Server Pro
   - [ ] Fix empty blocks and variable declarations
   - [ ] Fix indent-error-flow and var-naming issues
 
-- [ ] **15.21 Static Analysis (staticcheck - 4 issues)**
-  - [ ] Fix nil checks and type comparisons
+- [x] **15.21 Static Analysis (staticcheck - 4 issues + 3 additional)**
+  - [x] Fix nil checks before len() calls
+  - [x] Fix uint32 < 0 comparison
 
 - [ ] **15.22 Test Packages (testpackage - 9 issues)**
   - [ ] Rename test packages from `analysis` to `analysis_test` etc.
 
-- [ ] **15.23 Unnecessary Conversions (unconvert - 3 issues)**
-  - [ ] Remove unnecessary type conversions
+- [ ] **15.23 Unnecessary Conversions (unconvert - 3 issues remaining)**
+  - [x] Remove unnecessary type conversions (3 fixed, 3 new found)
 
-- [ ] **15.24 Unused Parameters (unparam - 2 issues)**
-  - [ ] Remove or use unused function parameters
+- [x] **15.24 Unused Parameters (unparam - 2 issues)**
+  - [x] Remove unused return values from findFunctionInsertionLocation and setupTestWorkspace
 
 - [ ] **15.25 Variable Names (varnamelen - 30 issues)**
   - [ ] Improve variable naming across codebase (avoid single-letter names)
 
-- [ ] **15.26 Error Wrapping (wrapcheck - 3 issues)**
-  - [ ] Properly wrap external package errors
+- [x] **15.26 Error Wrapping (wrapcheck - 2 issues)**
+  - [x] Properly wrap external package errors in path_utils.go and hover_test.go
+
+**New Categories Found:**
+
+- [x] **15.27 Unused Code (unused - 1 issue)**
+  - [x] Remove unused contains() function
+
+- [x] **15.28 Go Module Directives (gomoddirectives - 1 issue)**
+  - [x] Remove replace directive by updating kutil to v0.3.25
+
+- [x] **15.29 Formatting (gofumpt - 3 issues)**
+  - [x] Format test files with gofumpt
+
+- [ ] **15.30 Code Improvements (gocritic - 3 issues remaining)**
+  - [x] Fix else-if formatting (1 fixed)
+  - [ ] Rewrite if-else chains to switch statements (3 remaining)
 
 **Outcome**: Clean, maintainable codebase with zero lint issues, improved code quality and consistency.
 
