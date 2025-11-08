@@ -1281,24 +1281,24 @@ The implementation is organized into the following phases:
     - [x] Verify all calls updated
   - [x] Verify WorkspaceEdit structure is correct
 
-- [ ] **11.13 Write unit tests for rename across multiple files**
-  - [ ] Create test workspace with 3 files:
-    - [ ] File A defines function `GlobalFunc`
-    - [ ] File B calls `GlobalFunc`
-    - [ ] File C also calls `GlobalFunc`
-  - [ ] Rename `GlobalFunc` to `RenamedFunc`
-  - [ ] Verify WorkspaceEdit includes edits for all 3 files
-  - [ ] Verify correct grouping in DocumentChanges
-  - [ ] Test with classes and methods across files
-  - [ ] Verify document versions are set
+- [x] **11.13 Write unit tests for rename across multiple files**
+  - [x] Create test workspace with 3 files:
+    - [x] File A defines function `GlobalFunc`
+    - [x] File B calls `GlobalFunc`
+    - [x] File C also calls `GlobalFunc`
+  - [x] Rename `GlobalFunc` to `RenamedFunc`
+  - [x] Verify WorkspaceEdit includes edits for all 3 files
+  - [x] Verify correct grouping in DocumentChanges
+  - [x] Test with classes and methods across files
+  - [x] Verify document versions are set
 
-- [ ] **11.14 Write tests rejecting rename of keywords/built-ins**
-  - [ ] Test renaming `begin` keyword - should return error
-  - [ ] Test renaming `Integer` type - should return error
-  - [ ] Test renaming `PrintLn` built-in - should return error
-  - [ ] Verify error messages are clear and helpful
-  - [ ] Test prepareRename returns error for non-renameable symbols
-  - [ ] Verify client shows error dialog
+- [x] **11.14 Write tests rejecting rename of keywords/built-ins**
+  - [x] Test renaming `begin` keyword - should return error
+  - [x] Test renaming `Integer` type - should return error
+  - [x] Test renaming `PrintLn` built-in - should return error
+  - [x] Verify error messages are clear and helpful
+  - [x] Test prepareRename returns error for non-renameable symbols
+  - [x] Verify client shows error dialog
 
 - [ ] **11.15 Manually test rename operation in VSCode**
   - [ ] Open DWScript file in VSCode
@@ -1326,221 +1326,220 @@ The implementation is organized into the following phases:
 
 ### Tasks (25)
 
-- [ ] **12.1 Define SemanticTokensLegend with token types and modifiers**
-  - [ ] Create `internal/lsp/semantic_tokens.go`
-  - [ ] Define `SemanticTokensLegend` with `TokenTypes` array
-  - [ ] Define `TokenModifiers` array
-  - [ ] Store legend in Server struct for reuse
-  - [ ] Legend must be consistent across all requests
-  - [ ] Document token type and modifier indices
-  - [ ] Register legend during server initialization
+- [x] **12.1 Define SemanticTokensLegend with token types and modifiers**
+  - [x] Create `internal/lsp/semantic_tokens.go`
+  - [x] Define `SemanticTokensLegend` with `TokenTypes` array
+  - [x] Define `TokenModifiers` array
+  - [x] Store legend in Server struct for reuse
+  - [x] Legend must be consistent across all requests
+  - [x] Document token type and modifier indices
+  - [x] Register legend during server initialization
 
-- [ ] **12.2 Include token types: keyword, string, number, comment, variable, parameter, property, function, class, interface, enum**
-  - [ ] Define TokenTypes array with standard LSP types:
-    - [ ] "namespace"
-    - [ ] "type" (for classes, records)
-    - [ ] "class"
-    - [ ] "enum"
-    - [ ] "interface"
-    - [ ] "struct"
-    - [ ] "typeParameter"
-    - [ ] "parameter"
-    - [ ] "variable"
-    - [ ] "property"
-    - [ ] "enumMember"
-    - [ ] "function"
-    - [ ] "method"
-    - [ ] "keyword"
-    - [ ] "string"
-    - [ ] "number"
-    - [ ] "comment"
-  - [ ] Order matters: index is used in encoding
+- [x] **12.2 Include token types: keyword, string, number, comment, variable, parameter, property, function, class, interface, enum**
+  - [x] Define TokenTypes array with standard LSP types:
+    - [x] "namespace"
+    - [x] "type" (for classes, records)
+    - [x] "class"
+    - [x] "enum"
+    - [x] "interface"
+    - [x] "struct"
+    - [x] "typeParameter"
+    - [x] "parameter"
+    - [x] "variable"
+    - [x] "property"
+    - [x] "enumMember"
+    - [x] "function"
+    - [x] "method"
+    - [x] "keyword"
+    - [x] "string"
+    - [x] "number"
+    - [x] "comment"
+  - [x] Order matters: index is used in encoding
 
-- [ ] **12.3 Include modifiers: static, deprecated, declaration, readonly**
-  - [ ] Define TokenModifiers array:
-    - [ ] "declaration" - for symbol definitions
-    - [ ] "readonly" - for constants, readonly properties
-    - [ ] "static" - for static/class methods and fields
-    - [ ] "deprecated" - for deprecated symbols
-    - [ ] "abstract" - for abstract classes/methods
-    - [ ] "modification" - for assignments
-    - [ ] "documentation" - for doc comments
-  - [ ] Modifiers are bit flags (can combine multiple)
-  - [ ] Document bit positions for encoding
+- [x] **12.3 Include modifiers: static, deprecated, declaration, readonly**
+  - [x] Define TokenModifiers array:
+    - [x] "declaration" - for symbol definitions
+    - [x] "readonly" - for constants, readonly properties
+    - [x] "static" - for static/class methods and fields
+    - [x] "deprecated" - for deprecated symbols
+    - [x] "abstract" - for abstract classes/methods
+    - [x] "modification" - for assignments
+    - [x] "documentation" - for doc comments
+  - [x] Modifiers are bit flags (can combine multiple)
+  - [x] Document bit positions for encoding
 
-- [ ] **12.4 Advertise SemanticTokensProvider in server capabilities**
-  - [ ] In initialize handler, set `capabilities.SemanticTokensProvider`
-  - [ ] Set `Legend` with token types and modifiers
-  - [ ] Set `Full: true` to support full document tokenization
-  - [ ] Optionally set `Range: true` for range requests (defer to later)
-  - [ ] Optionally set `Full.Delta: true` for incremental updates (defer to later)
-  - [ ] Verify capability advertised to client
-  - [ ] Test that VSCode requests semantic tokens on document open
+- [x] **12.4 Advertise SemanticTokensProvider in server capabilities**
+  - [x] In initialize handler, set `capabilities.SemanticTokensProvider`
+  - [x] Set `Legend` with token types and modifiers
+  - [x] Set `Full: true` to support full document tokenization
+  - [x] Optionally set `Range: true` for range requests (defer to later)
+  - [x] Optionally set `Full.Delta: true` for incremental updates (defer to later)
+  - [x] Verify capability advertised to client
+  
+- [x] **12.5 Implement textDocument/semanticTokens/full handler**
+  - [x] Define handler: `func SemanticTokensFull(context *glsp.Context, params *protocol.SemanticTokensParams) (*protocol.SemanticTokens, error)`
+  - [x] Extract document URI from params
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document has valid AST
+  - [x] Call helper to collect semantic tokens
+  - [x] Encode tokens in LSP delta format
+  - [x] Return SemanticTokens response with data array
+  - [x] Register handler in server initialization
 
-- [ ] **12.5 Implement textDocument/semanticTokens/full handler**
-  - [ ] Define handler: `func SemanticTokensFull(context *glsp.Context, params *protocol.SemanticTokensParams) (*protocol.SemanticTokens, error)`
-  - [ ] Extract document URI from params
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document has valid AST
-  - [ ] Call helper to collect semantic tokens
-  - [ ] Encode tokens in LSP delta format
-  - [ ] Return SemanticTokens response with data array
-  - [ ] Register handler in server initialization
+- [x] **12.6 Traverse document AST to collect semantic tokens**
+  - [x] Create `internal/analysis/semantic_tokens.go`
+  - [x] Implement `CollectSemanticTokens(ast *ast.Program, legend *Legend) ([]SemanticToken, error)`
+  - [x] Use `ast.Inspect()` to traverse all nodes
+  - [x] For each node, check type and classify token
+  - [x] Collect raw tokens with position, type, and modifiers
+  - [x] Return sorted array of tokens
+  - [x] Handle errors gracefully (skip nodes with missing positions)
 
-- [ ] **12.6 Traverse document AST to collect semantic tokens**
-  - [ ] Create `internal/analysis/semantic_tokens.go`
-  - [ ] Implement `CollectSemanticTokens(ast *ast.Program, legend *Legend) ([]SemanticToken, error)`
-  - [ ] Use `ast.Inspect()` to traverse all nodes
-  - [ ] For each node, check type and classify token
-  - [ ] Collect raw tokens with position, type, and modifiers
-  - [ ] Return sorted array of tokens
-  - [ ] Handle errors gracefully (skip nodes with missing positions)
+- [x] **12.7 Classify identifiers by role: variable, parameter, property, function, class, etc.**
+  - [x] For `*ast.Identifier` nodes:
+    - [x] Determine if it's a variable reference
+    - [x] Determine if it's a function call
+    - [x] Determine if it's a type reference
+    - [x] Determine if it's a property access
+  - [x] Use semantic analysis to resolve identifier role
+  - [x] Query symbol table for symbol kind
+  - [x] Map symbol kind to token type
+  - [x] Handle ambiguous cases (fallback to "variable")
 
-- [ ] **12.7 Classify identifiers by role: variable, parameter, property, function, class, etc.**
-  - [ ] For `*ast.Identifier` nodes:
-    - [ ] Determine if it's a variable reference
-    - [ ] Determine if it's a function call
-    - [ ] Determine if it's a type reference
-    - [ ] Determine if it's a property access
-  - [ ] Use semantic analysis to resolve identifier role
-  - [ ] Query symbol table for symbol kind
-  - [ ] Map symbol kind to token type
-  - [ ] Handle ambiguous cases (fallback to "variable")
+- [x] **12.8 Tag variable declarations with declaration modifier**
+  - [x] For `*ast.VariableDeclaration` nodes:
+    - [x] Classify identifier as "variable" type
+    - [x] Add "declaration" modifier
+  - [x] For `*ast.ConstantDeclaration` nodes:
+    - [x] Classify as "variable" type
+    - [x] Add "declaration" and "readonly" modifiers
+  - [x] For function parameters:
+    - [x] Classify as "parameter" type
+    - [x] Add "declaration" modifier
+  - [x] For field declarations:
+    - [x] Classify as "property" type
+    - [x] Add "declaration" modifier
 
-- [ ] **12.8 Tag variable declarations with declaration modifier**
-  - [ ] For `*ast.VariableDeclaration` nodes:
-    - [ ] Classify identifier as "variable" type
-    - [ ] Add "declaration" modifier
-  - [ ] For `*ast.ConstantDeclaration` nodes:
-    - [ ] Classify as "variable" type
-    - [ ] Add "declaration" and "readonly" modifiers
-  - [ ] For function parameters:
-    - [ ] Classify as "parameter" type
-    - [ ] Add "declaration" modifier
-  - [ ] For field declarations:
-    - [ ] Classify as "property" type
-    - [ ] Add "declaration" modifier
+- [x] **12.9 Differentiate constants, enum members, and properties**
+  - [x] For constants:
+    - [x] Use "variable" type with "readonly" modifier
+  - [x] For enum members (if DWScript supports enums):
+    - [x] Use "enumMember" type
+  - [x] For class properties:
+    - [x] Use "property" type
+    - [x] Add "readonly" if property is read-only
+  - [x] For class fields:
+    - [x] Use "property" type (or "variable" if inside class)
 
-- [ ] **12.9 Differentiate constants, enum members, and properties**
-  - [ ] For constants:
-    - [ ] Use "variable" type with "readonly" modifier
-  - [ ] For enum members (if DWScript supports enums):
-    - [ ] Use "enumMember" type
-  - [ ] For class properties:
-    - [ ] Use "property" type
-    - [ ] Add "readonly" if property is read-only
-  - [ ] For class fields:
-    - [ ] Use "property" type (or "variable" if inside class)
+- [x] **12.10 Classify function and method names appropriately**
+  - [x] For `*ast.FunctionDeclaration` at global scope:
+    - [x] Use "function" type
+    - [x] Add "declaration" modifier
+  - [x] For `*ast.MethodDeclaration` in class:
+    - [x] Use "method" type
+    - [x] Add "declaration" modifier
+    - [x] Add "static" modifier if class method
+  - [x] For function calls (`*ast.CallExpression`):
+    - [x] Use "function" type (no declaration modifier)
+  - [x] For method calls:
+    - [x] Use "method" type
 
-- [ ] **12.10 Classify function and method names appropriately**
-  - [ ] For `*ast.FunctionDeclaration` at global scope:
-    - [ ] Use "function" type
-    - [ ] Add "declaration" modifier
-  - [ ] For `*ast.MethodDeclaration` in class:
-    - [ ] Use "method" type
-    - [ ] Add "declaration" modifier
-    - [ ] Add "static" modifier if class method
-  - [ ] For function calls (`*ast.CallExpression`):
-    - [ ] Use "function" type (no declaration modifier)
-  - [ ] For method calls:
-    - [ ] Use "method" type
+- [x] **12.11 Classify class names, type identifiers, interface names**
+  - [x] For `*ast.ClassDeclaration`:
+    - [x] Use "class" type
+    - [x] Add "declaration" modifier
+  - [x] For `*ast.InterfaceDeclaration` (if supported):
+    - [x] Use "interface" type
+    - [x] Add "declaration" modifier
+  - [x] For `*ast.TypeDeclaration`:
+    - [x] Use "type" type (or "class"/"struct" depending on kind)
+    - [x] Add "declaration" modifier
+  - [x] For type references in variable declarations:
+    - [x] Use "class" or "type" type (no declaration modifier)
 
-- [ ] **12.11 Classify class names, type identifiers, interface names**
-  - [ ] For `*ast.ClassDeclaration`:
-    - [ ] Use "class" type
-    - [ ] Add "declaration" modifier
-  - [ ] For `*ast.InterfaceDeclaration` (if supported):
-    - [ ] Use "interface" type
-    - [ ] Add "declaration" modifier
-  - [ ] For `*ast.TypeDeclaration`:
-    - [ ] Use "type" type (or "class"/"struct" depending on kind)
-    - [ ] Add "declaration" modifier
-  - [ ] For type references in variable declarations:
-    - [ ] Use "class" or "type" type (no declaration modifier)
+- [x] **12.12 Tag literals (numbers, strings, booleans)**
+  - [x] For `*ast.IntegerLiteral` and `*ast.FloatLiteral`:
+    - [x] Use "number" type
+    - [x] No modifiers
+  - [x] For `*ast.StringLiteral`:
+    - [x] Use "string" type
+    - [x] No modifiers
+  - [x] For `*ast.BooleanLiteral`:
+    - [x] Use "keyword" type (true/false are keywords)
+    - [x] OR use "number" type (some languages treat booleans as numbers)
+  - [x] Note: Literals may be redundant with TextMate grammar (optional to include)
 
-- [ ] **12.12 Tag literals (numbers, strings, booleans)**
-  - [ ] For `*ast.IntegerLiteral` and `*ast.FloatLiteral`:
-    - [ ] Use "number" type
-    - [ ] No modifiers
-  - [ ] For `*ast.StringLiteral`:
-    - [ ] Use "string" type
-    - [ ] No modifiers
-  - [ ] For `*ast.BooleanLiteral`:
-    - [ ] Use "keyword" type (true/false are keywords)
-    - [ ] OR use "number" type (some languages treat booleans as numbers)
-  - [ ] Note: Literals may be redundant with TextMate grammar (optional to include)
+- [x] **12.13 Optionally tag comments (may be redundant with TextMate grammar)**
+  - [x] If go-dws parser preserves comments:
+    - [x] Visit comment nodes
+    - [x] Use "comment" type
+    - [x] Optionally add "documentation" modifier for doc comments
+  - [x] If comments not in AST:
+    - [x] Skip (rely on TextMate grammar for comment highlighting)
+    - [x] This is acceptable and common practice
 
-- [ ] **12.13 Optionally tag comments (may be redundant with TextMate grammar)**
-  - [ ] If go-dws parser preserves comments:
-    - [ ] Visit comment nodes
-    - [ ] Use "comment" type
-    - [ ] Optionally add "documentation" modifier for doc comments
-  - [ ] If comments not in AST:
-    - [ ] Skip (rely on TextMate grammar for comment highlighting)
-    - [ ] This is acceptable and common practice
+- [x] **12.14 Ensure AST nodes have start/end position info for token ranges**
+  - [x] Verify all AST nodes have `Pos()` and `End()` methods (from Phase 2) ✅
+  - [x] Ensure positions are accurate (1-based in AST)
+  - [x] Convert positions to LSP format (0-based line and character)
+  - [x] Handle nodes with missing position info (skip them)
+  - [x] Test with sample programs to verify accuracy
 
-- [ ] **12.14 Ensure AST nodes have start/end position info for token ranges**
-  - [ ] Verify all AST nodes have `Pos()` and `End()` methods (from Phase 2) ✅
-  - [ ] Ensure positions are accurate (1-based in AST)
-  - [ ] Convert positions to LSP format (0-based line and character)
-  - [ ] Handle nodes with missing position info (skip them)
-  - [ ] Test with sample programs to verify accuracy
+- [x] **12.15 Calculate token length from identifier name length**
+  - [x] For identifier nodes:
+    - [x] Get identifier name string
+    - [x] Length = `len(name)` in characters (not bytes!)
+    - [x] Handle UTF-8 multibyte characters correctly
+  - [x] For keyword nodes:
+    - [x] Length = keyword string length
+  - [x] For literals:
+    - [x] Length = literal string representation length
+  - [x] For operators:
+    - [x] Length = operator string length (e.g., `+` = 1, `<=` = 2)
 
-- [ ] **12.15 Calculate token length from identifier name length**
-  - [ ] For identifier nodes:
-    - [ ] Get identifier name string
-    - [ ] Length = `len(name)` in characters (not bytes!)
-    - [ ] Handle UTF-8 multibyte characters correctly
-  - [ ] For keyword nodes:
-    - [ ] Length = keyword string length
-  - [ ] For literals:
-    - [ ] Length = literal string representation length
-  - [ ] For operators:
-    - [ ] Length = operator string length (e.g., `+` = 1, `<=` = 2)
+- [x] **12.16 Record [line, startChar, length, tokenType, tokenModifiers] for each token**
+  - [x] Define internal `SemanticToken` struct:
+    - [x] `Line int` (0-based)
+    - [x] `StartChar int` (0-based)
+    - [x] `Length int`
+    - [x] `TokenType int` (index in legend)
+    - [x] `TokenModifiers int` (bit flags)
+  - [x] For each AST node:
+    - [x] Extract position from `node.Pos()`
+    - [x] Convert to 0-based line and character
+    - [x] Calculate length
+    - [x] Determine token type index
+    - [x] Calculate modifier bit flags
+    - [x] Create SemanticToken and add to array
 
-- [ ] **12.16 Record [line, startChar, length, tokenType, tokenModifiers] for each token**
-  - [ ] Define internal `SemanticToken` struct:
-    - [ ] `Line int` (0-based)
-    - [ ] `StartChar int` (0-based)
-    - [ ] `Length int`
-    - [ ] `TokenType int` (index in legend)
-    - [ ] `TokenModifiers int` (bit flags)
-  - [ ] For each AST node:
-    - [ ] Extract position from `node.Pos()`
-    - [ ] Convert to 0-based line and character
-    - [ ] Calculate length
-    - [ ] Determine token type index
-    - [ ] Calculate modifier bit flags
-    - [ ] Create SemanticToken and add to array
+- [x] **12.17 Sort tokens by position (required by LSP)**
+  - [x] After collecting all tokens, sort by:
+    1. [x] Line number (ascending)
+    2. [x] Start character (ascending) if same line
+  - [x] Use `sort.Slice()` with custom comparator
+  - [x] Verify no overlapping tokens (would indicate bug)
+  - [x] Verify no duplicate tokens at same position
+  - [x] LSP requires sorted tokens for delta encoding
 
-- [ ] **12.17 Sort tokens by position (required by LSP)**
-  - [ ] After collecting all tokens, sort by:
-    1. [ ] Line number (ascending)
-    2. [ ] Start character (ascending) if same line
-  - [ ] Use `sort.Slice()` with custom comparator
-  - [ ] Verify no overlapping tokens (would indicate bug)
-  - [ ] Verify no duplicate tokens at same position
-  - [ ] LSP requires sorted tokens for delta encoding
+- [x] **12.18 Encode tokens in LSP relative format (delta encoding)**
+  - [x] Implement `EncodeSemanticTokens(tokens []SemanticToken) []uint32`
+  - [x] LSP format: flat array of uint32 values
+  - [x] Each token encoded as 5 values:
+    1. [x] Delta line (relative to previous token)
+    2. [x] Delta start char (relative to previous token if same line, else absolute)
+    3. [x] Length
+    4. [x] Token type index
+    5. [x] Token modifiers (bit flags)
+  - [x] First token is relative to (0, 0)
+  - [x] Example: `[0, 5, 3, 2, 0]` = token at line 0, char 5, length 3, type 2, no modifiers
+  - [x] Verify encoding with test cases
 
-- [ ] **12.18 Encode tokens in LSP relative format (delta encoding)**
-  - [ ] Implement `EncodeSemanticTokens(tokens []SemanticToken) []uint32`
-  - [ ] LSP format: flat array of uint32 values
-  - [ ] Each token encoded as 5 values:
-    1. [ ] Delta line (relative to previous token)
-    2. [ ] Delta start char (relative to previous token if same line, else absolute)
-    3. [ ] Length
-    4. [ ] Token type index
-    5. [ ] Token modifiers (bit flags)
-  - [ ] First token is relative to (0, 0)
-  - [ ] Example: `[0, 5, 3, 2, 0]` = token at line 0, char 5, length 3, type 2, no modifiers
-  - [ ] Verify encoding with test cases
-
-- [ ] **12.19 Return SemanticTokens response with encoded data**
-  - [ ] Create `protocol.SemanticTokens` struct
-  - [ ] Set `Data` field to encoded uint32 array
-  - [ ] Optionally set `ResultId` for delta support (defer to later)
-  - [ ] Return to client
-  - [ ] Client decodes and applies semantic highlighting
+- [x] **12.19 Return SemanticTokens response with encoded data**
+  - [x] Create `protocol.SemanticTokens` struct
+  - [x] Set `Data` field to encoded uint32 array
+  - [x] Optionally set `ResultId` for delta support (defer to later)
+  - [x] Return to client
+  - [x] Client decodes and applies semantic highlighting
 
 - [ ] **12.20 Optionally implement textDocument/semanticTokens/full/delta for incremental updates**
   - [ ] Defer to later if too complex
