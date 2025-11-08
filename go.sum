@@ -1,7 +1,7 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/cwbudde/go-dws v0.3.1-0.20251108104047-32789ac221ca h1:bOpZCRNpNlpqQCQByu29DKLOgJ26Er2B/7i39JXA2uM=
-github.com/cwbudde/go-dws v0.3.1-0.20251108104047-32789ac221ca/go.mod h1:sNtMidXHA3RPzDlPXUF2eyaIICa+OYYSvQ8s9HMlk2k=
+github.com/cwbudde/go-dws v0.3.1-0.20251108175356-790bc43db6be h1:rjZMXMToPIkOzQHOef4SghbZF54nVPAg1ymDp1b198s=
+github.com/cwbudde/go-dws v0.3.1-0.20251108175356-790bc43db6be/go.mod h1:sNtMidXHA3RPzDlPXUF2eyaIICa+OYYSvQ8s9HMlk2k=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gkampitakis/ciinfo v0.3.2 h1:JcuOPk8ZU7nZQjdUhctuhQofk7BGHuIy0c9Ez8BNhXs=
