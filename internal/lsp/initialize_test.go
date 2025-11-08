@@ -5,6 +5,8 @@ import (
 
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
+
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 func TestInitialize(t *testing.T) {
@@ -195,13 +197,50 @@ func TestShutdown(t *testing.T) {
 	// Create mock context
 	ctx := &glsp.Context{}
 
+	// Create a server instance and set it
+	srv := server.New()
+	SetServer(srv)
+
+	// Add some data to caches and stores
+	doc := &server.Document{
+		URI:     "file:///test.dws",
+		Text:    "var x = 1;",
+		Version: 1,
+	}
+	srv.Documents().Set(doc.URI, doc)
+
+	// Add some cached items
+	srv.CompletionCache().SetCachedItems(doc.URI, 1, &server.CachedCompletionItems{
+		Keywords: []protocol.CompletionItem{{Label: "var"}},
+	})
+
+	// Verify data exists before shutdown
+	if _, ok := srv.Documents().Get(doc.URI); !ok {
+		t.Fatal("Document should exist before shutdown")
+	}
+
 	// Call Shutdown handler
 	err := Shutdown(ctx)
 	if err != nil {
 		t.Fatalf("Shutdown returned error: %v", err)
 	}
 
-	// Shutdown should succeed without error
-	// TODO: Once we implement shutdown flag in server state, verify it's set
+	// Verify shutdown flag is set
+	if !srv.IsShuttingDown() {
+		t.Error("Server should be marked as shutting down")
+	}
+
+	// Verify resources are cleaned up
+	if len(srv.Documents().List()) != 0 {
+		t.Error("Document store should be cleared after shutdown")
+	}
+
+	if srv.CompletionCache().GetCachedItems(doc.URI, 1) != nil {
+		t.Error("Completion cache should be cleared after shutdown")
+	}
+
+	if srv.SemanticTokensCache().Size() != 0 {
+		t.Error("Semantic tokens cache should be cleared after shutdown")
+	}
 }
 

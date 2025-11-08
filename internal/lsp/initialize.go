@@ -191,12 +191,34 @@ func Initialized(context *glsp.Context, params *protocol.InitializedParams) erro
 // Shutdown handles the shutdown request.
 // The client sends this to ask the server to shut down gracefully.
 func Shutdown(context *glsp.Context) error {
-	// TODO: Mark server as shutting down
-	// TODO: Clean up resources
-	// - Flush caches
-	// - Close file handles
-	// - Cancel background operations
+	// Get server instance
+	srv, ok := serverInstance.(*server.Server)
+	if !ok || srv == nil {
+		return nil
+	}
 
+	log.Println("Shutting down LSP server...")
+
+	// Mark server as shutting down to prevent new operations
+	srv.SetShuttingDown()
+
+	// Clean up resources
+	log.Println("Clearing completion cache...")
+	srv.CompletionCache().Clear()
+
+	log.Println("Clearing semantic tokens cache...")
+	srv.SemanticTokensCache().Clear()
+
+	log.Println("Clearing symbol index...")
+	srv.Symbols().Clear()
+
+	log.Println("Clearing workspace index...")
+	srv.WorkspaceIndex().Clear()
+
+	log.Println("Clearing document store...")
+	srv.Documents().Clear()
+
+	log.Println("LSP server shutdown complete")
 	return nil
 }
 

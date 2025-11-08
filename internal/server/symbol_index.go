@@ -139,3 +139,10 @@ func maxZero(val int) int {
 	}
 	return val
 }
+
+// Clear removes all cached references from the index.
+func (si *SymbolIndex) Clear() {
+	si.mu.Lock()
+	defer si.mu.Unlock()
+	si.references = make(map[string]map[string][]protocol.Range)
+}

@@ -96,10 +96,19 @@ func GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *server.Document, ur
 		if identifierName != "" {
 			log.Printf("Generating quick fixes for undeclared identifier: %s\n", identifierName)
 
-			// Create "Declare variable" quick fix
-			action := createDeclareVariableAction(diagnostic, identifierName, uri, doc)
-			if action != nil {
-				actions = append(actions, *action)
+			// Check if the identifier is used as a function call
+			if isFunctionCall(identifierName, diagnostic, doc) {
+				// Create "Declare function" quick fix
+				action := createDeclareFunctionAction(diagnostic, identifierName, uri, doc)
+				if action != nil {
+					actions = append(actions, *action)
+				}
+			} else {
+				// Create "Declare variable" quick fix
+				action := createDeclareVariableAction(diagnostic, identifierName, uri, doc)
+				if action != nil {
+					actions = append(actions, *action)
+				}
 			}
 		}
 	}
@@ -274,6 +283,269 @@ func extractVariableName(diagnostic protocol.Diagnostic) string {
 	}
 
 	return ""
+}
+
+// isFunctionCall checks if an undeclared identifier is used as a function call.
+// It examines the document text and AST to determine if the identifier is followed by parentheses.
+func isFunctionCall(identifierName string, diagnostic protocol.Diagnostic, doc *server.Document) bool {
+	if doc.Text == "" {
+		return false
+	}
+
+	// Get the line where the error occurred
+	lines := strings.Split(doc.Text, "\n")
+	lineNum := int(diagnostic.Range.Start.Line)
+	if lineNum >= len(lines) {
+		return false
+	}
+
+	line := lines[lineNum]
+
+	// Look for the identifier followed by an opening parenthesis
+	// Pattern: identifier(
+	pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(identifierName) + `\s*\(`)
+	return pattern.MatchString(line)
+}
+
+// extractCallArguments extracts the argument list from a function call in the source text.
+// Returns a slice of argument expressions (as strings) and the number of arguments.
+func extractCallArguments(identifierName string, diagnostic protocol.Diagnostic, doc *server.Document) []string {
+	if doc.Text == "" {
+		return nil
+	}
+
+	lines := strings.Split(doc.Text, "\n")
+	lineNum := int(diagnostic.Range.Start.Line)
+	if lineNum >= len(lines) {
+		return nil
+	}
+
+	line := lines[lineNum]
+
+	// Find the function call pattern: identifier(args)
+	// This is a simplified approach that looks for the parentheses
+	pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(identifierName) + `\s*\((.*?)\)`)
+	matches := pattern.FindStringSubmatch(line)
+
+	if len(matches) < 2 {
+		// No arguments found, return empty slice
+		return []string{}
+	}
+
+	argsText := matches[1]
+	if strings.TrimSpace(argsText) == "" {
+		return []string{}
+	}
+
+	// Split by comma (simplified - doesn't handle nested calls)
+	args := strings.Split(argsText, ",")
+	result := make([]string, 0, len(args))
+	for _, arg := range args {
+		result = append(result, strings.TrimSpace(arg))
+	}
+
+	return result
+}
+
+// inferParameterType infers a parameter type from an argument expression.
+func inferParameterType(argExpr string) string {
+	argExpr = strings.TrimSpace(argExpr)
+
+	// Check for integer literal
+	if matched, _ := regexp.MatchString(`^-?\d+$`, argExpr); matched {
+		return "Integer"
+	}
+
+	// Check for float literal
+	if matched, _ := regexp.MatchString(`^-?\d+\.\d+$`, argExpr); matched {
+		return "Float"
+	}
+
+	// Check for string literal
+	if strings.HasPrefix(argExpr, "'") || strings.HasPrefix(argExpr, "\"") {
+		return "String"
+	}
+
+	// Check for boolean literal
+	lowerArg := strings.ToLower(argExpr)
+	if lowerArg == "true" || lowerArg == "false" {
+		return "Boolean"
+	}
+
+	// Default to Variant for complex expressions
+	return "Variant"
+}
+
+// generateFunctionSignature generates a function signature with inferred parameter types.
+func generateFunctionSignature(functionName string, args []string) string {
+	var params []string
+
+	for i, arg := range args {
+		paramType := inferParameterType(arg)
+		paramName := "arg" + string(rune('0'+i))
+		if i < 26 {
+			// Use letters for first 26 parameters
+			paramName = string(rune('a' + i))
+		}
+		params = append(params, paramName+": "+paramType)
+	}
+
+	paramsStr := strings.Join(params, "; ")
+	if paramsStr != "" {
+		return "function " + functionName + "(" + paramsStr + "): Variant;"
+	}
+	return "function " + functionName + "(): Variant;"
+}
+
+// createDeclareFunctionAction creates a quick fix action to declare an undeclared function.
+func createDeclareFunctionAction(diagnostic protocol.Diagnostic, identifierName string, uri string, doc *server.Document) *protocol.CodeAction {
+	title := "Declare function '" + identifierName + "'"
+
+	// Extract call arguments to infer parameter types
+	args := extractCallArguments(identifierName, diagnostic, doc)
+	log.Printf("Function call %s has %d arguments\n", identifierName, len(args))
+
+	// Generate function signature
+	functionSignature := generateFunctionSignature(identifierName, args)
+
+	// Find the appropriate insertion location
+	insertPosition, indentation := findFunctionInsertionLocation(diagnostic, doc)
+
+	// Generate the function declaration with proper indentation
+	functionDecl := indentation + functionSignature + "\n" +
+		indentation + "begin\n" +
+		indentation + "  // TODO: Implement " + identifierName + "\n" +
+		indentation + "  Result := nil;\n" +
+		indentation + "end;\n"
+
+	textEdit := protocol.TextEdit{
+		Range: protocol.Range{
+			Start: insertPosition,
+			End:   insertPosition,
+		},
+		NewText: functionDecl + "\n",
+	}
+
+	// Create WorkspaceEdit
+	changes := make(map[string][]protocol.TextEdit)
+	changes[uri] = []protocol.TextEdit{textEdit}
+
+	workspaceEdit := protocol.WorkspaceEdit{
+		Changes: changes,
+	}
+
+	action := protocol.CodeAction{
+		Title:       title,
+		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Diagnostics: []protocol.Diagnostic{diagnostic},
+		Edit:        &workspaceEdit,
+	}
+
+	log.Printf("Created quick fix: %s with signature: %s at line %d\n", title, functionSignature, insertPosition.Line)
+	return &action
+}
+
+// findFunctionInsertionLocation determines where to insert a function declaration.
+// Returns the position and indentation string.
+// Functions should be inserted at the top level (global scope) or in the implementation section.
+func findFunctionInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document) (protocol.Position, string) {
+	if doc.Text == "" {
+		return protocol.Position{Line: 0, Character: 0}, ""
+	}
+
+	lines := strings.Split(doc.Text, "\n")
+	errorLine := int(diagnostic.Range.Start.Line)
+
+	// Strategy:
+	// 1. Look for "implementation" section and insert there
+	// 2. Otherwise, look for the last function declaration and insert after it
+	// 3. Otherwise, insert after var declarations or at the end of the file
+
+	// Find implementation section
+	implLine := findImplementationSection(lines)
+	if implLine >= 0 {
+		// Insert after implementation keyword
+		insertLine := implLine + 1
+		return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+	}
+
+	// Find last function declaration before error line
+	lastFuncLine := findLastFunctionDeclaration(lines, errorLine)
+	if lastFuncLine >= 0 {
+		// Find the end of that function
+		funcEndLine := findFunctionEnd(lines, lastFuncLine)
+		if funcEndLine >= 0 {
+			insertLine := funcEndLine + 1
+			return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+		}
+	}
+
+	// Insert after var declarations or at a reasonable position
+	lastVarLine := findLastGlobalVarDeclaration(lines, len(lines))
+	if lastVarLine >= 0 {
+		insertLine := lastVarLine + 1
+		return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+	}
+
+	// Default to after program header
+	insertAfterLine := findProgramHeader(lines)
+	return protocol.Position{Line: uint32(insertAfterLine + 1), Character: 0}, ""
+}
+
+// findImplementationSection finds the "implementation" keyword line.
+// Returns the line number, or -1 if not found.
+func findImplementationSection(lines []string) int {
+	for i, line := range lines {
+		lowerLine := strings.TrimSpace(strings.ToLower(line))
+		if lowerLine == "implementation" {
+			return i
+		}
+	}
+	return -1
+}
+
+// findLastFunctionDeclaration finds the last function/procedure declaration before a given line.
+// Returns the line number, or -1 if not found.
+func findLastFunctionDeclaration(lines []string, beforeLine int) int {
+	lastFunc := -1
+
+	for i := 0; i < beforeLine && i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		lowerLine := strings.ToLower(line)
+
+		if strings.HasPrefix(lowerLine, "function ") || strings.HasPrefix(lowerLine, "procedure ") {
+			lastFunc = i
+		}
+	}
+
+	return lastFunc
+}
+
+// findFunctionEnd finds the "end;" that closes a function starting at startLine.
+// Returns the line number of the "end;", or -1 if not found.
+func findFunctionEnd(lines []string, startLine int) int {
+	depth := 0
+	inFunction := false
+
+	for i := startLine; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		lowerLine := strings.ToLower(line)
+
+		// Track begin/end depth
+		if lowerLine == "begin" || strings.HasPrefix(lowerLine, "begin ") {
+			depth++
+			inFunction = true
+		} else if lowerLine == "end;" || strings.HasPrefix(lowerLine, "end;") {
+			if inFunction {
+				depth--
+				if depth == 0 {
+					return i
+				}
+			}
+		}
+	}
+
+	return -1
 }
 
 // createDeclareVariableAction creates a quick fix action to declare an undeclared variable.

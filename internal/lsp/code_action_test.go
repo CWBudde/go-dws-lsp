@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	protocol "github.com/tliron/glsp/protocol_3_16"
+
+	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
 // Test diagnostic pattern recognition functions
@@ -505,6 +507,206 @@ func TestContainsString(t *testing.T) {
 			got := containsString(tt.slice, tt.str)
 			if got != tt.want {
 				t.Errorf("containsString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsFunctionCall(t *testing.T) {
+	tests := []struct {
+		name           string
+		identifierName string
+		text           string
+		want           bool
+	}{
+		{
+			name:           "simple function call",
+			identifierName: "myFunc",
+			text:           "result := myFunc();",
+			want:           true,
+		},
+		{
+			name:           "function call with arguments",
+			identifierName: "calculate",
+			text:           "x := calculate(10, 20);",
+			want:           true,
+		},
+		{
+			name:           "function call with spaces",
+			identifierName: "doSomething",
+			text:           "doSomething  (x);",
+			want:           true,
+		},
+		{
+			name:           "variable reference",
+			identifierName: "myVar",
+			text:           "x := myVar + 1;",
+			want:           false,
+		},
+		{
+			name:           "variable assignment",
+			identifierName: "myVar",
+			text:           "myVar := 42;",
+			want:           false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := &server.Document{
+				URI:  "file:///test.dws",
+				Text: tt.text,
+			}
+			diagnostic := protocol.Diagnostic{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 0},
+				},
+			}
+			got := isFunctionCall(tt.identifierName, diagnostic, doc)
+			if got != tt.want {
+				t.Errorf("isFunctionCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractCallArguments(t *testing.T) {
+	tests := []struct {
+		name           string
+		identifierName string
+		text           string
+		want           []string
+	}{
+		{
+			name:           "no arguments",
+			identifierName: "myFunc",
+			text:           "result := myFunc();",
+			want:           []string{},
+		},
+		{
+			name:           "single argument",
+			identifierName: "calculate",
+			text:           "x := calculate(42);",
+			want:           []string{"42"},
+		},
+		{
+			name:           "multiple arguments",
+			identifierName: "add",
+			text:           "result := add(10, 20);",
+			want:           []string{"10", "20"},
+		},
+		{
+			name:           "mixed argument types",
+			identifierName: "format",
+			text:           `result := format("Hello", 42, true);`,
+			want:           []string{`"Hello"`, "42", "true"},
+		},
+		{
+			name:           "arguments with spaces",
+			identifierName: "test",
+			text:           "test( x , y , z );",
+			want:           []string{"x", "y", "z"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := &server.Document{
+				URI:  "file:///test.dws",
+				Text: tt.text,
+			}
+			diagnostic := protocol.Diagnostic{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 0},
+				},
+			}
+			got := extractCallArguments(tt.identifierName, diagnostic, doc)
+			if len(got) != len(tt.want) {
+				t.Errorf("extractCallArguments() returned %d args, want %d", len(got), len(tt.want))
+				return
+			}
+			for i, arg := range got {
+				if arg != tt.want[i] {
+					t.Errorf("extractCallArguments()[%d] = %v, want %v", i, arg, tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestInferParameterType(t *testing.T) {
+	tests := []struct {
+		name    string
+		argExpr string
+		want    string
+	}{
+		{name: "integer literal", argExpr: "42", want: "Integer"},
+		{name: "negative integer", argExpr: "-100", want: "Integer"},
+		{name: "float literal", argExpr: "3.14", want: "Float"},
+		{name: "negative float", argExpr: "-2.5", want: "Float"},
+		{name: "string with single quotes", argExpr: "'hello'", want: "String"},
+		{name: "string with double quotes", argExpr: `"world"`, want: "String"},
+		{name: "boolean true", argExpr: "true", want: "Boolean"},
+		{name: "boolean false", argExpr: "false", want: "Boolean"},
+		{name: "boolean uppercase", argExpr: "True", want: "Boolean"},
+		{name: "variable reference", argExpr: "myVar", want: "Variant"},
+		{name: "expression", argExpr: "x + y", want: "Variant"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := inferParameterType(tt.argExpr)
+			if got != tt.want {
+				t.Errorf("inferParameterType(%q) = %v, want %v", tt.argExpr, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateFunctionSignature(t *testing.T) {
+	tests := []struct {
+		name         string
+		functionName string
+		args         []string
+		want         string
+	}{
+		{
+			name:         "no arguments",
+			functionName: "myFunc",
+			args:         []string{},
+			want:         "function myFunc(): Variant;",
+		},
+		{
+			name:         "single integer argument",
+			functionName: "square",
+			args:         []string{"10"},
+			want:         "function square(a: Integer): Variant;",
+		},
+		{
+			name:         "two arguments",
+			functionName: "add",
+			args:         []string{"5", "3"},
+			want:         "function add(a: Integer; b: Integer): Variant;",
+		},
+		{
+			name:         "mixed argument types",
+			functionName: "format",
+			args:         []string{`"Hello"`, "42", "true"},
+			want:         "function format(a: String; b: Integer; c: Boolean): Variant;",
+		},
+		{
+			name:         "variant arguments",
+			functionName: "process",
+			args:         []string{"x", "y + z"},
+			want:         "function process(a: Variant; b: Variant): Variant;",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := generateFunctionSignature(tt.functionName, tt.args)
+			if got != tt.want {
+				t.Errorf("generateFunctionSignature() = %v, want %v", got, tt.want)
 			}
 		})
 	}
