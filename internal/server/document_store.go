@@ -57,10 +57,17 @@ func (ds *DocumentStore) Delete(uri string) {
 func (ds *DocumentStore) List() []string {
 	ds.mu.RLock()
 	defer ds.mu.RUnlock()
-	
+
 	uris := make([]string, 0, len(ds.documents))
 	for uri := range ds.documents {
 		uris = append(uris, uri)
 	}
 	return uris
+}
+
+// Clear removes all documents from the store.
+func (ds *DocumentStore) Clear() {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.documents = make(map[string]*Document)
 }
