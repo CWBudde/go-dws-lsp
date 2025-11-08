@@ -10,6 +10,8 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const testDefinitionURI = "file:///test/test.dws"
+
 func TestNodeToLocation(t *testing.T) {
 	// Create a test node with position information
 	ident := &ast.Identifier{
@@ -121,7 +123,7 @@ func TestFindIdentifierDefinition_Variable(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -161,7 +163,7 @@ func TestFindIdentifierDefinition_Function(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -204,7 +206,7 @@ func TestFindIdentifierDefinition_FunctionParameter(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -239,7 +241,7 @@ func TestFindIdentifierDefinition_Class(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 10}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -263,7 +265,7 @@ func TestFindIdentifierDefinition_NotFound(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location != nil {
@@ -294,7 +296,7 @@ func TestFindIdentifierDefinition_Constant(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -332,7 +334,7 @@ func TestFindIdentifierDefinition_Enum(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -368,7 +370,7 @@ func TestFindIdentifierDefinition_EnumValue(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -388,7 +390,7 @@ func TestFindDefinitionLocation_UnsupportedNode(t *testing.T) {
 		Statements: []ast.Statement{},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findDefinitionLocation(node, nil, programAST, uri)
 
 	if location != nil {
@@ -448,7 +450,7 @@ func TestFindIdentifierDefinition_ShadowedVariable(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 4, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -503,7 +505,7 @@ func TestFindIdentifierDefinition_NestedBlocks(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 7, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -566,7 +568,7 @@ func TestFindIdentifierDefinition_LoopVariable(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location == nil {
@@ -597,7 +599,7 @@ func TestFindIdentifierDefinition_InvalidPosition(t *testing.T) {
 		Token: token.Token{Pos: token.Position{Line: 100, Column: 100}},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findIdentifierDefinition(identRef, programAST, uri)
 
 	if location != nil {
@@ -655,7 +657,7 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 		Statements: []ast.Statement{globalVarDecl, funcDecl},
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Test finding global variable
 	globalRef := &ast.Identifier{
@@ -809,7 +811,7 @@ end;
 		t.Fatal("Function declaration not found in AST")
 	}
 
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 	location := findDefinitionLocation(funcDecl, nil, programAST, uri)
 
 	if location == nil {
@@ -837,7 +839,7 @@ end;
 var x := GlobalFunc();
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the identifier "GlobalFunc" in the call expression
 	var callIdent *ast.Identifier
@@ -891,7 +893,7 @@ begin
 end;
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the identifier "globalVar" in the assignment (not the declaration)
 	var varIdent *ast.Identifier
@@ -943,7 +945,7 @@ type
 var obj: TMyClass;
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the identifier "TMyClass" in the variable declaration (not in the class decl)
 	var classIdent *ast.Identifier
@@ -1011,7 +1013,7 @@ begin
 end;
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the field declaration "FValue"
 	var fieldDecl *ast.FieldDecl
@@ -1056,7 +1058,7 @@ begin
 end;
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the method implementation
 	var methodDecl *ast.FunctionDecl
@@ -1128,7 +1130,7 @@ end;
 var x := Add(1, 2);
 `
 	programAST := parseCode(t, validCode)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the function call
 	var callIdent *ast.Identifier
@@ -1169,7 +1171,7 @@ end;
 var a := Process(10);
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Use the SymbolResolver to find definitions
 	resolver := analysis.NewSymbolResolver(uri, programAST, token.Position{
@@ -1238,7 +1240,7 @@ const
 var size := MAX_SIZE;
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the constant usage
 	var constIdent *ast.Identifier
@@ -1284,7 +1286,7 @@ var color: TColor;
 color := clRed;
 `
 	programAST := parseCode(t, code)
-	uri := "file:///test/test.dws"
+	uri := testDefinitionURI
 
 	// Find the enum type usage
 	var enumIdent *ast.Identifier

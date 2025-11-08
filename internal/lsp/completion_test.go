@@ -10,6 +10,20 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const testURI = "file:///test.dws"
+
+const (
+	testKeywordIf    = "if"
+	testKeywordWhile = "while"
+	testKeywordFor   = "for"
+	testKeywordVar   = "var"
+	testKeywordBegin = "begin"
+	testTypeInteger  = "Integer"
+	testTypeString   = "String"
+	testTypeBoolean  = "Boolean"
+	testTypeFloat    = "Float"
+)
+
 func TestCompletion_EmptyListForValidDocument(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -25,7 +39,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -100,7 +114,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -272,7 +286,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -375,7 +389,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -473,7 +487,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -594,7 +608,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -722,7 +736,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -821,7 +835,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -934,7 +948,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -991,15 +1005,15 @@ end.`
 			keywordCount++
 
 			switch item.Label {
-			case "if":
+			case testKeywordIf:
 				foundIf = true
-			case "while":
+			case testKeywordWhile:
 				foundWhile = true
-			case "for":
+			case testKeywordFor:
 				foundFor = true
-			case "var":
+			case testKeywordVar:
 				foundVar = true
-			case "begin":
+			case testKeywordBegin:
 				foundBegin = true
 			}
 		}
@@ -1041,7 +1055,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -1155,7 +1169,7 @@ begin
 end.`
 
 	// Add document to server
-	uri := "file:///test.dws"
+	uri := testURI
 
 	program, _, err := analysis.ParseDocument(source, uri)
 	if err != nil {
@@ -1210,16 +1224,16 @@ end.`
 		// Built-in types should have kind Class (type)
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindClass {
 			switch item.Label {
-			case "Integer":
+			case testTypeInteger:
 				foundInteger = true
 				builtinTypeCount++
-			case "String":
+			case testTypeString:
 				foundString = true
 				builtinTypeCount++
-			case "Boolean":
+			case testTypeBoolean:
 				foundBoolean = true
 				builtinTypeCount++
-			case "Float":
+			case testTypeFloat:
 				foundFloat = true
 				builtinTypeCount++
 			}

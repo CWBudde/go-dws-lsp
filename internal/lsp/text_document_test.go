@@ -8,13 +8,17 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	testDocumentURI = "file:///test/document.dws"
+)
+
 func TestDidOpen(t *testing.T) {
 	// Create a new server instance for testing
 	srv := server.New()
 	SetServer(srv)
 
 	// Create test document parameters
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	text := "var x: Integer;\nx := 42;"
 	languageID := "dwscript"
 	version := int32(1)
@@ -67,7 +71,7 @@ func TestDidClose(t *testing.T) {
 	SetServer(srv)
 
 	// First, open a document
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	doc := &server.Document{
 		URI:        uri,
 		Text:       "var x: Integer;",
@@ -111,7 +115,7 @@ func TestDidChange_FullSync(t *testing.T) {
 	SetServer(srv)
 
 	// First, open a document
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	originalText := "var x: Integer;"
 	doc := &server.Document{
 		URI:        uri,
@@ -172,7 +176,7 @@ func TestDidChange_IncrementalSync_SingleLine(t *testing.T) {
 	SetServer(srv)
 
 	// First, open a document
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	originalText := "var x: Integer;"
 	doc := &server.Document{
 		URI:        uri,

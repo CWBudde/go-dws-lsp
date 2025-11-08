@@ -8,10 +8,12 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-func TestCollectScopeCompletions_Keywords(t *testing.T) {
-	source := `
+const testBeginEndBlock = `
 begin
 end.`
+
+func TestCollectScopeCompletions_Keywords(t *testing.T) {
+	source := testBeginEndBlock
 
 	engine, err := dwscript.New()
 	if err != nil {
@@ -277,9 +279,7 @@ end.`
 }
 
 func TestCollectScopeCompletions_BuiltInFunctions(t *testing.T) {
-	source := `
-begin
-end.`
+	source := testBeginEndBlock
 
 	engine, err := dwscript.New()
 	if err != nil {
@@ -333,9 +333,7 @@ end.`
 }
 
 func TestCollectScopeCompletions_BuiltInTypes(t *testing.T) {
-	source := `
-begin
-end.`
+	source := testBeginEndBlock
 
 	engine, err := dwscript.New()
 	if err != nil {

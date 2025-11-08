@@ -225,15 +225,9 @@ func (tc *tokenCollector) addToken(pos token.Position, length int, tokenType str
 	}
 
 	// Convert 1-based position to 0-based
-	line := uint32(pos.Line - 1)
-	if line < 0 {
-		line = 0
-	}
+	line := max(uint32(pos.Line-1), 0)
 
-	startChar := uint32(pos.Column - 1)
-	if startChar < 0 {
-		startChar = 0
-	}
+	startChar := max(uint32(pos.Column-1), 0)
 
 	// Get token type index
 	typeIndex := tc.legend.GetTokenTypeIndex(tokenType)

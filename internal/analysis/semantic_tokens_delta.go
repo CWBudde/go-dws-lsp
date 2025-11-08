@@ -153,12 +153,3 @@ func calculateDeltaSize(edits []protocol.SemanticTokensEdit) int {
 
 	return size
 }
-
-// tokensEqual checks if two tokens are equal in all fields.
-func tokensEqual(a, b server.SemanticToken) bool {
-	return a.Line == b.Line &&
-		a.StartChar == b.StartChar &&
-		a.Length == b.Length &&
-		a.TokenType == b.TokenType &&
-		a.Modifiers == b.Modifiers
-}

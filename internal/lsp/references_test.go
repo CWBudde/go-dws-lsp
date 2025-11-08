@@ -3,9 +3,7 @@ package lsp
 import (
 	"testing"
 
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
-	"github.com/cwbudde/go-dws/pkg/dwscript"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -21,27 +19,27 @@ func TestSortLocationsByFileAndPosition(t *testing.T) {
 		{
 			name: "sort by line within same file",
 			input: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 10, Character: 5}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 8, Character: 0}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 10, Character: 5}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 8, Character: 0}}},
 			},
 			expected: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 8, Character: 0}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 10, Character: 5}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 8, Character: 0}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 10, Character: 5}}},
 			},
 		},
 		{
 			name: "sort by character within same line",
 			input: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 10}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 7}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 10}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 7}}},
 			},
 			expected: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 7}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 10}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 7}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 10}}},
 			},
 		},
 		{
@@ -82,10 +80,10 @@ func TestSortLocationsByFileAndPosition(t *testing.T) {
 		{
 			name: "single location",
 			input: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
 			},
 			expected: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 3}}},
 			},
 		},
 	}
@@ -128,7 +126,7 @@ func TestSortLocationsByFileAndPosition(t *testing.T) {
 // This test validates task 6.11 implementation.
 func TestApplyIncludeDeclaration(t *testing.T) {
 	defLocation := &protocol.Location{
-		URI: "file:///test.dws",
+		URI: testURI,
 		Range: protocol.Range{
 			Start: protocol.Position{Line: 1, Character: 4},
 			End:   protocol.Position{Line: 1, Character: 10},
@@ -146,8 +144,8 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 		{
 			name: "include declaration - not in list",
 			locations: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
 			},
 			defLocation:        defLocation,
 			includeDeclaration: true,
@@ -157,9 +155,9 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 		{
 			name: "include declaration - already in list",
 			locations: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
 			},
 			defLocation:        defLocation,
 			includeDeclaration: true,
@@ -169,9 +167,9 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 		{
 			name: "include declaration - in middle of list",
 			locations: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 0, Character: 0}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 0, Character: 0}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
 			},
 			defLocation:        defLocation,
 			includeDeclaration: true,
@@ -181,8 +179,8 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 		{
 			name: "exclude declaration - not in list",
 			locations: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
 			},
 			defLocation:        defLocation,
 			includeDeclaration: false,
@@ -191,9 +189,9 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 		{
 			name: "exclude declaration - in list",
 			locations: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 3, Character: 5}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
 			},
 			defLocation:        defLocation,
 			includeDeclaration: false,
@@ -202,9 +200,9 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 		{
 			name: "exclude declaration - in middle of list",
 			locations: []protocol.Location{
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 0, Character: 0}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
-				{URI: "file:///test.dws", Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 0, Character: 0}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 1, Character: 4}}},
+				{URI: testURI, Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 8}}},
 			},
 			defLocation:        defLocation,
 			includeDeclaration: false,
@@ -268,18 +266,6 @@ func TestApplyIncludeDeclaration(t *testing.T) {
 	}
 }
 
-// Helper function to parse DWScript code for testing.
-func parseCodeForReferenceTest(t *testing.T, code string) (*dwscript.Program, error) {
-	t.Helper()
-
-	program, _, err := analysis.ParseDocument(code, "test.dws")
-	if err != nil {
-		return nil, err
-	}
-
-	return program, nil
-}
-
 // TestLocalReferences_LocalVariable tests finding references for a local variable.
 // This validates task 6.12 requirements.
 func TestLocalReferences_LocalVariable(t *testing.T) {
@@ -295,7 +281,7 @@ end;`
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -366,7 +352,7 @@ end;`
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -427,7 +413,7 @@ end;`
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -493,7 +479,7 @@ func TestGlobalReferences_GlobalFunction(t *testing.T) {
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -567,7 +553,7 @@ end;`
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -632,7 +618,7 @@ var obj2: TMyClass;`
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -699,7 +685,7 @@ end;`
 	srv := server.New()
 	SetServer(srv)
 
-	uri := "file:///test.dws"
+	uri := testURI
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,

@@ -301,9 +301,185 @@ This document tracks the implementation status of the go-dws Language Server Pro
 
 ---
 
+## Phase 15: Code Quality and Linting Fixes
+
+**Goal**: Address all golangci-lint issues to improve code quality, maintainability, and performance.
+
+### Categories
+
+- [ ] **15.1 Error Handling (err113 - 26 issues)**
+  - [ ] Replace dynamic errors with wrapped static errors in identifier_scanner.go (2 issues)
+  - [ ] Replace dynamic errors with wrapped static errors in path_utils.go (2 issues)
+  - [ ] Replace dynamic errors with wrapped static errors in text_edit.go (7 issues)
+  - [ ] Replace dynamic errors with wrapped static errors in rename.go (15 issues)
+
+- [ ] **15.2 Duplicate Code (dupl - 22 issues)**
+  - [ ] Remove duplicate test code in text_document_test.go (lines 294-351 duplicate of 234-292)
+  - [ ] Address remaining 21 duplicate code blocks across the codebase
+
+- [ ] **15.3 Duplicate Words (dupword - 2 issues)**
+  - [ ] Fix duplicate "class" in semantic_tokens_test.go
+  - [ ] Fix duplicate "end;" in document_symbol_test.go
+
+- [ ] **15.4 Forbidden Functions (forbidigo - 1 issue)**
+  - [ ] Replace fmt.Printf with proper logging in main.go
+
+- [ ] **15.5 Function Ordering (funcorder - 13 issues)**
+  - [ ] Reorder unexported methods in symbol_resolver.go to appear after exported methods
+
+- [ ] **15.6 Function Length (funlen - 24 issues)**
+  - [ ] Break down main function in main.go (77 lines > 60)
+  - [ ] Break down TestPositionInRange in ast_node_finder_test.go (88 lines > 60)
+  - [ ] Break down TestGetSymbolName in ast_node_finder_test.go (64 lines > 60)
+  - [ ] Break down TestFindNodeAtPosition in ast_node_finder_test.go (93 lines > 60)
+  - [ ] Break down TestCountParameterIndex in call_context_test.go (90 lines > 60)
+  - [ ] Break down TestFindFunctionAtCall in call_context_test.go (68 lines > 60)
+  - [ ] Break down TestDetermineCallContextWithTempAST in call_context_test.go (91 lines > 60)
+  - [ ] Break down TestParseDocument_SyntaxErrors in parse_test.go (63 lines > 60)
+  - [ ] Break down TestConvertStructuredErrors in parse_test.go (67 lines > 60)
+  - [ ] Break down getKeywordCompletions in scope_completion.go (88 lines > 60)
+  - [ ] Break down getBuiltInCompletions in scope_completion.go (86 lines > 60)
+  - [ ] Break down FindSemanticReferences in semantic_references.go (68 lines > 60)
+  - [ ] Break down GetFunctionSignatures in signature_info.go (64 lines > 60)
+  - [ ] Break down TestExtractCallArguments in code_action_test.go (63 lines > 60)
+  - [ ] Break down TestCompletion_TriggerCharacterDot in completion_test.go (66 lines > 60)
+  - [ ] Break down TestCompletion_MemberAccessOnRecord in completion_test.go (83 lines > 60)
+  - [ ] Break down TestFindIdentifierDefinition_MultipleScopes in definition_test.go (76 lines > 60)
+  - [ ] Break down createRecordSymbol in document_symbol.go (88 lines > 60)
+  - [ ] Break down createEnumSymbol in document_symbol.go (64 lines > 60)
+  - [ ] Break down TestGetFunctionHover in hover_test.go (68 lines > 60)
+  - [ ] Break down TestSortLocationsByFileAndPosition in references_test.go (106 lines > 60)
+  - [ ] Break down TestGlobalReferences_AcrossMultipleFunctions in references_test.go (65 lines > 60)
+  - [ ] Break down TestGlobalReferences_VerifySorting in references_test.go (74 lines > 60)
+  - [ ] Break down TestCanRenameSymbol_Keywords in rename_test.go (87 lines > 60)
+
+- [ ] **15.7 Global Variables (gochecknoglobals - 5 issues)**
+  - [ ] Address builtinSignatures global variable in builtins/signatures.go
+  - [ ] Address serverInstance global variable in lsp/initialize.go
+  - [ ] Address dwscriptKeywords global variable in lsp/rename.go
+  - [ ] Address builtInTypes global variable in lsp/rename.go
+  - [ ] Address builtInFunctions global variable in lsp/rename.go
+
+- [ ] **15.8 Cognitive Complexity (gocognit - 15 issues)**
+  - [ ] Reduce complexity of findParameterIndex in call_context.go (38 > 30)
+  - [ ] Reduce complexity of FindFunctionAtCall in call_context.go (38 > 30)
+  - [ ] Reduce complexity of CountParameterIndex in call_context.go (39 > 30)
+  - [ ] Reduce complexity of findScopeAtPosition in completion_context.go (39 > 30)
+  - [ ] Reduce complexity of FindLocalReferences in local_references.go (43 > 30)
+  - [ ] Reduce complexity of getGlobalCompletions in scope_completion.go (37 > 30)
+  - [ ] Reduce complexity of visit method in semantic_tokens.go (63 > 30)
+  - [ ] Reduce complexity of checkStatementForSymbol in symbol_resolver.go (38 > 30)
+  - [ ] Reduce complexity of extractClassMembers in type_resolver.go (35 > 30)
+  - [ ] Reduce complexity of organizeUsesClause in code_action.go (40 > 30)
+  - [ ] Reduce complexity of getUsedIdentifiers in code_action.go (31 > 30)
+  - [ ] Reduce complexity of Completion in completion.go (44 > 30)
+  - [ ] Reduce complexity of findIdentifierDefinition in definition.go (46 > 30)
+  - [ ] Reduce complexity of TestInitialize in initialize_test.go (39 > 30)
+  - [ ] Reduce complexity of TestBuildWorkspaceEdit in rename_test.go (51 > 30)
+
+- [ ] **15.9 Constants (goconst - 26 issues)**
+  - [ ] Extract repeated strings to constants across codebase
+  - [ ] Address "begin end." repetition in scope_completion_test.go
+  - [ ] Address "function" repetition in symbol_resolver.go
+  - [ ] Address ")$0" repetition in type_resolver.go
+  - [ ] Address "var x: Integer; begin end." repetition in type_resolver_test.go
+  - [ ] Address "var x: Integer;" repetition in text_edit_test.go
+  - [ ] Address "var x: Integer; var y: String; var z: Float;" repetition in text_edit_test.go
+  - [ ] Address "Variant" repetition in code_action.go
+  - [ ] Address "file:///test.dws" repetition in completion_test.go
+  - [ ] Address keyword repetitions in completion_test.go (begin, Integer, String, Boolean, Float)
+  - [ ] Address "file:///test/test.dws" repetition in definition_test.go
+  - [ ] Address "TColor" repetition in definition_test.go
+  - [ ] Address "uses MyUnit;" repetition in definition_test.go
+  - [ ] Address "var x: Integer = 42;" repetition in semantic_tokens_handler_test.go
+  - [ ] Address "MyClass" repetition in symbol_info_test.go
+  - [ ] Address "field" repetition in symbol_info_test.go
+  - [ ] Address "file:///test/document.dws" repetition in text_document_test.go
+  - [ ] Address "var x: Integer;" repetition in text_document_test.go
+  - [ ] Address "result-1" and "result-2" repetitions in semantic_tokens_cache_test.go
+  - [ ] Address "file:///test.dws" repetition in symbol_index_test.go
+  - [ ] Address URI repetitions in symbol_index_test.go
+
+- [ ] **15.10 Code Improvements (gocritic - 4 issues)**
+  - [ ] Rewrite if-else chains to switch statements in call_context.go (3 issues)
+  - [ ] Replace 'else {if cond {}}' with 'else if cond {}' in call_context_test.go
+
+- [ ] **15.11 Documentation (godoclint - 11 issues)**
+  - [ ] Fix multiple godoc comments in analysis package files
+  - [ ] Fix multiple godoc comments in lsp package files
+  - [ ] Fix multiple godoc comments in server package files
+  - [ ] Fix multiple godoc comments in workspace package files
+
+- [ ] **15.12 Module Directives (gomoddirectives - 1 issue)**
+  - [ ] Remove or fix replacement directive in go.mod
+
+- [ ] **15.13 Security (gosec - 6 issues)**
+  - [ ] Fix integer overflow conversions (G115) in scope_completion.go, rename.go, indexer.go
+
+- [ ] **15.14 Line Length (lll - 19 issues)**
+  - [ ] Break long lines in various files (max 120 characters)
+  - [ ] Address long function signatures and variable declarations
+  - [ ] Address long log statements and comments
+
+- [ ] **15.15 Nested If Statements (nestif - 8 issues)**
+  - [ ] Reduce nesting complexity in code_action.go (2 issues)
+  - [ ] Reduce nesting complexity in completion.go (2 issues)
+  - [ ] Reduce nesting complexity in initialize.go (1 issue)
+  - [ ] Reduce nesting complexity in initialize_test.go (1 issue)
+  - [ ] Reduce nesting complexity in workspace.go (1 issue)
+  - [ ] Reduce nesting complexity in call_context_test.go (1 issue)
+
+- [ ] **15.16 Error Handling (nilerr - 1 issue)**
+  - [ ] Fix nil error return in indexer.go
+
+- [ ] **15.17 Return Values (nilnil - 3 issues)**
+  - [ ] Fix nil error returns with invalid values in call_context.go
+
+- [ ] **15.18 Named Returns (nonamedreturns - 1 issue)**
+  - [ ] Remove named return in text_edit.go
+
+- [ ] **15.19 Parallel Tests (paralleltest - 50 issues)**
+  - [ ] Add t.Parallel() calls to all test functions missing them
+  - [ ] Address parallel test issues across all test files
+
+- [ ] **15.20 Pre-allocation (prealloc - 15 issues)**
+  - [ ] Pre-allocate slices in various functions across codebase
+
+- [ ] **15.21 Code Quality (revive - 14 issues)**
+  - [ ] Fix unused parameters across various functions
+  - [ ] Fix empty blocks and variable declarations
+  - [ ] Fix indent-error-flow and var-naming issues
+
+- [ ] **15.22 Static Analysis (staticcheck - 4 issues)**
+  - [ ] Fix nil checks and type comparisons
+
+- [ ] **15.23 Test Packages (testpackage - 9 issues)**
+  - [ ] Rename test packages from `analysis` to `analysis_test` etc.
+
+- [ ] **15.24 Unnecessary Conversions (unconvert - 3 issues)**
+  - [ ] Remove unnecessary type conversions
+
+- [ ] **15.25 Unused Parameters (unparam - 2 issues)**
+  - [ ] Remove or use unused function parameters
+
+- [ ] **15.26 Unused Code (unused - 4 issues)**
+  - [ ] Remove unused functions and variables
+
+- [ ] **15.27 Variable Names (varnamelen - 30 issues)**
+  - [ ] Improve variable naming across codebase (avoid single-letter names)
+
+- [ ] **15.28 Error Wrapping (wrapcheck - 3 issues)**
+  - [ ] Properly wrap external package errors
+
+**Outcome**: Clean, maintainable codebase with zero lint issues, improved code quality and consistency.
+
+**Estimated Effort**: 2-3 weeks
+
+---
+
 ## Summary
 
-**Total Phases**: 15 (14 complete, 1 in progress)
+**Total Phases**: 15 (13 complete, 1 in progress)
 
 **Completed Features**:
 
@@ -321,4 +497,4 @@ This document tracks the implementation status of the go-dws Language Server Pro
 
 **Performance**: Optimized for IDE use with caching and incremental updates
 
-**Next Steps**: Phase 15 - Testing, quality assurance, and documentation
+**Next Steps**: Phase 15 - Code quality improvements and linting fixes

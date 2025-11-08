@@ -12,6 +12,10 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	snippetFinalCursorPosition = ")$0" // $0 is the final cursor position
+)
+
 // TypeInfo represents type information for a symbol.
 type TypeInfo struct {
 	// TypeName is the name of the type (e.g., "Integer", "String", "TMyClass")
@@ -610,7 +614,7 @@ func buildMethodSnippet(method *ast.FunctionDecl) (string, protocol.InsertTextFo
 
 	snippet += snippetSb572.String()
 
-	snippet += ")$0" // $0 is the final cursor position
+	snippet += snippetFinalCursorPosition
 
 	return snippet, protocol.InsertTextFormatSnippet
 }

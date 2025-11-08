@@ -46,8 +46,12 @@ linters = ['gochecknoglobals', 'gochecknoinits']
 path = 'cmd/.*\.go'
 
 [[linters.exclusions.rules]]
-linters = ['err113', 'wrapcheck']
+linters = ['err113', 'wrapcheck', 'forbidigo']
 path = 'cmd/.*\.go'
+
+[[linters.exclusions.rules]]
+linters = ['dupword']
+path = '.*_test\.go'
 
 [severity]
 default = 'warn'

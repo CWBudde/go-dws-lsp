@@ -12,6 +12,13 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	resolutionScopeFunction = "function"
+	resolutionScopeMethod   = "method"
+	resolutionScopeClass    = "class"
+	resolutionScopeGlobal   = "global"
+)
+
 // SymbolResolver provides symbol resolution with scope-based lookup.
 // It implements the resolution strategy: local → class → global → workspace.
 type SymbolResolver struct {
@@ -673,15 +680,15 @@ func (sr *SymbolResolver) resolveInImportedUnits(symbolName string) []protocol.L
 func (sr *SymbolResolver) GetResolutionScope() string {
 	if sr.findEnclosingFunction() != nil {
 		if sr.findEnclosingClass() != nil {
-			return "method"
+			return resolutionScopeMethod
 		}
 
-		return "function"
+		return resolutionScopeFunction
 	}
 
 	if sr.findEnclosingClass() != nil {
-		return "class"
+		return resolutionScopeClass
 	}
 
-	return "global"
+	return resolutionScopeGlobal
 }

@@ -15,6 +15,11 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	defaultTypeVariant = "Variant"
+	keywordBegin       = "begin"
+)
+
 // CodeAction handles the textDocument/codeAction request.
 // This provides quick fixes and refactoring actions for diagnostics and code.
 func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
@@ -379,7 +384,7 @@ func inferParameterType(argExpr string) string {
 	}
 
 	// Default to Variant for complex expressions
-	return "Variant"
+	return defaultTypeVariant
 }
 
 // generateFunctionSignature generates a function signature with inferred parameter types.
@@ -400,10 +405,10 @@ func generateFunctionSignature(functionName string, args []string) string {
 
 	paramsStr := strings.Join(params, "; ")
 	if paramsStr != "" {
-		return "function " + functionName + "(" + paramsStr + "): Variant;"
+		return "function " + functionName + "(" + paramsStr + "): " + defaultTypeVariant + ";"
 	}
 
-	return "function " + functionName + "(): Variant;"
+	return "function " + functionName + "(): " + defaultTypeVariant + ";"
 }
 
 // createDeclareFunctionAction creates a quick fix action to declare an undeclared function.
@@ -765,13 +770,13 @@ func inferTypeFromContext(diagnostic protocol.Diagnostic, identifierName string,
 
 	// Get the document text
 	if doc.Text == "" {
-		return "Variant" // Default type if no text available
+		return defaultTypeVariant // Default type if no text available
 	}
 
 	// Get the line where the error occurred
 	lines := strings.Split(doc.Text, "\n")
 	if int(diagnostic.Range.Start.Line) >= len(lines) {
-		return "Variant"
+		return defaultTypeVariant
 	}
 
 	line := lines[diagnostic.Range.Start.Line]
@@ -807,7 +812,7 @@ func inferTypeFromContext(diagnostic protocol.Diagnostic, identifierName string,
 	}
 
 	// Default to Variant if we can't infer the type
-	return "Variant"
+	return defaultTypeVariant
 }
 
 // findInsertionLocation determines where to insert a variable declaration.
@@ -864,7 +869,7 @@ func findFunctionBegin(lines []string, errorLine int) int {
 		lowerLine := strings.ToLower(line)
 
 		// Check if this line has "begin"
-		if lowerLine == "begin" || strings.HasPrefix(lowerLine, "begin ") || strings.HasPrefix(lowerLine, "begin;") {
+		if lowerLine == keywordBegin || strings.HasPrefix(lowerLine, keywordBegin+" ") || strings.HasPrefix(lowerLine, keywordBegin+";") {
 			return i
 		}
 

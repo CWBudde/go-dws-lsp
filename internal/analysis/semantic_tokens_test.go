@@ -50,17 +50,6 @@ func findToken(tokens []server.SemanticToken, line, startChar uint32) *server.Se
 	return nil
 }
 
-// findTokenByType finds the first token of the given type.
-func findTokenByType(tokens []server.SemanticToken, tokenType uint32) *server.SemanticToken {
-	for i := range tokens {
-		if tokens[i].TokenType == tokenType {
-			return &tokens[i]
-		}
-	}
-
-	return nil
-}
-
 func TestCollectSemanticTokens_SimpleVariableDeclaration(t *testing.T) {
 	code := `var x: Integer;`
 	doc := parseTestCode(t, code)

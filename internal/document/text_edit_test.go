@@ -6,6 +6,11 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	testVarDeclaration       = "var x: Integer;"
+	testMultiVarDeclarations = "var x: Integer;\nvar y: String;\nvar z: Float;"
+)
+
 func TestApplyContentChange_FullSync(t *testing.T) {
 	originalText := "var x: Integer;\nvar y: String;"
 	newText := "var z: Float;"
@@ -26,7 +31,7 @@ func TestApplyContentChange_FullSync(t *testing.T) {
 }
 
 func TestApplyContentChange_SingleLineReplacement(t *testing.T) {
-	originalText := "var x: Integer;"
+	originalText := testVarDeclaration
 
 	// Replace "Integer" (positions 7-14) with "String"
 	change := protocol.TextDocumentContentChangeEvent{
@@ -49,7 +54,7 @@ func TestApplyContentChange_SingleLineReplacement(t *testing.T) {
 }
 
 func TestApplyContentChange_MultiLineReplacement(t *testing.T) {
-	originalText := "var x: Integer;\nvar y: String;\nvar z: Float;"
+	originalText := testMultiVarDeclarations
 
 	// Delete the entire second line (including newline)
 	change := protocol.TextDocumentContentChangeEvent{
@@ -118,7 +123,7 @@ func TestApplyContentChange_InsertionAtStartOfLine(t *testing.T) {
 }
 
 func TestApplyContentChange_DeletionWithinLine(t *testing.T) {
-	originalText := "var x: Integer;"
+	originalText := testVarDeclaration
 
 	// Delete ": Integer" (positions 5-14)
 	change := protocol.TextDocumentContentChangeEvent{
@@ -166,7 +171,7 @@ func TestApplyContentChange_UTF16Handling(t *testing.T) {
 }
 
 func TestApplyContentChange_InvalidRange_StartLineOutOfBounds(t *testing.T) {
-	originalText := "var x: Integer;"
+	originalText := testVarDeclaration
 
 	change := protocol.TextDocumentContentChangeEvent{
 		Range: &protocol.Range{
@@ -183,7 +188,7 @@ func TestApplyContentChange_InvalidRange_StartLineOutOfBounds(t *testing.T) {
 }
 
 func TestApplyContentChange_InvalidRange_EndLineOutOfBounds(t *testing.T) {
-	originalText := "var x: Integer;"
+	originalText := testVarDeclaration
 
 	change := protocol.TextDocumentContentChangeEvent{
 		Range: &protocol.Range{
@@ -284,7 +289,7 @@ func TestUTF16CharOffsetToByteOffset_MultiByteChars(t *testing.T) {
 }
 
 func TestPositionToOffset(t *testing.T) {
-	text := "var x: Integer;\nvar y: String;\nvar z: Float;"
+	text := testMultiVarDeclarations
 
 	tests := []struct {
 		line       int
@@ -313,7 +318,7 @@ func TestPositionToOffset(t *testing.T) {
 }
 
 func TestOffsetToPosition(t *testing.T) {
-	text := "var x: Integer;\nvar y: String;\nvar z: Float;"
+	text := testMultiVarDeclarations
 
 	tests := []struct {
 		offset   int

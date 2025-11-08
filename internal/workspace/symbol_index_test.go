@@ -8,6 +8,12 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	testURI  = "file:///test.dws"
+	testURI1 = "file:///test1.dws"
+	testURI2 = "file:///test2.dws"
+)
+
 func TestSymbolIndex_NewSymbolIndex(t *testing.T) {
 	index := NewSymbolIndex()
 
@@ -27,7 +33,7 @@ func TestSymbolIndex_NewSymbolIndex(t *testing.T) {
 func TestSymbolIndex_AddSymbol(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -51,7 +57,7 @@ func TestSymbolIndex_AddSymbol(t *testing.T) {
 func TestSymbolIndex_FindSymbol(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 5, Character: 9},
 		End:   protocol.Position{Line: 5, Character: 17},
@@ -97,8 +103,8 @@ func TestSymbolIndex_FindSymbol_MultipleLocations(t *testing.T) {
 	index := NewSymbolIndex()
 
 	// Add same symbol name in different files (function overloading or same name in different units)
-	uri1 := "file:///test1.dws"
-	uri2 := "file:///test2.dws"
+	uri1 := testURI1
+	uri2 := testURI2
 
 	range1 := protocol.Range{
 		Start: protocol.Position{Line: 1, Character: 0},
@@ -141,7 +147,7 @@ func TestSymbolIndex_FindSymbol_MultipleLocations(t *testing.T) {
 func TestSymbolIndex_RemoveFile(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -176,8 +182,8 @@ func TestSymbolIndex_RemoveFile(t *testing.T) {
 func TestSymbolIndex_RemoveFile_KeepsOtherFiles(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri1 := "file:///test1.dws"
-	uri2 := "file:///test2.dws"
+	uri1 := testURI1
+	uri2 := testURI2
 
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
@@ -210,8 +216,8 @@ func TestSymbolIndex_RemoveFile_KeepsOtherFiles(t *testing.T) {
 func TestSymbolIndex_RemoveFile_WithSharedSymbolNames(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri1 := "file:///test1.dws"
-	uri2 := "file:///test2.dws"
+	uri1 := testURI1
+	uri2 := testURI2
 
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
@@ -239,7 +245,7 @@ func TestSymbolIndex_RemoveFile_WithSharedSymbolNames(t *testing.T) {
 func TestSymbolIndex_FindSymbolsByKind(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -269,8 +275,8 @@ func TestSymbolIndex_FindSymbolsByKind(t *testing.T) {
 func TestSymbolIndex_FindSymbolsInFile(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri1 := "file:///test1.dws"
-	uri2 := "file:///test2.dws"
+	uri1 := testURI1
+	uri2 := testURI2
 
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
@@ -300,7 +306,7 @@ func TestSymbolIndex_FindSymbolsInFile(t *testing.T) {
 func TestSymbolIndex_ContainerName(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -327,7 +333,7 @@ func TestSymbolIndex_ContainerName(t *testing.T) {
 func TestSymbolIndex_Clear(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -352,7 +358,7 @@ func TestSymbolIndex_Clear(t *testing.T) {
 func TestSymbolIndex_ThreadSafety(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -393,7 +399,7 @@ func TestSymbolIndex_ThreadSafety(t *testing.T) {
 func TestSymbolIndex_Search_BasicMatching(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -426,7 +432,7 @@ func TestSymbolIndex_Search_BasicMatching(t *testing.T) {
 func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -501,7 +507,7 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 func TestSymbolIndex_Search_MaxResults(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -534,7 +540,7 @@ func TestSymbolIndex_Search_MaxResults(t *testing.T) {
 func TestSymbolIndex_Search_CaseInsensitive(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
@@ -569,7 +575,7 @@ func TestSymbolIndex_Search_CaseInsensitive(t *testing.T) {
 func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
 	index := NewSymbolIndex()
 
-	uri := "file:///test.dws"
+	uri := testURI
 	symbolRange := protocol.Range{
 		Start: protocol.Position{Line: 0, Character: 0},
 		End:   protocol.Position{Line: 0, Character: 10},
