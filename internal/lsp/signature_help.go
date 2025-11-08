@@ -109,57 +109,96 @@ func computeSignatureHelp(doc *server.Document, line, character int, srv *server
 
 	log.Printf("computeSignatureHelp: Function='%s', ParameterIndex=%d\n", callCtx.FunctionName, callCtx.ParameterIndex)
 
-	// Tasks 10.8 & 10.9: Retrieve function signature (user-defined or built-in)
-	var funcSig *analysis.FunctionSignature
+	// Tasks 10.8, 10.9 & 10.15: Retrieve function signatures (user-defined or built-in, supports overloading)
+	var funcSignatures []*analysis.FunctionSignature
 
-	// First try to get user-defined function signature
-	funcSig, err = analysis.GetFunctionSignature(doc, callCtx.FunctionName, line, character, srv.WorkspaceIndex())
+	// First try to get user-defined function signatures (may have multiple overloads)
+	funcSignatures, err = analysis.GetFunctionSignatures(doc, callCtx.FunctionName, line, character, srv.WorkspaceIndex())
 	if err != nil {
-		log.Printf("computeSignatureHelp: Error getting function signature: %v\n", err)
+		log.Printf("computeSignatureHelp: Error getting function signatures: %v\n", err)
 	}
 
 	// If not found, check built-in functions
-	if funcSig == nil {
-		funcSig = builtins.GetBuiltinSignature(callCtx.FunctionName)
-		if funcSig != nil {
+	if len(funcSignatures) == 0 {
+		builtinSig := builtins.GetBuiltinSignature(callCtx.FunctionName)
+		if builtinSig != nil {
 			log.Printf("computeSignatureHelp: Found built-in function '%s'\n", callCtx.FunctionName)
+			funcSignatures = []*analysis.FunctionSignature{builtinSig}
 		}
 	}
 
-	if funcSig == nil {
+	if len(funcSignatures) == 0 {
 		log.Printf("computeSignatureHelp: Function '%s' not found\n", callCtx.FunctionName)
 		return nil
 	}
 
-	// Tasks 10.10-10.12: Construct SignatureHelp response
-	signatureInfo := buildSignatureInformation(funcSig)
-	if signatureInfo == nil {
+	log.Printf("computeSignatureHelp: Found %d signature(s) for '%s'\n", len(funcSignatures), callCtx.FunctionName)
+
+	// Tasks 10.10-10.12 & 10.15: Construct SignatureHelp response with all signatures
+	var signatureInfos []protocol.SignatureInformation
+	for _, sig := range funcSignatures {
+		sigInfo := buildSignatureInformation(sig)
+		if sigInfo != nil {
+			signatureInfos = append(signatureInfos, *sigInfo)
+		}
+	}
+
+	if len(signatureInfos) == 0 {
 		return nil
 	}
 
-	// Create the SignatureHelp response
-	activeSignature := uint32(0) // Task 10.14: Default to first signature (no overloading support yet)
+	// Task 10.14 & 10.15: Determine activeSignature based on parameter count
+	activeSignature := determineActiveSignature(funcSignatures, callCtx.ParameterIndex)
 	activeParameter := uint32(callCtx.ParameterIndex)
 
-	// Clamp activeParameter to valid range
-	if int(activeParameter) >= len(funcSig.Parameters) {
-		if len(funcSig.Parameters) > 0 {
-			activeParameter = uint32(len(funcSig.Parameters) - 1)
-		} else {
-			activeParameter = 0
+	// Clamp activeParameter to valid range for the active signature
+	if int(activeSignature) < len(funcSignatures) {
+		activeSig := funcSignatures[activeSignature]
+		if int(activeParameter) >= len(activeSig.Parameters) {
+			if len(activeSig.Parameters) > 0 {
+				activeParameter = uint32(len(activeSig.Parameters) - 1)
+			} else {
+				activeParameter = 0
+			}
 		}
 	}
 
 	signatureHelp := &protocol.SignatureHelp{
-		Signatures:      []protocol.SignatureInformation{*signatureInfo},
+		Signatures:      signatureInfos,
 		ActiveSignature: &activeSignature,
 		ActiveParameter: &activeParameter,
 	}
 
-	log.Printf("computeSignatureHelp: Returning signature help with %d parameters, active=%d\n",
-		len(funcSig.Parameters), activeParameter)
+	log.Printf("computeSignatureHelp: Returning %d signature(s), active=%d, activeParam=%d\n",
+		len(signatureInfos), activeSignature, activeParameter)
 
 	return signatureHelp
+}
+
+// determineActiveSignature selects the best matching signature based on parameter index
+// Task 10.15: Match by parameter count - select signature where paramIndex is valid
+func determineActiveSignature(signatures []*analysis.FunctionSignature, paramIndex int) uint32 {
+	if len(signatures) == 0 {
+		return 0
+	}
+
+	// If only one signature, return it
+	if len(signatures) == 1 {
+		return 0
+	}
+
+	// Try to find a signature where the current parameter index is valid
+	// Prefer signatures with exact or slightly more parameters than the current index
+	for i, sig := range signatures {
+		if paramIndex < len(sig.Parameters) {
+			// This signature can accommodate the current parameter
+			return uint32(i)
+		}
+	}
+
+	// If no signature can accommodate the parameter index,
+	// return the signature with the most parameters
+	return uint32(len(signatures) - 1)
 }
 
 // buildSignatureInformation constructs a SignatureInformation from a FunctionSignature

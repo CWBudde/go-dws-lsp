@@ -1105,15 +1105,15 @@ The implementation is organized into the following phases:
   - [x] Update activeSignature to match selected signature
   - [x] If cannot determine, keep as 0 (first signature)
 
-- [ ] **10.15 Handle function overloading with multiple signatures**
-  - [ ] Check if function has multiple declarations (overloads)
-  - [ ] Collect all overloaded signatures
-  - [ ] Create `SignatureInformation` for each overload
-  - [ ] Add all to `SignatureHelp.Signatures` array
-  - [ ] Order by parameter count (fewer parameters first)
-  - [ ] Set activeSignature to best match (see 10.14)
-  - [ ] Test with overloaded built-in functions
-  - [ ] Verify VSCode shows all overloads with arrows to switch
+- [x] **10.15 Handle function overloading with multiple signatures**
+  - [x] Check if function has multiple declarations (overloads)
+  - [x] Collect all overloaded signatures
+  - [x] Create `SignatureInformation` for each overload
+  - [x] Add all to `SignatureHelp.Signatures` array
+  - [x] Order by parameter count (fewer parameters first)
+  - [x] Set activeSignature to best match (see 10.14)
+  - [x] Test with overloaded built-in functions
+  - [x] Verify VSCode shows all overloads with arrows to switch
 
 - [ ] **10.16 Write unit tests for signature help with multi-parameter functions**
   - [ ] Create `internal/lsp/signature_help_test.go`

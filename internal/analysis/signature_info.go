@@ -41,14 +41,25 @@ type ParameterInfo struct {
 // GetFunctionSignature retrieves function definition to get parameters and documentation
 // This implements task 10.8 - it reuses symbol resolution from go-to-definition (Phase 5)
 func GetFunctionSignature(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) (*FunctionSignature, error) {
+	signatures, err := GetFunctionSignatures(doc, functionName, line, character, workspaceIndex)
+	if err != nil || len(signatures) == 0 {
+		return nil, err
+	}
+	// Return the first signature (for backward compatibility)
+	return signatures[0], nil
+}
+
+// GetFunctionSignatures retrieves all function definitions (supports overloading)
+// This implements task 10.15 - it collects all overloaded signatures
+func GetFunctionSignatures(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) ([]*FunctionSignature, error) {
 	if doc.Program == nil {
-		log.Printf("GetFunctionSignature: No program available\n")
+		log.Printf("GetFunctionSignatures: No program available\n")
 		return nil, nil
 	}
 
 	programAST := doc.Program.AST()
 	if programAST == nil {
-		log.Printf("GetFunctionSignature: No AST available\n")
+		log.Printf("GetFunctionSignatures: No AST available\n")
 		return nil, nil
 	}
 
@@ -57,9 +68,9 @@ func GetFunctionSignature(doc *server.Document, functionName string, line, chara
 	astColumn := character + 1
 	pos := token.Position{Line: astLine, Column: astColumn}
 
-	log.Printf("GetFunctionSignature: Looking for function '%s' at %d:%d\n", functionName, astLine, astColumn)
+	log.Printf("GetFunctionSignatures: Looking for function '%s' at %d:%d\n", functionName, astLine, astColumn)
 
-	// Use SymbolResolver to find the function definition
+	// Use SymbolResolver to find the function definition(s)
 	var resolver *SymbolResolver
 	if workspaceIndex != nil {
 		resolver = NewSymbolResolverWithIndex(doc.URI, programAST, pos, workspaceIndex)
@@ -69,35 +80,64 @@ func GetFunctionSignature(doc *server.Document, functionName string, line, chara
 
 	locations := resolver.ResolveSymbol(functionName)
 	if len(locations) == 0 {
-		log.Printf("GetFunctionSignature: Function '%s' not found (may be built-in)\n", functionName)
+		log.Printf("GetFunctionSignatures: Function '%s' not found (may be built-in)\n", functionName)
 		return nil, nil
 	}
 
-	// Get the first location (functions should have a single definition)
-	location := locations[0]
-	log.Printf("GetFunctionSignature: Found definition at %s:%d:%d\n", location.URI, location.Range.Start.Line, location.Range.Start.Character)
+	log.Printf("GetFunctionSignatures: Found %d definition(s) for '%s'\n", len(locations), functionName)
 
-	// Find the AST node at the definition location
-	// Convert back to 1-based for AST
-	defLine := int(location.Range.Start.Line) + 1
-	defColumn := int(location.Range.Start.Character) + 1
-	defPos := token.Position{Line: defLine, Column: defColumn}
+	// Collect signatures from all locations (supports overloading)
+	var signatures []*FunctionSignature
 
-	// Find the function declaration node
-	funcDecl := findFunctionDeclarationAtPosition(programAST, defPos)
-	if funcDecl == nil {
-		log.Printf("GetFunctionSignature: Could not find function declaration AST node\n")
+	for i, location := range locations {
+		log.Printf("GetFunctionSignatures: Processing definition %d at %s:%d:%d\n",
+			i+1, location.URI, location.Range.Start.Line, location.Range.Start.Character)
+
+		// Find the AST node at the definition location
+		// Convert back to 1-based for AST
+		defLine := int(location.Range.Start.Line) + 1
+		defColumn := int(location.Range.Start.Character) + 1
+		defPos := token.Position{Line: defLine, Column: defColumn}
+
+		// Find the function declaration node
+		funcDecl := findFunctionDeclarationAtPosition(programAST, defPos)
+		if funcDecl == nil {
+			log.Printf("GetFunctionSignatures: Could not find function declaration AST node for definition %d\n", i+1)
+			continue
+		}
+
+		// Extract signature information from the function declaration
+		signature := extractSignatureFromDeclaration(funcDecl)
+		if signature != nil {
+			signature.Name = functionName
+			signatures = append(signatures, signature)
+			log.Printf("GetFunctionSignatures: Extracted signature %d with %d parameters\n", i+1, len(signature.Parameters))
+		}
+	}
+
+	if len(signatures) == 0 {
+		log.Printf("GetFunctionSignatures: No valid signatures extracted\n")
 		return nil, nil
 	}
 
-	// Extract signature information from the function declaration
-	signature := extractSignatureFromDeclaration(funcDecl)
-	if signature != nil {
-		signature.Name = functionName
-		log.Printf("GetFunctionSignature: Extracted signature for '%s' with %d parameters\n", functionName, len(signature.Parameters))
-	}
+	// Task 10.15: Order signatures by parameter count (fewer parameters first)
+	// This helps users see simpler overloads first
+	sortSignaturesByParameterCount(signatures)
 
-	return signature, nil
+	return signatures, nil
+}
+
+// sortSignaturesByParameterCount sorts signatures by parameter count (ascending)
+func sortSignaturesByParameterCount(signatures []*FunctionSignature) {
+	// Simple bubble sort (fine for small number of overloads)
+	n := len(signatures)
+	for i := 0; i < n-1; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if len(signatures[j].Parameters) > len(signatures[j+1].Parameters) {
+				signatures[j], signatures[j+1] = signatures[j+1], signatures[j]
+			}
+		}
+	}
 }
 
 // findFunctionDeclarationAtPosition finds a function or method declaration at the given position
