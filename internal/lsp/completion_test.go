@@ -557,3 +557,333 @@ end.`
 
 	t.Logf("Shadowing test passed: found 'value' in results (count=%d)", valueCount)
 }
+
+// Task 9.20: Test member access on class instance
+func TestCompletion_MemberAccessOnClass(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Setup: class with fields Name, Age, method GetInfo()
+	source := `program Test;
+
+type TPerson = class
+  Name: String;
+  Age: Integer;
+
+  function GetInfo(): String;
+end;
+
+function TPerson.GetInfo(): String;
+begin
+  Result := Name;
+end;
+
+var person: TPerson;
+
+begin
+  person.Name := 'John';
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Input: cursor after "person." (after the dot)
+	// Testing member access completion
+	triggerChar := "."
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      17, // On the "person.Name := 'John';" line (0-indexed)
+				Character: 9,  // After "person." -> "  person." = 2 spaces + 6 chars + 1 dot = position 9
+			},
+		},
+		Context: &protocol.CompletionContext{
+			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
+			TriggerCharacter: &triggerChar,
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// Expected: Name, Age, GetInfo in results
+	foundName := false
+	foundAge := false
+	foundGetInfo := false
+	var nameKind, ageKind, getInfoKind *protocol.CompletionItemKind
+
+	for _, item := range completionList.Items {
+		t.Logf("Found completion item: %s (kind: %v, detail: %v)",
+			item.Label, item.Kind, item.Detail)
+		if item.Label == "Name" {
+			foundName = true
+			nameKind = item.Kind
+		}
+		if item.Label == "Age" {
+			foundAge = true
+			ageKind = item.Kind
+		}
+		if item.Label == "GetInfo" {
+			foundGetInfo = true
+			getInfoKind = item.Kind
+		}
+	}
+
+	// Verify: Name, Age, and GetInfo should be in results
+	if !foundName {
+		t.Error("Expected 'Name' to be in completion results")
+	}
+	if !foundAge {
+		t.Error("Expected 'Age' to be in completion results")
+	}
+	if !foundGetInfo {
+		t.Error("Expected 'GetInfo' to be in completion results")
+	}
+
+	// Verify completion item kinds are correct
+	if nameKind != nil && *nameKind != protocol.CompletionItemKindField {
+		t.Errorf("Expected 'Name' to have kind Field (%d), got %d",
+			protocol.CompletionItemKindField, *nameKind)
+	}
+	if ageKind != nil && *ageKind != protocol.CompletionItemKindField {
+		t.Errorf("Expected 'Age' to have kind Field (%d), got %d",
+			protocol.CompletionItemKindField, *ageKind)
+	}
+	if getInfoKind != nil && *getInfoKind != protocol.CompletionItemKindMethod {
+		t.Errorf("Expected 'GetInfo' to have kind Method (%d), got %d",
+			protocol.CompletionItemKindMethod, *getInfoKind)
+	}
+
+	t.Logf("Member access test passed: found Name=%v, Age=%v, GetInfo=%v",
+		foundName, foundAge, foundGetInfo)
+}
+
+// Task 9.20: Test member access on record type
+func TestCompletion_MemberAccessOnRecord(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Setup: record type with fields
+	source := `program Test;
+
+type TPoint = record
+  X: Integer;
+  Y: Integer;
+end;
+
+var point: TPoint;
+
+begin
+  point.X := 10;
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Input: cursor after "point." (after the dot)
+	// Testing member access completion on record
+	triggerChar := "."
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      10, // On the "point.X := 10;" line (0-indexed)
+				Character: 8,  // After "point." -> "  point." = 2 + 5 + 1 = 8
+			},
+		},
+		Context: &protocol.CompletionContext{
+			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
+			TriggerCharacter: &triggerChar,
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// Expected: X and Y from TPoint record
+	foundX := false
+	foundY := false
+
+	for _, item := range completionList.Items {
+		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
+		if item.Label == "X" {
+			foundX = true
+		}
+		if item.Label == "Y" {
+			foundY = true
+		}
+	}
+
+	// Verify: X and Y should be in results
+	if !foundX {
+		t.Error("Expected 'X' to be in completion results for record member access")
+	}
+	if !foundY {
+		t.Error("Expected 'Y' to be in completion results for record member access")
+	}
+
+	t.Logf("Record member access test passed: found X=%v, Y=%v", foundX, foundY)
+}
+
+// Task 9.20: Test member access returns all members (no prefix)
+func TestCompletion_MemberAccessAllMembers(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Setup: class with multiple members
+	source := `program Test;
+
+type TData = class
+  GetValue: Integer;
+  GetName: String;
+  SetValue: Integer;
+  Count: Integer;
+end;
+
+var data: TData;
+
+begin
+  data.GetValue := 1;
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Input: cursor right after "data." (testing all members)
+	// Testing that member access returns all members of the type
+	triggerChar := "."
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      12, // On the "data.GetValue := 1;" line (0-indexed)
+				Character: 7,  // After "data." -> "  data." = 2 + 4 + 1 = 7
+			},
+		},
+		Context: &protocol.CompletionContext{
+			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
+			TriggerCharacter: &triggerChar,
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// Expected: All four members should be in results
+	foundGetValue := false
+	foundGetName := false
+	foundSetValue := false
+	foundCount := false
+
+	for _, item := range completionList.Items {
+		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
+		if item.Label == "GetValue" {
+			foundGetValue = true
+		}
+		if item.Label == "GetName" {
+			foundGetName = true
+		}
+		if item.Label == "SetValue" {
+			foundSetValue = true
+		}
+		if item.Label == "Count" {
+			foundCount = true
+		}
+	}
+
+	// Verify: All four members should be in results
+	if !foundGetValue {
+		t.Error("Expected 'GetValue' to be in completion results")
+	}
+	if !foundGetName {
+		t.Error("Expected 'GetName' to be in completion results")
+	}
+	if !foundSetValue {
+		t.Error("Expected 'SetValue' to be in completion results")
+	}
+	if !foundCount {
+		t.Error("Expected 'Count' to be in completion results")
+	}
+
+	t.Logf("Member access all members test passed: found all 4 members (GetValue=%v, GetName=%v, SetValue=%v, Count=%v)",
+		foundGetValue, foundGetName, foundSetValue, foundCount)
+}
