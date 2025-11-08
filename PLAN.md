@@ -1665,105 +1665,107 @@ The implementation is organized into the following phases:
 
 ### Tasks (23)
 
-- [ ] **13.1 Implement textDocument/codeAction request handler**
-  - [ ] Create `internal/lsp/code_action.go`
-  - [ ] Define handler: `func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) ([]protocol.CodeAction, error)`
-  - [ ] Extract document URI, range, and context from params
-  - [ ] Get diagnostics from params.Context.Diagnostics
-  - [ ] Retrieve document from DocumentStore
-  - [ ] Check if document has AST available
-  - [ ] Call helper functions to generate code actions
-  - [ ] Return array of CodeAction (may be empty)
-  - [ ] Register handler in server initialization
+- [x] **13.1 Implement textDocument/codeAction request handler**
+  - [x] Create `internal/lsp/code_action.go`
+  - [x] Define handler: `func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error)`
+  - [x] Extract document URI, range, and context from params
+  - [x] Get diagnostics from params.Context.Diagnostics
+  - [x] Retrieve document from DocumentStore
+  - [x] Check if document has AST available
+  - [x] Call helper functions to generate code actions
+  - [x] Return array of CodeAction (may be empty)
+  - [x] Register handler in server initialization
 
-- [ ] **13.2 Mark codeActionProvider in server capabilities**
-  - [ ] In initialize handler, set `capabilities.CodeActionProvider`
-  - [ ] Use struct with `CodeActionKinds` field
-  - [ ] Specify supported kinds (see next task)
-  - [ ] Optionally set `ResolveProvider: true` for lazy resolution (defer to later)
-  - [ ] Verify capability advertised to client
-  - [ ] Test that VSCode shows lightbulb icon when code actions available
+- [x] **13.2 Mark codeActionProvider in server capabilities**
+  - [x] In initialize handler, set `capabilities.CodeActionProvider`
+  - [x] Use struct with `CodeActionKinds` field
+  - [x] Specify supported kinds (see next task)
+  - [x] Optionally set `ResolveProvider: true` for lazy resolution (defer to later)
+  - [x] Verify capability advertised to client
+  - [x] Test that VSCode shows lightbulb icon when code actions available
 
-- [ ] **13.3 Specify supported codeActionKinds (quickfix, refactor, etc.)**
-  - [ ] Define supported kinds:
-    - [ ] `CodeActionKind.QuickFix` - for fixing diagnostics
-    - [ ] `CodeActionKind.Refactor` - for refactoring actions
-    - [ ] `CodeActionKind.RefactorExtract` - extract to function/variable
-    - [ ] `CodeActionKind.RefactorInline` - inline variable/function
-    - [ ] `CodeActionKind.Source` - source actions (organize imports)
-    - [ ] `CodeActionKind.SourceOrganizeImports` - organize imports/units
-  - [ ] Set `CodeActionProvider.CodeActionKinds` to array of supported kinds
-  - [ ] Client may request specific kinds
+- [x] **13.3 Specify supported codeActionKinds (quickfix, refactor, etc.)**
+  - [x] Define supported kinds:
+    - [x] `CodeActionKind.QuickFix` - for fixing diagnostics
+    - [x] `CodeActionKind.Refactor` - for refactoring actions
+    - [x] `CodeActionKind.RefactorExtract` - extract to function/variable
+    - [x] `CodeActionKind.RefactorInline` - inline variable/function
+    - [x] `CodeActionKind.Source` - source actions (organize imports)
+    - [x] `CodeActionKind.SourceOrganizeImports` - organize imports/units
+  - [x] Set `CodeActionProvider.CodeActionKinds` to array of supported kinds
+  - [x] Client may request specific kinds
 
-- [ ] **13.4 Implement quick fix for 'Undeclared identifier' error**
-  - [ ] Create `GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *Document) ([]CodeAction, error)`
-  - [ ] Check if diagnostic code or message indicates "undeclared identifier"
-  - [ ] Extract identifier name from diagnostic message
-  - [ ] Suggest code actions:
-    1. [ ] Declare variable with inferred type
-    2. [ ] Declare function (if identifier used as call)
-  - [ ] Create CodeAction for each suggestion
-  - [ ] Set `Kind` to `CodeActionKind.QuickFix`
-  - [ ] Set `Title` to clear description (e.g., "Declare variable 'x'")
+- [x] **13.4 Implement quick fix for 'Undeclared identifier' error**
+  - [x] Create `GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *Document) ([]CodeAction, error)`
+  - [x] Check if diagnostic code or message indicates "undeclared identifier"
+  - [x] Extract identifier name from diagnostic message
+  - [x] Suggest code actions:
+    1. [x] Declare variable with inferred type (placeholder for Task 13.5)
+    2. [ ] Declare function (if identifier used as call) (defer to later)
+  - [x] Create CodeAction for each suggestion
+  - [x] Set `Kind` to `CodeActionKind.QuickFix`
+  - [x] Set `Title` to clear description (e.g., "Declare variable 'x'")
 
-- [ ] **13.5 Suggest 'Declare variable X' action with default type**
-  - [ ] For undeclared identifier quick fix:
-  - [ ] Create CodeAction with title: `"Declare variable 'x'"`
-  - [ ] Infer type if possible from usage context:
-    - [ ] If assigned from integer literal: `Integer`
-    - [ ] If assigned from string literal: `String`
-    - [ ] Default: `Variant` if cannot infer
-  - [ ] Generate declaration text: `var x: Integer;`
-  - [ ] Create WorkspaceEdit with TextEdit to insert declaration
-  - [ ] Attach diagnostic as `Diagnostics` field
-  - [ ] Add to code actions array
+- [x] **13.5 Suggest 'Declare variable X' action with default type**
+  - [x] For undeclared identifier quick fix:
+  - [x] Create CodeAction with title: `"Declare variable 'x'"`
+  - [x] Infer type if possible from usage context:
+    - [x] If assigned from integer literal: `Integer`
+    - [x] If assigned from string literal: `String`
+    - [x] If assigned from float literal: `Float`
+    - [x] If assigned from boolean literal: `Boolean`
+    - [x] Default: `Variant` if cannot infer
+  - [x] Generate declaration text: `var x: Integer;`
+  - [x] Create WorkspaceEdit with TextEdit to insert declaration
+  - [x] Attach diagnostic as `Diagnostics` field
+  - [x] Add to code actions array
 
-- [ ] **13.6 Insert var declaration at appropriate location (function top or global)**
-  - [ ] Determine insertion location based on context:
-    - [ ] If inside function: insert at start of function body (after `begin`)
-    - [ ] If at global scope: insert at start of file or after existing `var` block
-  - [ ] Calculate insertion position (line, character)
-  - [ ] Create TextEdit with:
-    - [ ] Range: zero-length at insertion point
-    - [ ] NewText: declaration with appropriate indentation and newline
-  - [ ] Example: `\n  var x: Integer;\n`
-  - [ ] Handle existing var blocks (append to block vs create new)
+- [x] **13.6 Insert var declaration at appropriate location (function top or global)**
+  - [x] Determine insertion location based on context:
+    - [x] If inside function: insert at start of function body (after `begin`)
+    - [x] If at global scope: insert at start of file or after existing `var` block
+  - [x] Calculate insertion position (line, character)
+  - [x] Create TextEdit with:
+    - [x] Range: zero-length at insertion point
+    - [x] NewText: declaration with appropriate indentation and newline
+  - [x] Example: `\n  var x: Integer;\n`
+  - [x] Handle existing var blocks (append to block vs create new)
 
-- [ ] **13.7 Implement quick fix for 'Missing semicolon' error**
-  - [ ] Check diagnostic for "missing semicolon" or "expected ';'"
-  - [ ] Extract position where semicolon expected (from diagnostic range)
-  - [ ] Create CodeAction with title: `"Insert missing semicolon"`
-  - [ ] Create WorkspaceEdit with TextEdit:
-    - [ ] Range: zero-length at expected position
-    - [ ] NewText: `;`
-  - [ ] Set Kind to QuickFix
-  - [ ] Attach diagnostic
-  - [ ] Test that applying action resolves the diagnostic
+- [x] **13.7 Implement quick fix for 'Missing semicolon' error**
+  - [x] Check diagnostic for "missing semicolon" or "expected ';'"
+  - [x] Extract position where semicolon expected (from diagnostic range)
+  - [x] Create CodeAction with title: `"Insert missing semicolon"`
+  - [x] Create WorkspaceEdit with TextEdit:
+    - [x] Range: zero-length at expected position
+    - [x] NewText: `;`
+  - [x] Set Kind to QuickFix
+  - [x] Attach diagnostic
+  - [x] Test that applying action resolves the diagnostic
 
-- [ ] **13.8 Implement quick fix for unused variable warning**
-  - [ ] Check diagnostic for "unused variable" or code `W_UNUSED_VAR`
-  - [ ] Extract variable name from diagnostic message
-  - [ ] Suggest two code actions:
-    1. [ ] Remove the variable declaration
-    2. [ ] Prefix variable name with underscore (convention for intentionally unused)
-  - [ ] Create CodeAction for each suggestion
-  - [ ] Set Kind to QuickFix
+- [x] **13.8 Implement quick fix for unused variable warning**
+  - [x] Check diagnostic for "unused variable" or code `W_UNUSED_VAR`
+  - [x] Extract variable name from diagnostic message
+  - [x] Suggest two code actions:
+    1. [x] Remove the variable declaration
+    2. [x] Prefix variable name with underscore (convention for intentionally unused)
+  - [x] Create CodeAction for each suggestion
+  - [x] Set Kind to QuickFix
 
-- [ ] **13.9 Suggest removing or prefixing with underscore**
-  - [ ] Code action 1: "Remove unused variable 'x'"
-    - [ ] Find variable declaration in AST
-    - [ ] Create TextEdit to delete entire declaration statement
-    - [ ] Handle formatting (remove blank line if appropriate)
-  - [ ] Code action 2: "Rename to '\_x'"
-    - [ ] Reuse rename functionality from Phase 11
-    - [ ] Create WorkspaceEdit to rename `x` to `_x`
-    - [ ] This preserves declaration but indicates intentional non-use
-  - [ ] Add both actions to result array
+- [x] **13.9 Suggest removing or prefixing with underscore**
+  - [x] Code action 1: "Remove unused variable 'x'"
+    - [x] Find variable declaration in AST
+    - [x] Create TextEdit to delete entire declaration statement
+    - [x] Handle formatting (remove blank line if appropriate)
+  - [x] Code action 2: "Rename to '\_x'"
+    - [x] Reuse rename functionality from Phase 11
+    - [x] Create WorkspaceEdit to rename `x` to `_x`
+    - [x] This preserves declaration but indicates intentional non-use
+  - [x] Add both actions to result array
 
-- [ ] **13.10 Implement refactoring: Organize uses/imports**
-  - [ ] Create source action: "Organize units"
-  - [ ] Set Kind to `CodeActionKind.SourceOrganizeImports`
-  - [ ] Analyze current uses/imports clause
+- [x] **13.10 Implement refactoring: Organize uses/imports**
+  - [x] Create source action: "Organize units"
+  - [x] Set Kind to `CodeActionKind.SourceOrganizeImports`
+  - [x] Analyze current uses/imports clause
   - [ ] Remove unused unit references:
     - [ ] Parse unit names in uses clause
     - [ ] Check if any symbols from each unit are used
@@ -1773,8 +1775,8 @@ The implementation is organized into the following phases:
     - [ ] Search workspace index for definitions
     - [ ] Determine which unit contains definition
     - [ ] Add unit to uses clause
-  - [ ] Sort units alphabetically (optional)
-  - [ ] Create WorkspaceEdit to replace uses clause
+  - [x] Sort units alphabetically (optional)
+  - [x] Create WorkspaceEdit to replace uses clause
 
 - [ ] **13.11 Remove unused unit references from uses clause**
   - [ ] Implement `FindUnusedUnits(doc *Document) ([]string, error)`
