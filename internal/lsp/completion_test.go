@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tliron/glsp"
@@ -886,4 +887,326 @@ end.`
 
 	t.Logf("Member access all members test passed: found all 4 members (GetValue=%v, GetName=%v, SetValue=%v, Count=%v)",
 		foundGetValue, foundGetName, foundSetValue, foundCount)
+}
+
+// Task 9.21: Test keyword completion at statement start
+func TestCompletion_KeywordsAtStatementStart(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Setup: function with cursor at beginning of line
+	source := `program Test;
+
+function DoSomething(): Integer;
+begin
+  Result := 0;
+end;
+
+begin
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Input: cursor at beginning of line inside function (after "begin")
+	// Testing keyword completion at statement start
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      4,  // On the "  Result := 0;" line (0-indexed)
+				Character: 2, // At the beginning after indent
+			},
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// Expected: Keywords like if, while, for, var, etc. should be in results
+	foundIf := false
+	foundWhile := false
+	foundFor := false
+	foundVar := false
+	foundBegin := false
+
+	keywordCount := 0
+
+	for _, item := range completionList.Items {
+		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindKeyword {
+			keywordCount++
+			switch item.Label {
+			case "if":
+				foundIf = true
+			case "while":
+				foundWhile = true
+			case "for":
+				foundFor = true
+			case "var":
+				foundVar = true
+			case "begin":
+				foundBegin = true
+			}
+		}
+	}
+
+	// Verify: Control flow keywords should be in results
+	if !foundIf {
+		t.Error("Expected 'if' keyword to be in completion results")
+	}
+	if !foundWhile {
+		t.Error("Expected 'while' keyword to be in completion results")
+	}
+	if !foundFor {
+		t.Error("Expected 'for' keyword to be in completion results")
+	}
+
+	// Verify we have a reasonable number of keywords
+	if keywordCount < 10 {
+		t.Errorf("Expected at least 10 keywords, found %d", keywordCount)
+	}
+
+	t.Logf("Keyword completion test passed: found %d keywords (if=%v, while=%v, for=%v, var=%v, begin=%v)",
+		keywordCount, foundIf, foundWhile, foundFor, foundVar, foundBegin)
+}
+
+// Task 9.21: Test built-in function completion
+func TestCompletion_BuiltInFunctions(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Setup: simple program
+	source := `program Test;
+
+begin
+  PrintLn('test');
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Input: cursor at beginning of line inside begin/end
+	// Testing that built-in functions are available
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      3,  // On the "  PrintLn('test');" line (0-indexed)
+				Character: 2, // At the beginning after indent
+			},
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// Expected: Built-in functions like PrintLn, IntToStr, Length, etc.
+	foundPrintLn := false
+	foundPrint := false
+	foundIntToStr := false
+	foundLength := false
+
+	builtinFuncCount := 0
+
+	for _, item := range completionList.Items {
+		// Built-in functions should have kind Function
+		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindFunction {
+			// Check if it's a built-in based on detail or sortText
+			if item.Detail != nil {
+				detail := *item.Detail
+				if strings.Contains(detail, "(") && strings.Contains(detail, ")") {
+					switch item.Label {
+					case "PrintLn":
+						foundPrintLn = true
+						builtinFuncCount++
+					case "Print":
+						foundPrint = true
+						builtinFuncCount++
+					case "IntToStr":
+						foundIntToStr = true
+						builtinFuncCount++
+					case "Length":
+						foundLength = true
+						builtinFuncCount++
+					}
+				}
+			}
+		}
+	}
+
+	// Verify: Common built-in functions should be in results
+	if !foundPrintLn {
+		t.Error("Expected 'PrintLn' built-in function to be in completion results")
+	}
+	if !foundIntToStr {
+		t.Error("Expected 'IntToStr' built-in function to be in completion results")
+	}
+	if !foundLength {
+		t.Error("Expected 'Length' built-in function to be in completion results")
+	}
+
+	// Verify we have a reasonable number of built-in functions
+	if builtinFuncCount < 4 {
+		t.Errorf("Expected at least 4 built-in functions, found %d", builtinFuncCount)
+	}
+
+	t.Logf("Built-in function completion test passed: found %d built-ins (PrintLn=%v, Print=%v, IntToStr=%v, Length=%v)",
+		builtinFuncCount, foundPrintLn, foundPrint, foundIntToStr, foundLength)
+}
+
+// Task 9.21: Test built-in types completion
+func TestCompletion_BuiltInTypes(t *testing.T) {
+	// Create a test server
+	srv := server.New()
+	SetServer(srv)
+
+	// Setup: simple program
+	source := `program Test;
+
+var x: Integer;
+
+begin
+end.`
+
+	// Add document to server
+	uri := "file:///test.dws"
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+
+	// Input: cursor at beginning of line
+	// Testing that built-in types are available
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      4,  // Inside begin/end (0-indexed)
+				Character: 0, // At the beginning
+			},
+		},
+	}
+
+	// Call Completion handler
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	// Expected: Built-in types like Integer, String, Boolean, Float, etc.
+	foundInteger := false
+	foundString := false
+	foundBoolean := false
+	foundFloat := false
+
+	builtinTypeCount := 0
+
+	for _, item := range completionList.Items {
+		// Built-in types should have kind Class (type)
+		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindClass {
+			switch item.Label {
+			case "Integer":
+				foundInteger = true
+				builtinTypeCount++
+			case "String":
+				foundString = true
+				builtinTypeCount++
+			case "Boolean":
+				foundBoolean = true
+				builtinTypeCount++
+			case "Float":
+				foundFloat = true
+				builtinTypeCount++
+			}
+		}
+	}
+
+	// Verify: Common built-in types should be in results
+	if !foundInteger {
+		t.Error("Expected 'Integer' built-in type to be in completion results")
+	}
+	if !foundString {
+		t.Error("Expected 'String' built-in type to be in completion results")
+	}
+	if !foundBoolean {
+		t.Error("Expected 'Boolean' built-in type to be in completion results")
+	}
+
+	// Verify we have a reasonable number of built-in types
+	if builtinTypeCount < 3 {
+		t.Errorf("Expected at least 3 built-in types, found %d", builtinTypeCount)
+	}
+
+	t.Logf("Built-in type completion test passed: found %d built-in types (Integer=%v, String=%v, Boolean=%v, Float=%v)",
+		builtinTypeCount, foundInteger, foundString, foundBoolean, foundFloat)
 }
