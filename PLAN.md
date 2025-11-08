@@ -1541,23 +1541,37 @@ The implementation is organized into the following phases:
   - [x] Return to client
   - [x] Client decodes and applies semantic highlighting
 
-- [ ] **12.20 Optionally implement textDocument/semanticTokens/full/delta for incremental updates**
-  - [ ] Defer to later if too complex
-  - [ ] Would require:
-    - [ ] Storing previous token set
-    - [ ] Computing diff between old and new tokens
-    - [ ] Encoding edits in SemanticTokensEdit format
-  - [ ] Benefit: performance improvement for large files with small changes
-  - [ ] Not essential for initial implementation
+- [x] **12.20 Implement textDocument/semanticTokens/full/delta for incremental updates**
+  - [x] **Phase 1: Foundation & Data Structures**
+    - [x] 12.20.1: Create SemanticTokensCache data structure
+    - [x] 12.20.2: Implement ResultId generation
+    - [x] 12.20.3: Add cache to Server struct
+    - [x] 12.20.4: Implement cache management methods
+  - [x] **Phase 2: Delta Computation Logic**
+    - [x] 12.20.5: Create delta computation module
+    - [x] 12.20.6: Implement token comparison algorithm
+    - [x] 12.20.7: Implement SemanticTokensEdit generation
+    - [x] 12.20.8: Handle edge cases
+  - [x] **Phase 3: Handler Implementation**
+    - [x] 12.20.9: Implement textDocument/semanticTokens/full/delta handler
+    - [x] 12.20.10: Modify full handler to support caching
+    - [x] 12.20.11: Handle previousResultId in delta handler
+    - [x] 12.20.12: Implement delta-to-full fallback
+  - [x] **Phase 4: Integration & Lifecycle**
+    - [x] 12.20.13: Advertise delta support in capabilities
+    - [x] 12.20.14: Register delta handler
+    - [x] 12.20.15: Invalidate cache on document changes
+    - [x] 12.20.16: Cleanup cache on document close
+  - [x] Benefit: performance improvement for large files with small changes
 
-- [ ] **12.21 Recompute semantic tokens after document changes**
-  - [ ] When document changes (didChange event):
-    - [ ] AST is reparsed
-    - [ ] Client may request new semantic tokens
-  - [ ] Don't proactively push semantic tokens
-  - [ ] Wait for client request (pull model)
-  - [ ] Ensure fresh AST is used for token computation
-  - [ ] Test with rapid edits (no stale tokens)
+- [x] **12.21 Recompute semantic tokens after document changes**
+  - [x] When document changes (didChange event):
+    - [x] AST is reparsed (DidChange calls ParseDocument)
+    - [x] Client may request new semantic tokens (pull model)
+  - [x] Don't proactively push semantic tokens (only respond to requests)
+  - [x] Wait for client request (pull model - handlers wait for requests)
+  - [x] Ensure fresh AST is used for token computation (handlers get from document store)
+  - [x] Cache invalidated on changes (task 12.20.15)
 
 - [ ] **12.22 Write unit tests for semantic token generation**
   - [ ] Create `internal/analysis/semantic_tokens_test.go`
