@@ -108,6 +108,26 @@ func GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *server.Document, ur
 		}
 	}
 
+	// Check if diagnostic is for unused variable
+	if isUnusedVariable(diagnostic) {
+		variableName := extractVariableName(diagnostic)
+		if variableName != "" {
+			log.Printf("Generating quick fixes for unused variable: %s\n", variableName)
+
+			// Create "Remove unused variable" quick fix
+			removeAction := createRemoveVariableAction(diagnostic, variableName, uri, doc)
+			if removeAction != nil {
+				actions = append(actions, *removeAction)
+			}
+
+			// Create "Prefix with underscore" quick fix
+			prefixAction := createPrefixUnderscoreAction(diagnostic, variableName, uri, doc)
+			if prefixAction != nil {
+				actions = append(actions, *prefixAction)
+			}
+		}
+	}
+
 	return actions, nil
 }
 
@@ -172,6 +192,36 @@ func isMissingSemicolon(diagnostic protocol.Diagnostic) bool {
 	return false
 }
 
+// isUnusedVariable checks if a diagnostic indicates an unused variable warning.
+func isUnusedVariable(diagnostic protocol.Diagnostic) bool {
+	message := strings.ToLower(diagnostic.Message)
+
+	// Check for common unused variable patterns
+	patterns := []string{
+		"unused variable",
+		"variable not used",
+		"variable declared but not used",
+		"unused local variable",
+		"variable is declared but never used",
+	}
+
+	for _, pattern := range patterns {
+		if strings.Contains(message, pattern) {
+			return true
+		}
+	}
+
+	// Check error code if available
+	if diagnostic.Code != nil {
+		code := diagnostic.Code.Value
+		if code == "W_UNUSED_VAR" || code == "W_UNUSED_VARIABLE" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // extractIdentifierName extracts the identifier name from a diagnostic message.
 // It looks for patterns like "undeclared identifier 'x'" or "unknown identifier: x"
 func extractIdentifierName(diagnostic protocol.Diagnostic) string {
@@ -184,6 +234,29 @@ func extractIdentifierName(diagnostic protocol.Diagnostic) string {
 		regexp.MustCompile(`identifier\s+([a-zA-Z_][a-zA-Z0-9_]*)`),      // identifier name
 		regexp.MustCompile(`\b([a-zA-Z_][a-zA-Z0-9_]*)\s+not\s+found`),   // name not found
 		regexp.MustCompile(`unknown\s+([a-zA-Z_][a-zA-Z0-9_]*)`),         // unknown name
+	}
+
+	for _, pattern := range patterns {
+		matches := pattern.FindStringSubmatch(message)
+		if len(matches) >= 2 {
+			return matches[1]
+		}
+	}
+
+	return ""
+}
+
+// extractVariableName extracts the variable name from an unused variable diagnostic message.
+// It looks for patterns like "unused variable 'x'" or "variable x not used"
+func extractVariableName(diagnostic protocol.Diagnostic) string {
+	message := diagnostic.Message
+
+	// Try various regex patterns to extract the variable name
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]`),                // 'varname' or "varname"
+		regexp.MustCompile(`variable\s+([a-zA-Z_][a-zA-Z0-9_]*)`),               // variable name
+		regexp.MustCompile(`([a-zA-Z_][a-zA-Z0-9_]*)\s+(?:not used|unused)`),    // name not used/unused
+		regexp.MustCompile(`unused:\s*([a-zA-Z_][a-zA-Z0-9_]*)`),                // unused: name
 	}
 
 	for _, pattern := range patterns {
@@ -269,6 +342,120 @@ func createInsertSemicolonAction(diagnostic protocol.Diagnostic, uri string) *pr
 	}
 
 	log.Printf("Created quick fix: %s at line %d, column %d\n", title, insertPosition.Line, insertPosition.Character)
+	return &action
+}
+
+// createRemoveVariableAction creates a quick fix action to remove an unused variable declaration.
+func createRemoveVariableAction(diagnostic protocol.Diagnostic, variableName string, uri string, doc *server.Document) *protocol.CodeAction {
+	title := "Remove unused variable '" + variableName + "'"
+
+	// Find the variable declaration line
+	if doc.Text == "" {
+		log.Println("Cannot remove variable: document text is empty")
+		return nil
+	}
+
+	lines := strings.Split(doc.Text, "\n")
+	varLine := int(diagnostic.Range.Start.Line)
+
+	if varLine >= len(lines) {
+		log.Printf("Variable line %d out of bounds\n", varLine)
+		return nil
+	}
+
+	// Create a range that covers the entire line including newline
+	deleteRange := protocol.Range{
+		Start: protocol.Position{Line: uint32(varLine), Character: 0},
+		End:   protocol.Position{Line: uint32(varLine + 1), Character: 0},
+	}
+
+	// If this is the last line, adjust the range
+	if varLine == len(lines)-1 {
+		deleteRange.End.Line = uint32(varLine)
+		deleteRange.End.Character = uint32(len(lines[varLine]))
+	}
+
+	textEdit := protocol.TextEdit{
+		Range:   deleteRange,
+		NewText: "",
+	}
+
+	// Create WorkspaceEdit
+	changes := make(map[string][]protocol.TextEdit)
+	changes[uri] = []protocol.TextEdit{textEdit}
+
+	workspaceEdit := protocol.WorkspaceEdit{
+		Changes: changes,
+	}
+
+	action := protocol.CodeAction{
+		Title:       title,
+		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Diagnostics: []protocol.Diagnostic{diagnostic},
+		Edit:        &workspaceEdit,
+	}
+
+	log.Printf("Created quick fix: %s at line %d\n", title, varLine)
+	return &action
+}
+
+// createPrefixUnderscoreAction creates a quick fix action to prefix an unused variable with underscore.
+func createPrefixUnderscoreAction(diagnostic protocol.Diagnostic, variableName string, uri string, doc *server.Document) *protocol.CodeAction {
+	newName := "_" + variableName
+	title := "Rename to '" + newName + "'"
+
+	// Find all occurrences of the variable and rename them
+	// This is similar to the rename functionality, but simplified for this quick fix
+	if doc.Text == "" {
+		log.Println("Cannot rename variable: document text is empty")
+		return nil
+	}
+
+	// For now, we'll do a simple text-based replacement
+	// A more sophisticated approach would use the AST to find all references
+	var edits []protocol.TextEdit
+
+	lines := strings.Split(doc.Text, "\n")
+	varPattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(variableName) + `\b`)
+
+	for lineNum, line := range lines {
+		matches := varPattern.FindAllStringIndex(line, -1)
+		for _, match := range matches {
+			startChar := match[0]
+			endChar := match[1]
+
+			edit := protocol.TextEdit{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: uint32(lineNum), Character: uint32(startChar)},
+					End:   protocol.Position{Line: uint32(lineNum), Character: uint32(endChar)},
+				},
+				NewText: newName,
+			}
+			edits = append(edits, edit)
+		}
+	}
+
+	if len(edits) == 0 {
+		log.Printf("No occurrences of variable '%s' found\n", variableName)
+		return nil
+	}
+
+	// Create WorkspaceEdit
+	changes := make(map[string][]protocol.TextEdit)
+	changes[uri] = edits
+
+	workspaceEdit := protocol.WorkspaceEdit{
+		Changes: changes,
+	}
+
+	action := protocol.CodeAction{
+		Title:       title,
+		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Diagnostics: []protocol.Diagnostic{diagnostic},
+		Edit:        &workspaceEdit,
+	}
+
+	log.Printf("Created quick fix: %s (%d edits)\n", title, len(edits))
 	return &action
 }
 

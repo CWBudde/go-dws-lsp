@@ -1709,14 +1709,14 @@ The implementation is organized into the following phases:
   - [x] Attach diagnostic
   - [x] Test that applying action resolves the diagnostic
 
-- [ ] **13.8 Implement quick fix for unused variable warning**
-  - [ ] Check diagnostic for "unused variable" or code `W_UNUSED_VAR`
-  - [ ] Extract variable name from diagnostic message
-  - [ ] Suggest two code actions:
-    1. [ ] Remove the variable declaration
-    2. [ ] Prefix variable name with underscore (convention for intentionally unused)
-  - [ ] Create CodeAction for each suggestion
-  - [ ] Set Kind to QuickFix
+- [x] **13.8 Implement quick fix for unused variable warning**
+  - [x] Check diagnostic for "unused variable" or code `W_UNUSED_VAR`
+  - [x] Extract variable name from diagnostic message
+  - [x] Suggest two code actions:
+    1. [x] Remove the variable declaration
+    2. [x] Prefix variable name with underscore (convention for intentionally unused)
+  - [x] Create CodeAction for each suggestion
+  - [x] Set Kind to QuickFix
 
 - [ ] **13.9 Suggest removing or prefixing with underscore**
   - [ ] Code action 1: "Remove unused variable 'x'"
