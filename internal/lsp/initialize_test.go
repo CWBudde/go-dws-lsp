@@ -205,7 +205,3 @@ func TestShutdown(t *testing.T) {
 	// TODO: Once we implement shutdown flag in server state, verify it's set
 }
 
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
-}

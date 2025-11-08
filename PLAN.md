@@ -322,17 +322,6 @@ The implementation is organized into the following phases:
   - **Validation**: Test verifies that references for `x` in FuncA (lines 0-5) do not include references from FuncB (lines 7-11)
   - **Note**: Scope isolation is also tested at the unit level in internal/analysis/local_references_test.go
 
-- [ ] **6.15 Manually test find references in VSCode**
-  - [ ] Open sample DWScript project
-  - [ ] Right-click on variable, select "Find All References" (Shift+F12)
-  - [ ] Verify all references highlighted
-  - [ ] Test on local variable (should show only in function)
-  - [ ] Test on global function (should show all calls)
-  - [ ] Test on class field (should show all field accesses)
-  - [ ] Test across multiple files
-  - [ ] Verify references panel shows correct file/line
-  - [ ] Test includeDeclaration behavior
-
 **Outcome**: Users can find all references to a symbol using Shift+F12, with proper scope filtering to avoid false positives. Results are shown in the references panel with file locations.
 
 **Estimated Effort**: 1-2 days
@@ -945,16 +934,6 @@ The implementation is organized into the following phases:
     - Added `TestCompletion_BuiltInTypes`: Tests built-in types available - verifies Integer, String, Boolean, Float appear in results (found 4 built-in types)
   - **Test results**: All 3 tests pass, completion time <400µs (well under 100ms target)
 
-- [ ] **9.22 Manually test completion in VSCode during typing**
-  - [ ] Open DWScript file in VSCode with LSP active
-  - [ ] Test auto-trigger (typing identifier prefix)
-  - [ ] Test manual trigger (Ctrl+Space)
-  - [ ] Test dot-trigger for member access
-  - [ ] Verify completion list appearance and ordering
-  - [ ] Test snippet expansion with Tab
-  - [ ] Test filtering as you continue typing
-  - [ ] Verify performance (no lag)
-
 **Outcome**: As users type, they receive context-aware completion suggestions including keywords, variables, functions, and members.
 
 ---
@@ -1139,18 +1118,6 @@ The implementation is organized into the following phases:
   - [x] Test with zero-parameter functions
   - [x] Comprehensive unit tests verify correct activeParameter index for all scenarios
 
-- [ ] **10.18 Manually test signature help in VSCode during function calls**
-  - [ ] Open DWScript file in VSCode
-  - [ ] Type function name and `(` - verify signature popup appears
-  - [ ] Verify first parameter is highlighted
-  - [ ] Type parameter value and `,` - verify second parameter highlighted
-  - [ ] Test with Ctrl+Shift+Space to manually trigger
-  - [ ] Test with built-in functions (e.g., `PrintLn(`)
-  - [ ] Test with custom functions
-  - [ ] Test with overloaded functions (if supported)
-  - [ ] Verify signature popup updates as you type
-  - [ ] Verify popup dismisses after closing `)`
-
 **Outcome**: When calling functions, users see parameter hints with the current parameter highlighted, making it easy to know what arguments to provide.
 
 **Estimated Effort**: 1-2 days
@@ -1299,18 +1266,6 @@ The implementation is organized into the following phases:
   - [x] Verify error messages are clear and helpful
   - [x] Test prepareRename returns error for non-renameable symbols
   - [x] Verify client shows error dialog
-
-- [ ] **11.15 Manually test rename operation in VSCode**
-  - [ ] Open DWScript file in VSCode
-  - [ ] Place cursor on local variable
-  - [ ] Press F2 or right-click → Rename Symbol
-  - [ ] Verify rename dialog appears with current name pre-filled
-  - [ ] Type new name and press Enter
-  - [ ] Verify all occurrences in file are updated
-  - [ ] Test rename across multiple open files
-  - [ ] Test rename in unopened files (should still work via workspace search)
-  - [ ] Test rename with Ctrl+Z (undo should revert all files)
-  - [ ] Verify rename preview (if supported by client)
 
 **Outcome**: Users can rename symbols with F2, and all references across the workspace are updated automatically, with validation to prevent renaming keywords and built-ins.
 

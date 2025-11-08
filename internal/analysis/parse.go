@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/dwscript"
+	"github.com/cwbudde/go-dws/pkg/token"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -46,6 +48,14 @@ func ParseDocument(text string, filename string) (*dwscript.Program, []protocol.
 	} else {
 		log.Printf("Compilation successful for %s", filename)
 		diagnostics = []protocol.Diagnostic{}
+	}
+
+	// Perform additional validation for unsupported DWScript constructs (e.g., function overloading)
+	if program != nil {
+		extraDiagnostics := detectUnsupportedFunctionOverloads(program)
+		if len(extraDiagnostics) > 0 {
+			diagnostics = append(diagnostics, extraDiagnostics...)
+		}
 	}
 
 	return program, diagnostics, nil
@@ -163,6 +173,84 @@ func mapDiagnosticTags(code string) []protocol.DiagnosticTag {
 	}
 
 	return tags
+}
+
+// detectUnsupportedFunctionOverloads emits diagnostics when the document declares
+// multiple global functions with the same name. DWScript does not support
+// function overloading, so we proactively flag this scenario even if the compiler
+// succeeds.
+func detectUnsupportedFunctionOverloads(program *dwscript.Program) []protocol.Diagnostic {
+	if program == nil {
+		return nil
+	}
+
+	root := program.AST()
+	if root == nil {
+		return nil
+	}
+
+	seen := make(map[string]struct{})
+	diagnostics := make([]protocol.Diagnostic, 0)
+
+	ast.Inspect(root, func(node ast.Node) bool {
+		fn, ok := node.(*ast.FunctionDecl)
+		if !ok || fn == nil || fn.Name == nil {
+			return true
+		}
+
+		// Skip methods for now – this validation only targets global functions.
+		if fn.ClassName != nil {
+			return true
+		}
+
+		name := fn.Name.Value
+		if _, exists := seen[name]; exists {
+			diagnostics = append(diagnostics, createFunctionRedeclarationDiagnostic(name, fn.Name.Pos()))
+			return true
+		}
+
+		seen[name] = struct{}{}
+		return true
+	})
+
+	return diagnostics
+}
+
+func createFunctionRedeclarationDiagnostic(name string, pos token.Position) protocol.Diagnostic {
+	severity := protocol.DiagnosticSeverityError
+
+	message := fmt.Sprintf("Function '%s' is redeclared. DWScript does not support function overloading.", name)
+
+	return protocol.Diagnostic{
+		Range:    identifierRange(pos, name),
+		Severity: &severity,
+		Source:   stringPtr("go-dws"),
+		Message:  message,
+	}
+}
+
+func identifierRange(pos token.Position, identifier string) protocol.Range {
+	line := uint32(0)
+	if pos.Line > 0 {
+		line = uint32(pos.Line - 1)
+	}
+
+	startChar := uint32(0)
+	if pos.Column > 0 {
+		startChar = uint32(pos.Column - 1)
+	}
+
+	tokenLength := utf16Length(identifier)
+	if tokenLength <= 0 {
+		tokenLength = 1
+	}
+
+	endChar := startChar + uint32(tokenLength)
+
+	return protocol.Range{
+		Start: protocol.Position{Line: line, Character: startChar},
+		End:   protocol.Position{Line: line, Character: endChar},
+	}
 }
 
 // stringPtr is a helper function to create a pointer to a string.

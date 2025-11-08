@@ -86,7 +86,7 @@ func ComputeSemanticTokensDelta(oldTokens, newTokens []server.SemanticToken, new
 // computeEdits computes the edit operations to transform oldTokens into newTokens.
 // This uses a simple sequential scan algorithm for efficiency.
 func computeEdits(oldTokens, newTokens []server.SemanticToken) []protocol.SemanticTokensEdit {
-	var edits []protocol.SemanticTokensEdit
+	edits := make([]protocol.SemanticTokensEdit, 0)
 
 	// Encode both token sets for comparison
 	oldEncoded := EncodeSemanticTokens(oldTokens)

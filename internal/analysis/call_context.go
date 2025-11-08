@@ -451,6 +451,21 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 // This is useful for incomplete function calls during typing
 // Falls back to token-based analysis if temporary parsing fails
 func DetermineCallContextWithTempAST(doc *server.Document, line, character int) (*CallContext, error) {
+	buildFallbackContext := func() (*CallContext, error) {
+		functionName, err := FindFunctionAtCall(doc, line, character)
+		if err != nil || functionName == "" {
+			return nil, err
+		}
+
+		return &CallContext{
+			CallNode:       nil,
+			FunctionName:   functionName,
+			ObjectExpr:     nil,
+			ParameterIndex: findParameterIndexFromText(doc.Text, line, character),
+			IsInsideCall:   true,
+		}, nil
+	}
+
 	// First try the normal approach with the actual AST
 	ctx, err := DetermineCallContext(doc, line, character)
 	if ctx != nil || err != nil {
@@ -463,20 +478,7 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 	tempAST := ParseWithTemporaryClosingParen(doc.Text, line, character)
 	if tempAST == nil {
 		log.Printf("DetermineCallContextWithTempAST: Temporary parsing failed, falling back to token-based analysis\n")
-		// Fallback to token-based analysis using FindFunctionAtCall
-		functionName, err := FindFunctionAtCall(doc, line, character)
-		if err != nil || functionName == "" {
-			return nil, err
-		}
-
-		// Create a basic CallContext with just the function name
-		return &CallContext{
-			CallNode:       nil,
-			FunctionName:   functionName,
-			ObjectExpr:     nil,
-			ParameterIndex: findParameterIndexFromText(doc.Text, line, character),
-			IsInsideCall:   true,
-		}, nil
+		return buildFallbackContext()
 	}
 
 	// Find enclosing call expression in the temporary AST
@@ -486,14 +488,14 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 
 	if callNode == nil {
 		log.Printf("DetermineCallContextWithTempAST: No call expression found in temporary AST\n")
-		return nil, nil
+		return buildFallbackContext()
 	}
 
 	// Extract function name
 	functionName, objectExpr := extractFunctionName(callNode)
 	if functionName == "" {
 		log.Printf("DetermineCallContextWithTempAST: Could not extract function name\n")
-		return nil, nil
+		return buildFallbackContext()
 	}
 
 	log.Printf("DetermineCallContextWithTempAST: Found call expression: function=%s\n", functionName)
@@ -543,11 +545,11 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 	runes := []rune(textBefore)
 
 	// Scan backward from cursor position character-by-character
-	parenDepth := 0      // Track parenthesis depth for nested calls
-	bracketDepth := 0    // Track bracket depth for array indexing
-	commaCount := 0      // Count commas at the same nesting level
-	inString := false    // Track if we're inside a string literal
-	var stringChar rune  // The quote character that started the string
+	parenDepth := 0     // Track parenthesis depth for nested calls
+	bracketDepth := 0   // Track bracket depth for array indexing
+	commaCount := 0     // Count commas at the same nesting level
+	inString := false   // Track if we're inside a string literal
+	var stringChar rune // The quote character that started the string
 	foundOpenParen := false
 
 	// Traverse backward through the text
