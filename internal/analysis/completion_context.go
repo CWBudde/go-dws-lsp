@@ -40,6 +40,10 @@ type CompletionContext struct {
 
 	// Character is the 0-based character offset (LSP convention)
 	Character int
+
+	// Prefix is the partial identifier the user has typed (for filtering)
+	// Task 9.18: Used for early prefix filtering to reduce processing
+	Prefix string
 }
 
 // DetermineContext analyzes the document and position to determine the completion context.
@@ -69,6 +73,11 @@ func DetermineContext(doc *server.Document, line, character int) (*CompletionCon
 	if parentIdent := extractParentIdentifier(textBeforeCursor); parentIdent != "" {
 		ctx.Type = CompletionContextMember
 		ctx.ParentIdentifier = parentIdent
+		// For member access, extract the prefix after the dot
+		ctx.Prefix = extractPartialIdentifier(textBeforeCursor)
+	} else {
+		// For general completion, extract the partial identifier being typed
+		ctx.Prefix = extractPartialIdentifier(textBeforeCursor)
 	}
 
 	// Determine current scope from AST
@@ -277,4 +286,49 @@ func isPositionInNode(node ast.Node, line, column int) bool {
 	}
 
 	return true
+}
+
+// extractPartialIdentifier extracts the partial identifier being typed at the cursor position.
+// Task 9.18: Used for early prefix filtering to reduce processing.
+// Example: "var myVa" -> "myVa"
+// Example: "person." -> "" (no prefix after dot)
+// Example: "person.Na" -> "Na"
+func extractPartialIdentifier(textBeforeCursor string) string {
+	// Get the text on the current line only (faster than processing full text)
+	lines := strings.Split(textBeforeCursor, "\n")
+	if len(lines) == 0 {
+		return ""
+	}
+
+	currentLine := lines[len(lines)-1]
+
+	// Work backwards from the end to find the start of the identifier
+	i := len(currentLine) - 1
+
+	// Skip trailing whitespace
+	for i >= 0 && unicode.IsSpace(rune(currentLine[i])) {
+		i--
+	}
+
+	// If we hit a dot, return empty (we're right after a dot for member access)
+	if i >= 0 && currentLine[i] == '.' {
+		return ""
+	}
+
+	// Find the start of the identifier
+	end := i + 1
+	for i >= 0 {
+		ch := rune(currentLine[i])
+		if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' {
+			break
+		}
+		i--
+	}
+
+	start := i + 1
+	if start >= end {
+		return ""
+	}
+
+	return currentLine[start:end]
 }

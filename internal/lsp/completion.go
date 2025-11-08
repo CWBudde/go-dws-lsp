@@ -3,6 +3,7 @@ package lsp
 
 import (
 	"log"
+	"time"
 
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -14,6 +15,13 @@ import (
 // Completion handles the textDocument/completion request.
 // This provides intelligent code completion suggestions.
 func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, error) {
+	// Task 9.18: Add timing measurements for performance tracking
+	startTime := time.Now()
+	defer func() {
+		elapsed := time.Since(startTime)
+		log.Printf("Completion took %v (target: <100ms)", elapsed)
+	}()
+
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
@@ -96,11 +104,12 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	}
 
 	// Log the completion context for debugging
-	log.Printf("Completion context: type=%d, parent=%s\n",
-		completionContext.Type, completionContext.ParentIdentifier)
+	log.Printf("Completion context: type=%d, parent=%s, prefix=%s\n",
+		completionContext.Type, completionContext.ParentIdentifier, completionContext.Prefix)
 
 	// Task 9.4: Handle member access completion
 	var completionList *protocol.CompletionList
+	const maxCompletionItems = 200 // Task 9.18: Limit completion list size
 
 	if completionContext.Type == analysis.CompletionContextMember {
 		// Member access completion: resolve the type of the parent identifier
@@ -124,6 +133,12 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 				} else if len(members) > 0 {
 					log.Printf("Found %d members for type '%s'", len(members), typeInfo.TypeName)
 					items = members
+
+					// Task 9.18: Apply prefix filtering early
+					if completionContext.Prefix != "" {
+						items = analysis.FilterCompletionsByPrefix(items, completionContext.Prefix)
+						log.Printf("After prefix filtering '%s': %d items", completionContext.Prefix, len(items))
+					}
 				} else {
 					log.Printf("No members found for type '%s'", typeInfo.TypeName)
 				}
@@ -132,8 +147,14 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 			}
 		}
 
+		// Task 9.18: Limit completion list size
+		if len(items) > maxCompletionItems {
+			items = items[:maxCompletionItems]
+			log.Printf("Limited member completion items to %d", maxCompletionItems)
+		}
+
 		completionList = &protocol.CompletionList{
-			IsIncomplete: false,
+			IsIncomplete: len(items) >= maxCompletionItems,
 			Items:        items,
 		}
 	} else {
@@ -149,10 +170,22 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 			items = []protocol.CompletionItem{}
 		}
 
-		log.Printf("Found %d scope completion items", len(items))
+		log.Printf("Found %d scope completion items before filtering", len(items))
+
+		// Task 9.18: Apply prefix filtering early to reduce processing
+		if completionContext.Prefix != "" {
+			items = analysis.FilterCompletionsByPrefix(items, completionContext.Prefix)
+			log.Printf("After prefix filtering '%s': %d items", completionContext.Prefix, len(items))
+		}
+
+		// Task 9.18: Limit completion list size
+		if len(items) > maxCompletionItems {
+			items = items[:maxCompletionItems]
+			log.Printf("Limited scope completion items to %d", maxCompletionItems)
+		}
 
 		completionList = &protocol.CompletionList{
-			IsIncomplete: false,
+			IsIncomplete: len(items) >= maxCompletionItems,
 			Items:        items,
 		}
 	}
