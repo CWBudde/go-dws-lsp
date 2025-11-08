@@ -1,7 +1,7 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/cwbudde/go-dws v0.0.0-20251107150541-36cc51824199 h1:7IU19IS5Sn+a2Sl664B4yl825MhuJXEKm6sNfFCMYWA=
-github.com/cwbudde/go-dws v0.0.0-20251107150541-36cc51824199/go.mod h1:sNtMidXHA3RPzDlPXUF2eyaIICa+OYYSvQ8s9HMlk2k=
+github.com/cwbudde/go-dws v0.3.1-0.20251108104047-32789ac221ca h1:bOpZCRNpNlpqQCQByu29DKLOgJ26Er2B/7i39JXA2uM=
+github.com/cwbudde/go-dws v0.3.1-0.20251108104047-32789ac221ca/go.mod h1:sNtMidXHA3RPzDlPXUF2eyaIICa+OYYSvQ8s9HMlk2k=
 github.com/gkampitakis/ciinfo v0.3.2 h1:JcuOPk8ZU7nZQjdUhctuhQofk7BGHuIy0c9Ez8BNhXs=
 github.com/gkampitakis/ciinfo v0.3.2/go.mod h1:1NIwaOcFChN4fa/B0hEBdAb6npDlFL8Bwx4dfRLRqAo=
 github.com/gkampitakis/go-diff v1.3.2 h1:Qyn0J9XJSDTgnsgHRdz9Zp24RaJeKMUHg2+PDZZdC4M=

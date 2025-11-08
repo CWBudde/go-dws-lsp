@@ -3,7 +3,7 @@ module github.com/CWBudde/go-dws-lsp
 go 1.24
 
 require (
-	github.com/cwbudde/go-dws v0.0.0-20251107150541-36cc51824199
+	github.com/cwbudde/go-dws v0.3.1-0.20251108104047-32789ac221ca
 	github.com/tliron/glsp v0.2.2
 )
 
