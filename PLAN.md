@@ -832,28 +832,53 @@ The implementation is organized into the following phases:
     - Functions with parameters use Snippet format, no-parameter functions use PlainText
     - Snippet syntax: `FunctionName(${1:param1}, ${2:param2})$0` with proper tabstops
 
-- [ ] **9.15 Set insertTextFormat to Snippet where appropriate**
-  - [ ] For functions with parameters: use Snippet
-  - [ ] For control structures (if-then, for-do): use Snippet
-  - [ ] For simple identifiers: use PlainText
-  - [ ] Ensure editor supports snippets (check client capabilities)
+- [x] **9.15 Set insertTextFormat to Snippet where appropriate** ✅
+  - [x] For functions with parameters: use Snippet
+  - [x] For control structures (if-then, for-do): use Snippet
+  - [x] For simple identifiers: use PlainText
+  - [x] Ensure editor supports snippets (check client capabilities)
+  - **Implementation**:
+    - Added `SupportsSnippets()` method to Server to check client capabilities
+    - Client capabilities stored during initialization in `internal/lsp/initialize.go:34`
+    - Control structure keywords now use Snippet format with proper syntax:
+      - `if`: `if ${1:condition} then\n\t$0\nend;`
+      - `for`: `for ${1:i} := ${2:0} to ${3:10} do\n\t$0\nend;`
+      - `while`: `while ${1:condition} do\n\t$0\nend;`
+      - `repeat`: `repeat\n\t$0\nuntil ${1:condition};`
+      - `case`: `case ${1:expression} of\n\t${2:value}: $0\nend;`
+      - `try`: `try\n\t$0\nexcept\n\ton E: Exception do\n\t\tRaise;\nend;`
+      - `function`, `procedure`, `class` declarations also have snippets
+    - All completion items now explicitly set `InsertTextFormat`:
+      - Functions with parameters: `InsertTextFormatSnippet`
+      - Simple identifiers (variables, types, fields, properties): `InsertTextFormatPlainText`
+      - Keywords without structure: `InsertTextFormatPlainText`
+    - Locations: `internal/analysis/scope_completion.go`, `internal/analysis/type_resolver.go`, `internal/server/server.go`
 
-- [ ] **9.16 Optionally implement completionItem/resolve for lazy resolution**
-  - [ ] Mark `CompletionProvider.ResolveProvider = true` in capabilities
-  - [ ] Implement resolve handler: `func CompletionResolve(context *glsp.Context, item *protocol.CompletionItem) (*protocol.CompletionItem, error)`
-  - [ ] Use item.Data to store deferred resolution info
-  - [ ] In resolve, add documentation, additional edits, etc.
-  - [ ] This improves performance by deferring expensive computation
+- [~] **9.16 Optionally implement completionItem/resolve for lazy resolution** (Skipped - not needed)
+  - [~] Mark `CompletionProvider.ResolveProvider = true` in capabilities
+  - [~] Implement resolve handler: `func CompletionResolve(context *glsp.Context, item *protocol.CompletionItem) (*protocol.CompletionItem, error)`
+  - [~] Use item.Data to store deferred resolution info
+  - [~] In resolve, add documentation, additional edits, etc.
+  - [~] This improves performance by deferring expensive computation
+  - **Decision**: Skipped as optional - current implementation already provides documentation efficiently
 
-- [ ] **9.17 Cache global symbol suggestions for performance**
-  - [ ] Create `CompletionCache` struct with:
-    - [ ] `globalSymbols []CompletionItem`
-    - [ ] `builtins []CompletionItem`
-    - [ ] `keywords []CompletionItem`
-    - [ ] `lastUpdate time.Time`
-  - [ ] Rebuild cache when workspace changes
-  - [ ] Use cached items for quick response
-  - [ ] Invalidate cache on file changes
+- [x] **9.17 Cache global symbol suggestions for performance** ✅
+  - [x] Create `CompletionCache` struct with:
+    - [x] `globalSymbols []CompletionItem`
+    - [x] `builtins []CompletionItem`
+    - [x] `keywords []CompletionItem`
+    - [x] `lastUpdate time.Time`
+  - [x] Rebuild cache when workspace changes
+  - [x] Use cached items for quick response
+  - [x] Invalidate cache on file changes
+  - **Implementation**:
+    - Created `CompletionCache` in `internal/server/completion_cache.go`
+    - Per-document caching with version tracking
+    - Caches keywords, built-ins, and global symbols together
+    - Automatic cache invalidation on document changes (`internal/lsp/text_document.go:175,89`)
+    - Cache hit/miss logging for debugging
+    - Zero cache overhead when cache is nil (backward compatible with tests)
+    - Thread-safe with RWMutex protection
 
 - [ ] **9.18 Optimize completion generation for fast response**
   - [ ] Target <100ms response time

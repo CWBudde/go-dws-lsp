@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Server holds the state of the LSP server.
@@ -20,6 +21,12 @@ type Server struct {
 
 	// workspaceFolders stores the workspace folders from the client
 	workspaceFolders []string
+
+	// clientCapabilities stores the client's capabilities from the initialize request
+	clientCapabilities *protocol.ClientCapabilities
+
+	// completionCache caches completion items for performance (task 9.17)
+	completionCache *CompletionCache
 
 	// config holds server configuration
 	config *Config
@@ -43,9 +50,10 @@ type Config struct {
 // New creates a new LSP server instance.
 func New() *Server {
 	return &Server{
-		documents:      NewDocumentStore(),
-		symbolIndex:    NewSymbolIndex(),
-		workspaceIndex: workspace.NewSymbolIndex(),
+		documents:       NewDocumentStore(),
+		symbolIndex:     NewSymbolIndex(),
+		workspaceIndex:  workspace.NewSymbolIndex(),
+		completionCache: NewCompletionCache(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -109,4 +117,51 @@ func (s *Server) GetWorkspaceFolders() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.workspaceFolders
+}
+
+// SetClientCapabilities sets the client's capabilities.
+func (s *Server) SetClientCapabilities(capabilities *protocol.ClientCapabilities) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clientCapabilities = capabilities
+}
+
+// GetClientCapabilities returns the client's capabilities.
+func (s *Server) GetClientCapabilities() *protocol.ClientCapabilities {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.clientCapabilities
+}
+
+// SupportsSnippets returns true if the client supports snippet completions.
+func (s *Server) SupportsSnippets() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.clientCapabilities == nil {
+		return false
+	}
+
+	if s.clientCapabilities.TextDocument == nil {
+		return false
+	}
+
+	if s.clientCapabilities.TextDocument.Completion == nil {
+		return false
+	}
+
+	if s.clientCapabilities.TextDocument.Completion.CompletionItem == nil {
+		return false
+	}
+
+	if s.clientCapabilities.TextDocument.Completion.CompletionItem.SnippetSupport == nil {
+		return false
+	}
+
+	return *s.clientCapabilities.TextDocument.Completion.CompletionItem.SnippetSupport
+}
+
+// CompletionCache returns the completion cache.
+func (s *Server) CompletionCache() *CompletionCache {
+	return s.completionCache
 }

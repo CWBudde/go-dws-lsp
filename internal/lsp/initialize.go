@@ -30,6 +30,10 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 	// Get server instance
 	srv, ok := serverInstance.(*server.Server)
 	if ok && srv != nil {
+		// Store client capabilities
+		srv.SetClientCapabilities(&params.Capabilities)
+		log.Printf("Client snippet support: %v\n", srv.SupportsSnippets())
+
 		// Extract and store workspace folders from params
 		if params.WorkspaceFolders != nil && len(params.WorkspaceFolders) > 0 {
 			folders := make([]string, 0, len(params.WorkspaceFolders))

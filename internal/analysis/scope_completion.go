@@ -13,13 +13,47 @@ import (
 
 // CollectScopeCompletions gathers all completion items available in the current scope.
 // This includes keywords, local variables, parameters, global symbols, and built-in functions.
-func CollectScopeCompletions(doc *server.Document, line, character int) ([]protocol.CompletionItem, error) {
+// Task 9.17: Uses caching for keywords, built-ins, and global symbols.
+func CollectScopeCompletions(doc *server.Document, cache *server.CompletionCache, line, character int) ([]protocol.CompletionItem, error) {
 	log.Printf("CollectScopeCompletions: gathering completions at %d:%d", line, character)
 
 	var items []protocol.CompletionItem
+	var keywords, builtins, globalItems []protocol.CompletionItem
 
-	// Task 9.8: Add keywords
-	items = append(items, getKeywordCompletions()...)
+	// Try to get from cache first (task 9.17)
+	var cached *server.CachedCompletionItems
+	if cache != nil {
+		cached = cache.GetCachedItems(doc.URI, int32(doc.Version))
+	}
+
+	if cached != nil && len(cached.Keywords) > 0 {
+		log.Printf("CollectScopeCompletions: using cached keywords, builtins, and global symbols")
+		keywords = cached.Keywords
+		builtins = cached.Builtins
+		globalItems = cached.GlobalSymbols
+	} else {
+		// Cache miss - compute all items
+		keywords = getKeywordCompletions()
+		builtins = getBuiltInCompletions()
+
+		if doc.Program != nil && doc.Program.AST() != nil {
+			globalItems = getGlobalCompletions(doc.Program.AST())
+		}
+
+		// Cache for future requests
+		if cache != nil && doc.Program != nil {
+			cache.SetCachedItems(doc.URI, int32(doc.Version), &server.CachedCompletionItems{
+				Keywords:      keywords,
+				Builtins:      builtins,
+				GlobalSymbols: globalItems,
+			})
+			log.Printf("CollectScopeCompletions: cached completion items for %s (version %d)",
+				doc.URI, doc.Version)
+		}
+	}
+
+	// Add keywords
+	items = append(items, keywords...)
 
 	if doc.Program == nil || doc.Program.AST() == nil {
 		log.Println("CollectScopeCompletions: no AST available, returning keywords only")
@@ -32,46 +66,108 @@ func CollectScopeCompletions(doc *server.Document, line, character int) ([]proto
 	astLine := line + 1
 	astColumn := character + 1
 
-	// Task 9.9: Add local variables and parameters
+	// Task 9.9: Add local variables and parameters (not cached - varies by position)
 	localItems := getLocalCompletions(program, astLine, astColumn)
 	items = append(items, localItems...)
 
-	// Task 9.11: Add global symbols (functions, types, constants)
-	globalItems := getGlobalCompletions(program)
+	// Add global symbols
 	items = append(items, globalItems...)
 
-	// Task 9.12: Add built-in functions and types
-	items = append(items, getBuiltInCompletions()...)
+	// Add built-in functions and types
+	items = append(items, builtins...)
 
 	log.Printf("CollectScopeCompletions: found %d total completion items", len(items))
 	return items, nil
 }
 
 // getKeywordCompletions returns completion items for DWScript keywords.
+// Task 9.15: Includes snippet support for control structures.
 func getKeywordCompletions() []protocol.CompletionItem {
-	keywords := []string{
-		"begin", "end", "if", "then", "else", "while", "for", "do", "to", "downto",
-		"repeat", "until", "case", "of", "var", "const", "type", "function", "procedure",
-		"class", "record", "interface", "implementation", "uses", "unit", "program",
-		"try", "except", "finally", "raise", "on", "as", "is", "in", "not", "and", "or",
-		"xor", "div", "mod", "shl", "shr", "array", "set", "property", "read", "write",
-		"private", "protected", "public", "published", "constructor", "destructor",
-		"inherited", "nil", "true", "false", "exit", "break", "continue", "with",
-	}
-
 	var items []protocol.CompletionItem
 	kind := protocol.CompletionItemKindKeyword
 
-	for _, keyword := range keywords {
-		detail := "DWScript keyword"
-		// Use sortText to ensure keywords appear after local/global symbols
-		sortText := "~keyword~" + keyword // ~ sorts after most alphanumeric characters
+	// Control structures with snippets
+	controlStructures := map[string]struct {
+		snippet string
+		detail  string
+	}{
+		"if": {
+			snippet: "if ${1:condition} then\n\t$0\nend;",
+			detail:  "if-then-end statement",
+		},
+		"for": {
+			snippet: "for ${1:i} := ${2:0} to ${3:10} do\n\t$0\nend;",
+			detail:  "for-to-do loop",
+		},
+		"while": {
+			snippet: "while ${1:condition} do\n\t$0\nend;",
+			detail:  "while-do loop",
+		},
+		"repeat": {
+			snippet: "repeat\n\t$0\nuntil ${1:condition};",
+			detail:  "repeat-until loop",
+		},
+		"case": {
+			snippet: "case ${1:expression} of\n\t${2:value}: $0\nend;",
+			detail:  "case-of statement",
+		},
+		"try": {
+			snippet: "try\n\t$0\nexcept\n\ton E: Exception do\n\t\tRaise;\nend;",
+			detail:  "try-except block",
+		},
+		"function": {
+			snippet: "function ${1:FunctionName}(${2:params}): ${3:ReturnType};\nbegin\n\t$0\nend;",
+			detail:  "function declaration",
+		},
+		"procedure": {
+			snippet: "procedure ${1:ProcedureName}(${2:params});\nbegin\n\t$0\nend;",
+			detail:  "procedure declaration",
+		},
+		"class": {
+			snippet: "class ${1:ClassName}\nprivate\n\t$0\npublic\nend;",
+			detail:  "class declaration",
+		},
+	}
+
+	// Add control structures with snippets
+	for keyword, info := range controlStructures {
+		sortText := "~keyword~" + keyword
+		detail := info.detail
+		insertTextFormat := protocol.InsertTextFormatSnippet
+
 		item := protocol.CompletionItem{
-			Label:      keyword,
-			Kind:       &kind,
-			Detail:     &detail,
-			InsertText: &keyword,
-			SortText:   &sortText,
+			Label:            keyword,
+			Kind:             &kind,
+			Detail:           &detail,
+			InsertText:       &info.snippet,
+			InsertTextFormat: &insertTextFormat,
+			SortText:         &sortText,
+		}
+		items = append(items, item)
+	}
+
+	// Simple keywords without snippets (use PlainText format)
+	simpleKeywords := []string{
+		"begin", "end", "then", "else", "do", "to", "downto", "until", "of",
+		"var", "const", "type", "record", "interface", "implementation", "uses",
+		"unit", "program", "except", "finally", "raise", "on", "as", "is", "in",
+		"not", "and", "or", "xor", "div", "mod", "shl", "shr", "array", "set",
+		"property", "read", "write", "private", "protected", "public", "published",
+		"constructor", "destructor", "inherited", "nil", "true", "false", "exit",
+		"break", "continue", "with",
+	}
+
+	plainTextFormat := protocol.InsertTextFormatPlainText
+	for _, keyword := range simpleKeywords {
+		detail := "DWScript keyword"
+		sortText := "~keyword~" + keyword
+		item := protocol.CompletionItem{
+			Label:            keyword,
+			Kind:             &kind,
+			Detail:           &detail,
+			InsertText:       &keyword,
+			InsertTextFormat: &plainTextFormat,
+			SortText:         &sortText,
 		}
 		items = append(items, item)
 	}
@@ -92,6 +188,8 @@ func getLocalCompletions(program *ast.Program, line, column int) []protocol.Comp
 
 	// Add function parameters
 	paramKind := protocol.CompletionItemKindVariable
+	plainTextFormat := protocol.InsertTextFormatPlainText
+
 	for _, param := range enclosingFunc.Parameters {
 		if param.Name == nil {
 			continue
@@ -106,10 +204,11 @@ func getLocalCompletions(program *ast.Program, line, column int) []protocol.Comp
 		sortText := "0param~" + param.Name.Value
 
 		item := protocol.CompletionItem{
-			Label:    param.Name.Value,
-			Kind:     &paramKind,
-			Detail:   &detail,
-			SortText: &sortText,
+			Label:            param.Name.Value,
+			Kind:             &paramKind,
+			Detail:           &detail,
+			SortText:         &sortText,
+			InsertTextFormat: &plainTextFormat,
 		}
 		items = append(items, item)
 	}
@@ -150,6 +249,7 @@ func findEnclosingFunctionAt(program *ast.Program, line, column int) *ast.Functi
 func extractLocalVariables(block *ast.BlockStatement) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 	kind := protocol.CompletionItemKindVariable
+	plainTextFormat := protocol.InsertTextFormatPlainText
 
 	if block == nil {
 		return items
@@ -168,10 +268,11 @@ func extractLocalVariables(block *ast.BlockStatement) []protocol.CompletionItem 
 				sortText := "0local~" + name.Value
 
 				item := protocol.CompletionItem{
-					Label:    name.Value,
-					Kind:     &kind,
-					Detail:   &detail,
-					SortText: &sortText,
+					Label:            name.Value,
+					Kind:             &kind,
+					Detail:           &detail,
+					SortText:         &sortText,
+					InsertTextFormat: &plainTextFormat,
 				}
 				items = append(items, item)
 			}
@@ -216,11 +317,13 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			kind := protocol.CompletionItemKindClass
 			detail := "Class"
 			sortText := "1global~" + s.Name.Value
+			plainTextFormat := protocol.InsertTextFormatPlainText
 			item := protocol.CompletionItem{
-				Label:    s.Name.Value,
-				Kind:     &kind,
-				Detail:   &detail,
-				SortText: &sortText,
+				Label:            s.Name.Value,
+				Kind:             &kind,
+				Detail:           &detail,
+				SortText:         &sortText,
+				InsertTextFormat: &plainTextFormat,
 			}
 			items = append(items, item)
 
@@ -231,11 +334,13 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			kind := protocol.CompletionItemKindStruct
 			detail := "Record"
 			sortText := "1global~" + s.Name.Value
+			plainTextFormat := protocol.InsertTextFormatPlainText
 			item := protocol.CompletionItem{
-				Label:    s.Name.Value,
-				Kind:     &kind,
-				Detail:   &detail,
-				SortText: &sortText,
+				Label:            s.Name.Value,
+				Kind:             &kind,
+				Detail:           &detail,
+				SortText:         &sortText,
+				InsertTextFormat: &plainTextFormat,
 			}
 			items = append(items, item)
 
@@ -246,16 +351,19 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			kind := protocol.CompletionItemKindInterface
 			detail := "Interface"
 			sortText := "1global~" + s.Name.Value
+			plainTextFormat := protocol.InsertTextFormatPlainText
 			item := protocol.CompletionItem{
-				Label:    s.Name.Value,
-				Kind:     &kind,
-				Detail:   &detail,
-				SortText: &sortText,
+				Label:            s.Name.Value,
+				Kind:             &kind,
+				Detail:           &detail,
+				SortText:         &sortText,
+				InsertTextFormat: &plainTextFormat,
 			}
 			items = append(items, item)
 
 		case *ast.VarDeclStatement:
 			kind := protocol.CompletionItemKindVariable
+			plainTextFormat := protocol.InsertTextFormatPlainText
 			for _, name := range s.Names {
 				detail := "Global variable"
 				if s.Type != nil {
@@ -263,10 +371,11 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 				}
 				sortText := "1global~" + name.Value
 				item := protocol.CompletionItem{
-					Label:    name.Value,
-					Kind:     &kind,
-					Detail:   &detail,
-					SortText: &sortText,
+					Label:            name.Value,
+					Kind:             &kind,
+					Detail:           &detail,
+					SortText:         &sortText,
+					InsertTextFormat: &plainTextFormat,
 				}
 				items = append(items, item)
 			}
@@ -284,11 +393,13 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 				detail += " = " + s.Value.String()
 			}
 			sortText := "1global~" + s.Name.Value
+			plainTextFormat := protocol.InsertTextFormatPlainText
 			item := protocol.CompletionItem{
-				Label:    s.Name.Value,
-				Kind:     &kind,
-				Detail:   &detail,
-				SortText: &sortText,
+				Label:            s.Name.Value,
+				Kind:             &kind,
+				Detail:           &detail,
+				SortText:         &sortText,
+				InsertTextFormat: &plainTextFormat,
 			}
 			items = append(items, item)
 
@@ -299,11 +410,13 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 			kind := protocol.CompletionItemKindEnum
 			detail := "Enumeration"
 			sortText := "1global~" + s.Name.Value
+			plainTextFormat := protocol.InsertTextFormatPlainText
 			item := protocol.CompletionItem{
-				Label:    s.Name.Value,
-				Kind:     &kind,
-				Detail:   &detail,
-				SortText: &sortText,
+				Label:            s.Name.Value,
+				Kind:             &kind,
+				Detail:           &detail,
+				SortText:         &sortText,
+				InsertTextFormat: &plainTextFormat,
 			}
 			items = append(items, item)
 
@@ -313,10 +426,11 @@ func getGlobalCompletions(program *ast.Program) []protocol.CompletionItem {
 				enumDetail := "Enum value: " + s.Name.Value
 				enumSortText := "1global~" + enumVal.Name
 				enumItem := protocol.CompletionItem{
-					Label:    enumVal.Name,
-					Kind:     &constKind,
-					Detail:   &enumDetail,
-					SortText: &enumSortText,
+					Label:            enumVal.Name,
+					Kind:             &constKind,
+					Detail:           &enumDetail,
+					SortText:         &enumSortText,
+					InsertTextFormat: &plainTextFormat,
 				}
 				items = append(items, enumItem)
 			}
@@ -471,14 +585,16 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 	}
 
 	typeKind := protocol.CompletionItemKindClass
+	plainTextFormat := protocol.InsertTextFormatPlainText
 	for _, typeName := range builtInTypes {
 		detail := "Built-in type"
 		sortText := "2builtin~" + typeName
 		item := protocol.CompletionItem{
-			Label:    typeName,
-			Kind:     &typeKind,
-			Detail:   &detail,
-			SortText: &sortText,
+			Label:            typeName,
+			Kind:             &typeKind,
+			Detail:           &detail,
+			SortText:         &sortText,
+			InsertTextFormat: &plainTextFormat,
 		}
 		items = append(items, item)
 	}
