@@ -1375,7 +1375,6 @@ The implementation is organized into the following phases:
   - [x] Optionally set `Range: true` for range requests (defer to later)
   - [x] Optionally set `Full.Delta: true` for incremental updates (defer to later)
   - [x] Verify capability advertised to client
-  
 - [x] **12.5 Implement textDocument/semanticTokens/full handler**
   - [x] Define handler: `func SemanticTokensFull(context *glsp.Context, params *protocol.SemanticTokensParams) (*protocol.SemanticTokens, error)`
   - [x] Extract document URI from params
