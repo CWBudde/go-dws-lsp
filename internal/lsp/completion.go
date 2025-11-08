@@ -140,7 +140,10 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 		// Task 9.7+: Handle general scope completion
 		log.Println("General scope completion requested")
 
-		items, err := analysis.CollectScopeCompletions(doc, int(position.Line), int(position.Character))
+		// Get completion cache (task 9.17)
+		cache := srv.CompletionCache()
+
+		items, err := analysis.CollectScopeCompletions(doc, cache, int(position.Line), int(position.Character))
 		if err != nil {
 			log.Printf("Error collecting scope completions: %v", err)
 			items = []protocol.CompletionItem{}

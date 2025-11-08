@@ -13,13 +13,47 @@ import (
 
 // CollectScopeCompletions gathers all completion items available in the current scope.
 // This includes keywords, local variables, parameters, global symbols, and built-in functions.
-func CollectScopeCompletions(doc *server.Document, line, character int) ([]protocol.CompletionItem, error) {
+// Task 9.17: Uses caching for keywords, built-ins, and global symbols.
+func CollectScopeCompletions(doc *server.Document, cache *server.CompletionCache, line, character int) ([]protocol.CompletionItem, error) {
 	log.Printf("CollectScopeCompletions: gathering completions at %d:%d", line, character)
 
 	var items []protocol.CompletionItem
+	var keywords, builtins, globalItems []protocol.CompletionItem
 
-	// Task 9.8: Add keywords (with snippet support for control structures - task 9.15)
-	items = append(items, getKeywordCompletions()...)
+	// Try to get from cache first (task 9.17)
+	var cached *server.CachedCompletionItems
+	if cache != nil {
+		cached = cache.GetCachedItems(doc.URI, int32(doc.Version))
+	}
+
+	if cached != nil && len(cached.Keywords) > 0 {
+		log.Printf("CollectScopeCompletions: using cached keywords, builtins, and global symbols")
+		keywords = cached.Keywords
+		builtins = cached.Builtins
+		globalItems = cached.GlobalSymbols
+	} else {
+		// Cache miss - compute all items
+		keywords = getKeywordCompletions()
+		builtins = getBuiltInCompletions()
+
+		if doc.Program != nil && doc.Program.AST() != nil {
+			globalItems = getGlobalCompletions(doc.Program.AST())
+		}
+
+		// Cache for future requests
+		if cache != nil && doc.Program != nil {
+			cache.SetCachedItems(doc.URI, int32(doc.Version), &server.CachedCompletionItems{
+				Keywords:      keywords,
+				Builtins:      builtins,
+				GlobalSymbols: globalItems,
+			})
+			log.Printf("CollectScopeCompletions: cached completion items for %s (version %d)",
+				doc.URI, doc.Version)
+		}
+	}
+
+	// Add keywords
+	items = append(items, keywords...)
 
 	if doc.Program == nil || doc.Program.AST() == nil {
 		log.Println("CollectScopeCompletions: no AST available, returning keywords only")
@@ -32,16 +66,15 @@ func CollectScopeCompletions(doc *server.Document, line, character int) ([]proto
 	astLine := line + 1
 	astColumn := character + 1
 
-	// Task 9.9: Add local variables and parameters
+	// Task 9.9: Add local variables and parameters (not cached - varies by position)
 	localItems := getLocalCompletions(program, astLine, astColumn)
 	items = append(items, localItems...)
 
-	// Task 9.11: Add global symbols (functions, types, constants)
-	globalItems := getGlobalCompletions(program)
+	// Add global symbols
 	items = append(items, globalItems...)
 
-	// Task 9.12: Add built-in functions and types
-	items = append(items, getBuiltInCompletions()...)
+	// Add built-in functions and types
+	items = append(items, builtins...)
 
 	log.Printf("CollectScopeCompletions: found %d total completion items", len(items))
 	return items, nil

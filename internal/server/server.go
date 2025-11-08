@@ -25,6 +25,9 @@ type Server struct {
 	// clientCapabilities stores the client's capabilities from the initialize request
 	clientCapabilities *protocol.ClientCapabilities
 
+	// completionCache caches completion items for performance (task 9.17)
+	completionCache *CompletionCache
+
 	// config holds server configuration
 	config *Config
 
@@ -47,9 +50,10 @@ type Config struct {
 // New creates a new LSP server instance.
 func New() *Server {
 	return &Server{
-		documents:      NewDocumentStore(),
-		symbolIndex:    NewSymbolIndex(),
-		workspaceIndex: workspace.NewSymbolIndex(),
+		documents:       NewDocumentStore(),
+		symbolIndex:     NewSymbolIndex(),
+		workspaceIndex:  workspace.NewSymbolIndex(),
+		completionCache: NewCompletionCache(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -155,4 +159,9 @@ func (s *Server) SupportsSnippets() bool {
 	}
 
 	return *s.clientCapabilities.TextDocument.Completion.CompletionItem.SnippetSupport
+}
+
+// CompletionCache returns the completion cache.
+func (s *Server) CompletionCache() *CompletionCache {
+	return s.completionCache
 }

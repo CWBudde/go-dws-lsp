@@ -29,7 +29,7 @@ end.`
 	}
 
 	// Get completions at line 1 (inside begin/end block)
-	items, err := CollectScopeCompletions(doc, 1, 0)
+	items, err := CollectScopeCompletions(doc, nil, 1, 0)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -77,7 +77,7 @@ end;`
 	}
 
 	// Get completions inside the function (line 5, where comment is)
-	items, err := CollectScopeCompletions(doc, 5, 2)
+	items, err := CollectScopeCompletions(doc, nil, 5, 2)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -132,7 +132,7 @@ end;`
 	}
 
 	// Get completions inside the function
-	items, err := CollectScopeCompletions(doc, 3, 2)
+	items, err := CollectScopeCompletions(doc, nil, 3, 2)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -190,7 +190,7 @@ end.`
 	}
 
 	// Get completions in main begin/end block
-	items, err := CollectScopeCompletions(doc, 11, 2)
+	items, err := CollectScopeCompletions(doc, nil, 11, 2)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -242,7 +242,7 @@ end.`
 	}
 
 	// Get completions
-	items, err := CollectScopeCompletions(doc, 6, 0)
+	items, err := CollectScopeCompletions(doc, nil, 6, 0)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -287,7 +287,7 @@ end.`
 	}
 
 	// Get completions
-	items, err := CollectScopeCompletions(doc, 1, 0)
+	items, err := CollectScopeCompletions(doc, nil, 1, 0)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -340,7 +340,7 @@ end.`
 	}
 
 	// Get completions
-	items, err := CollectScopeCompletions(doc, 1, 0)
+	items, err := CollectScopeCompletions(doc, nil, 1, 0)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)
@@ -418,7 +418,7 @@ func TestCollectScopeCompletions_NoAST(t *testing.T) {
 	}
 
 	// Should still return keywords
-	items, err := CollectScopeCompletions(doc, 0, 0)
+	items, err := CollectScopeCompletions(doc, nil, 0, 0)
 
 	if err != nil {
 		t.Fatalf("CollectScopeCompletions returned error: %v", err)

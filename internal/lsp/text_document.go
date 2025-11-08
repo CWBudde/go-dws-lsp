@@ -84,6 +84,12 @@ func DidClose(context *glsp.Context, params *protocol.DidCloseTextDocumentParams
 	// Remove document from store
 	srv.Documents().Delete(uri)
 
+	// Invalidate completion cache for this document (task 9.17)
+	if srv.CompletionCache() != nil {
+		srv.CompletionCache().InvalidateDocument(uri)
+		log.Printf("Invalidated completion cache for closed document: %s", uri)
+	}
+
 	log.Printf("Document closed: %s\n", uri)
 
 	// Send empty diagnostics to clear error markers in the editor
@@ -169,6 +175,12 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 	srv.Documents().Set(uri, updatedDoc)
 	if srv.Symbols() != nil {
 		srv.Symbols().UpdateDocument(updatedDoc)
+	}
+
+	// Invalidate completion cache for this document (task 9.17)
+	if srv.CompletionCache() != nil {
+		srv.CompletionCache().InvalidateDocument(uri)
+		log.Printf("Invalidated completion cache for %s", uri)
 	}
 
 	// Publish updated diagnostics to the client
