@@ -281,13 +281,14 @@ func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 
 		// Determine match type
 		var mType matchType
-		if nameLower == queryLower {
+		switch {
+		case nameLower == queryLower:
 			mType = matchExact
-		} else if strings.HasPrefix(nameLower, queryLower) {
+		case strings.HasPrefix(nameLower, queryLower):
 			mType = matchPrefix
-		} else if strings.Contains(nameLower, queryLower) {
+		case strings.Contains(nameLower, queryLower):
 			mType = matchSubstring
-		} else {
+		default:
 			continue // No match
 		}
 

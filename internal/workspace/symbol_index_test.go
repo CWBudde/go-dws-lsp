@@ -462,13 +462,14 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 		nameLower := strings.ToLower(result.Name)
 
 		var currentMatchType matchType
-		if nameLower == "test" {
+		switch {
+		case nameLower == "test":
 			currentMatchType = matchExact
 			exactCount++
-		} else if strings.HasPrefix(nameLower, "test") {
+		case strings.HasPrefix(nameLower, "test"):
 			currentMatchType = matchPrefix
 			prefixCount++
-		} else {
+		default:
 			currentMatchType = matchSubstring
 			substringCount++
 		}

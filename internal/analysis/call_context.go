@@ -194,9 +194,10 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 		}
 
 		// Handle parentheses
-		if r == ')' {
+		switch r {
+		case ')':
 			parenDepth++
-		} else if r == '(' {
+		case '(':
 			if parenDepth == 0 {
 				// Found the opening parenthesis of our call
 				foundOpenParen = true
@@ -204,13 +205,13 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 			}
 
 			parenDepth--
-		} else if r == ']' {
+		case ']':
 			bracketDepth++
-		} else if r == '[' {
+		case '[':
 			if bracketDepth > 0 {
 				bracketDepth--
 			}
-		} else if r == ',' {
+		case ',':
 			// Only count commas at the same nesting level
 			if parenDepth == 0 && bracketDepth == 0 {
 				commaCount++
@@ -585,9 +586,10 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 		}
 
 		// Handle parentheses - track nesting depth
-		if r == ')' {
+		switch r {
+		case ')':
 			parenDepth++
-		} else if r == '(' {
+		case '(':
 			if parenDepth == 0 {
 				// Found the opening parenthesis of current call - stop here
 				foundOpenParen = true
@@ -595,14 +597,14 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 			}
 
 			parenDepth--
-		} else if r == ']' {
+		case ']':
 			// Track array indexing depth
 			bracketDepth++
-		} else if r == '[' {
+		case '[':
 			if bracketDepth > 0 {
 				bracketDepth--
 			}
-		} else if r == ',' {
+		case ',':
 			// Count commas at the same parenthesis nesting level
 			// Only count commas when we're at depth 0 (same level as our call)
 			if parenDepth == 0 && bracketDepth == 0 {
@@ -677,16 +679,19 @@ func findParameterIndexFromText(text string, line, character int) int {
 		}
 
 		// Handle parentheses and commas
-		if r == ')' {
+		switch r {
+		case ')':
 			parenDepth++
-		} else if r == '(' {
+		case '(':
 			if parenDepth == 0 {
 				break
 			}
 
 			parenDepth--
-		} else if r == ',' && parenDepth == 0 {
-			commaCount++
+		case ',':
+			if parenDepth == 0 {
+				commaCount++
+			}
 		}
 	}
 
