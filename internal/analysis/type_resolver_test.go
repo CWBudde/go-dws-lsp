@@ -8,6 +8,12 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const testSimpleVarAssignmentCode = `
+var x: Integer;
+begin
+  x := 10;
+end.`
+
 func TestResolveMemberType_LocalVariable(t *testing.T) {
 	source := `
 var x: Integer;
@@ -191,11 +197,7 @@ end.`
 }
 
 func TestResolveMemberType_UnknownIdentifier(t *testing.T) {
-	source := `
-var x: Integer;
-begin
-  x := 10;
-end.`
+	source := testSimpleVarAssignmentCode
 
 	engine, err := dwscript.New()
 	if err != nil {
@@ -394,11 +396,7 @@ end.`
 }
 
 func TestGetTypeMembers_BuiltInType(t *testing.T) {
-	source := `
-var x: Integer;
-begin
-  x := 10;
-end.`
+	source := testSimpleVarAssignmentCode
 
 	engine, err := dwscript.New()
 	if err != nil {
@@ -429,11 +427,7 @@ end.`
 }
 
 func TestGetTypeMembers_UnknownType(t *testing.T) {
-	source := `
-var x: Integer;
-begin
-  x := 10;
-end.`
+	source := testSimpleVarAssignmentCode
 
 	engine, err := dwscript.New()
 	if err != nil {

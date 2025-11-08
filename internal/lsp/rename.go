@@ -310,7 +310,7 @@ func buildWorkspaceEdit(locations []protocol.Location, newName string, docs *ser
 	}
 
 	// Build DocumentChanges (preferred over Changes for versioned edits)
-	var documentChanges []any
+	documentChanges := make([]any, 0, len(editsByURI))
 
 	for uri, edits := range editsByURI {
 		// Get document version from DocumentStore

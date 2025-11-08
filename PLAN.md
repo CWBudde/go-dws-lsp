@@ -377,51 +377,28 @@ This document tracks the implementation status of the go-dws Language Server Pro
   - [ ] Reduce complexity of TestInitialize in initialize_test.go (39 > 30)
   - [ ] Reduce complexity of TestBuildWorkspaceEdit in rename_test.go (51 > 30)
 
-- [ ] **15.9 Constants (goconst - 26 issues)**
-  - [ ] Extract repeated strings to constants across codebase
-  - [ ] Address "begin end." repetition in scope_completion_test.go
-  - [ ] Address "function" repetition in symbol_resolver.go
-  - [ ] Address ")$0" repetition in type_resolver.go
-  - [ ] Address "var x: Integer; begin end." repetition in type_resolver_test.go
-  - [ ] Address "var x: Integer;" repetition in text_edit_test.go
-  - [ ] Address "var x: Integer; var y: String; var z: Float;" repetition in text_edit_test.go
-  - [ ] Address "Variant" repetition in code_action.go
-  - [ ] Address "file:///test.dws" repetition in completion_test.go
-  - [ ] Address keyword repetitions in completion_test.go (begin, Integer, String, Boolean, Float)
-  - [ ] Address "file:///test/test.dws" repetition in definition_test.go
-  - [ ] Address "TColor" repetition in definition_test.go
-  - [ ] Address "uses MyUnit;" repetition in definition_test.go
-  - [ ] Address "var x: Integer = 42;" repetition in semantic_tokens_handler_test.go
-  - [ ] Address "MyClass" repetition in symbol_info_test.go
-  - [ ] Address "field" repetition in symbol_info_test.go
-  - [ ] Address "file:///test/document.dws" repetition in text_document_test.go
-  - [ ] Address "var x: Integer;" repetition in text_document_test.go
-  - [ ] Address "result-1" and "result-2" repetitions in semantic_tokens_cache_test.go
-  - [ ] Address "file:///test.dws" repetition in symbol_index_test.go
-  - [ ] Address URI repetitions in symbol_index_test.go
-
-- [ ] **15.10 Code Improvements (gocritic - 4 issues)**
+- [ ] **15.9 Code Improvements (gocritic - 4 issues)**
   - [ ] Rewrite if-else chains to switch statements in call_context.go (3 issues)
   - [ ] Replace 'else {if cond {}}' with 'else if cond {}' in call_context_test.go
 
-- [ ] **15.11 Documentation (godoclint - 11 issues)**
+- [ ] **15.10 Documentation (godoclint - 11 issues)**
   - [ ] Fix multiple godoc comments in analysis package files
   - [ ] Fix multiple godoc comments in lsp package files
   - [ ] Fix multiple godoc comments in server package files
   - [ ] Fix multiple godoc comments in workspace package files
 
-- [ ] **15.12 Module Directives (gomoddirectives - 1 issue)**
+- [ ] **15.11 Module Directives (gomoddirectives - 1 issue)**
   - [ ] Remove or fix replacement directive in go.mod
 
-- [ ] **15.13 Security (gosec - 6 issues)**
+- [ ] **15.12 Security (gosec - 6 issues)**
   - [ ] Fix integer overflow conversions (G115) in scope_completion.go, rename.go, indexer.go
 
-- [ ] **15.14 Line Length (lll - 19 issues)**
+- [ ] **15.13 Line Length (lll - 19 issues)**
   - [ ] Break long lines in various files (max 120 characters)
   - [ ] Address long function signatures and variable declarations
   - [ ] Address long log statements and comments
 
-- [ ] **15.15 Nested If Statements (nestif - 8 issues)**
+- [ ] **15.14 Nested If Statements (nestif - 8 issues)**
   - [ ] Reduce nesting complexity in code_action.go (2 issues)
   - [ ] Reduce nesting complexity in completion.go (2 issues)
   - [ ] Reduce nesting complexity in initialize.go (1 issue)
@@ -429,46 +406,43 @@ This document tracks the implementation status of the go-dws Language Server Pro
   - [ ] Reduce nesting complexity in workspace.go (1 issue)
   - [ ] Reduce nesting complexity in call_context_test.go (1 issue)
 
-- [ ] **15.16 Error Handling (nilerr - 1 issue)**
+- [ ] **15.15 Error Handling (nilerr - 1 issue)**
   - [ ] Fix nil error return in indexer.go
 
-- [ ] **15.17 Return Values (nilnil - 3 issues)**
+- [ ] **15.16 Return Values (nilnil - 3 issues)**
   - [ ] Fix nil error returns with invalid values in call_context.go
 
-- [ ] **15.18 Named Returns (nonamedreturns - 1 issue)**
+- [ ] **15.17 Named Returns (nonamedreturns - 1 issue)**
   - [ ] Remove named return in text_edit.go
 
-- [ ] **15.19 Parallel Tests (paralleltest - 50 issues)**
+- [ ] **15.18 Parallel Tests (paralleltest - 50 issues)**
   - [ ] Add t.Parallel() calls to all test functions missing them
   - [ ] Address parallel test issues across all test files
 
-- [ ] **15.20 Pre-allocation (prealloc - 15 issues)**
-  - [ ] Pre-allocate slices in various functions across codebase
+- [x] **15.19 Pre-allocation (prealloc - 15 issues)**
+  - [x] Pre-allocate slices in various functions across codebase
 
-- [ ] **15.21 Code Quality (revive - 14 issues)**
+- [ ] **15.20 Code Quality (revive - 14 issues)**
   - [ ] Fix unused parameters across various functions
   - [ ] Fix empty blocks and variable declarations
   - [ ] Fix indent-error-flow and var-naming issues
 
-- [ ] **15.22 Static Analysis (staticcheck - 4 issues)**
+- [ ] **15.21 Static Analysis (staticcheck - 4 issues)**
   - [ ] Fix nil checks and type comparisons
 
-- [ ] **15.23 Test Packages (testpackage - 9 issues)**
+- [ ] **15.22 Test Packages (testpackage - 9 issues)**
   - [ ] Rename test packages from `analysis` to `analysis_test` etc.
 
-- [ ] **15.24 Unnecessary Conversions (unconvert - 3 issues)**
+- [ ] **15.23 Unnecessary Conversions (unconvert - 3 issues)**
   - [ ] Remove unnecessary type conversions
 
-- [ ] **15.25 Unused Parameters (unparam - 2 issues)**
+- [ ] **15.24 Unused Parameters (unparam - 2 issues)**
   - [ ] Remove or use unused function parameters
 
-- [ ] **15.26 Unused Code (unused - 4 issues)**
-  - [ ] Remove unused functions and variables
-
-- [ ] **15.27 Variable Names (varnamelen - 30 issues)**
+- [ ] **15.25 Variable Names (varnamelen - 30 issues)**
   - [ ] Improve variable naming across codebase (avoid single-letter names)
 
-- [ ] **15.28 Error Wrapping (wrapcheck - 3 issues)**
+- [ ] **15.26 Error Wrapping (wrapcheck - 3 issues)**
   - [ ] Properly wrap external package errors
 
 **Outcome**: Clean, maintainable codebase with zero lint issues, improved code quality and consistency.

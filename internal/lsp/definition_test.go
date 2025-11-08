@@ -11,6 +11,15 @@ import (
 )
 
 const testDefinitionURI = "file:///test/test.dws"
+const testEnumTypeTColor = "TColor"
+const testEnumDeclarationCode = `
+type
+  TColor = (clRed, clGreen, clBlue);
+
+var color: TColor;
+color := clRed;
+`
+const testUsesMyUnit = "uses MyUnit;"
 
 func TestNodeToLocation(t *testing.T) {
 	// Create a test node with position information
@@ -311,7 +320,7 @@ func TestFindIdentifierDefinition_Constant(t *testing.T) {
 func TestFindIdentifierDefinition_Enum(t *testing.T) {
 	// Create a program with an enum declaration
 	enumName := &ast.Identifier{
-		Value: "TColor",
+		Value: testEnumTypeTColor,
 		Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 	}
 
@@ -330,7 +339,7 @@ func TestFindIdentifierDefinition_Enum(t *testing.T) {
 
 	// Create an identifier reference to the enum
 	identRef := &ast.Identifier{
-		Value: "TColor",
+		Value: testEnumTypeTColor,
 		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
@@ -350,7 +359,7 @@ func TestFindIdentifierDefinition_EnumValue(t *testing.T) {
 	// Create a program with an enum that has values
 	enumDecl := &ast.EnumDecl{
 		Name: &ast.Identifier{
-			Value: "TColor",
+			Value: testEnumTypeTColor,
 			Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 		},
 		Values: []ast.EnumValue{
@@ -1278,13 +1287,7 @@ var size := MAX_SIZE;
 
 func TestGlobalDefinition_EnumDeclaration(t *testing.T) {
 	// Test go-to-definition on an enum type and values
-	code := `
-type
-  TColor = (clRed, clGreen, clBlue);
-
-var color: TColor;
-color := clRed;
-`
+	code := testEnumDeclarationCode
 	programAST := parseCode(t, code)
 	uri := testDefinitionURI
 
@@ -1295,9 +1298,9 @@ color := clRed;
 	ast.Inspect(programAST, func(node ast.Node) bool {
 		// Look for TColor usage in type annotation
 		if typeAnnot, ok := node.(*ast.TypeAnnotation); ok {
-			if typeAnnot.Name == "TColor" && foundDecl {
+			if typeAnnot.Name == testEnumTypeTColor && foundDecl {
 				enumIdent = &ast.Identifier{
-					Value: "TColor",
+					Value: testEnumTypeTColor,
 					Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
 				}
 
@@ -1306,7 +1309,7 @@ color := clRed;
 		}
 
 		if enumDecl, ok := node.(*ast.EnumDecl); ok {
-			if enumDecl.Name != nil && enumDecl.Name.Value == "TColor" {
+			if enumDecl.Name != nil && enumDecl.Name.Value == testEnumTypeTColor {
 				foundDecl = true
 			}
 		}
@@ -1316,7 +1319,7 @@ color := clRed;
 
 	if enumIdent == nil {
 		enumIdent = &ast.Identifier{
-			Value: "TColor",
+			Value: testEnumTypeTColor,
 			Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
 		}
 	}
@@ -1463,7 +1466,7 @@ end;
 
 	// File A has "uses MyUnit;" which imports the symbols from MyUnit.dws
 	// We parse just the uses clause to test cross-file resolution
-	codeWithImport := `uses MyUnit;`
+	codeWithImport := testUsesMyUnit
 	importAST := parseCode(t, codeWithImport)
 
 	// Create resolver for file A at a test position
@@ -1515,7 +1518,7 @@ end;
 	index, _ := setupTestWorkspace(t, files)
 
 	// File A imports MyUnit
-	codeWithImport := `uses MyUnit;`
+	codeWithImport := testUsesMyUnit
 	importAST := parseCode(t, codeWithImport)
 
 	// Test resolving HelperFunc (defined in B)
@@ -1555,7 +1558,7 @@ end;
 	index, _ := setupTestWorkspace(t, files)
 
 	// File A imports MyUnit
-	codeWithImport := `uses MyUnit;`
+	codeWithImport := testUsesMyUnit
 	importAST := parseCode(t, codeWithImport)
 
 	resolver := analysis.NewSymbolResolverWithIndex(

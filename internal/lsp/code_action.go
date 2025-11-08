@@ -389,7 +389,7 @@ func inferParameterType(argExpr string) string {
 
 // generateFunctionSignature generates a function signature with inferred parameter types.
 func generateFunctionSignature(functionName string, args []string) string {
-	var params []string
+	params := make([]string, 0, len(args))
 
 	for i, arg := range args {
 		paramType := inferParameterType(arg)
@@ -1315,7 +1315,7 @@ func isUnitUsed(unitName string, text string, workspaceIndex *workspace.SymbolIn
 // findMissingUnits identifies symbols that are used but not declared and their defining units.
 // For task 13.10 and 13.12: Add missing unit references for used symbols.
 func findMissingUnits(text string, workspaceIndex *workspace.SymbolIndex, doc *server.Document) []string {
-	var missing []string
+	missing := make([]string, 0, 10)
 	seenUnits := make(map[string]bool)
 
 	// Get current units from uses clause (if any)

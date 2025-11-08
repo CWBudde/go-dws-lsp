@@ -204,7 +204,7 @@ func createVariableSymbols(varDecl *ast.VarDeclStatement) []protocol.DocumentSym
 		return nil
 	}
 
-	var symbols []protocol.DocumentSymbol
+	symbols := make([]protocol.DocumentSymbol, 0, len(varDecl.Names))
 
 	for _, name := range varDecl.Names {
 		if name == nil {
@@ -346,7 +346,7 @@ func createClassSymbol(classDecl *ast.ClassDecl) *protocol.DocumentSymbol {
 	}
 
 	// Add class members as children (fields, methods, properties)
-	var children []protocol.DocumentSymbol
+	children := make([]protocol.DocumentSymbol, 0, 20)
 
 	// Add fields
 	for _, field := range classDecl.Fields {
@@ -526,7 +526,7 @@ func createRecordSymbol(recordDecl *ast.RecordDecl) *protocol.DocumentSymbol {
 	}
 
 	// Add record fields as children
-	var children []protocol.DocumentSymbol
+	children := make([]protocol.DocumentSymbol, 0, len(recordDecl.Properties))
 
 	for i := range recordDecl.Properties {
 		prop := &recordDecl.Properties[i]
@@ -620,7 +620,7 @@ func createEnumSymbol(enumDecl *ast.EnumDecl) *protocol.DocumentSymbol {
 	}
 
 	// Add enum values as children
-	var children []protocol.DocumentSymbol
+	children := make([]protocol.DocumentSymbol, 0, len(enumDecl.Values))
 
 	for _, value := range enumDecl.Values {
 		if value.Name == "" {

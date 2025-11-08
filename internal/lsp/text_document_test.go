@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	testDocumentURI = "file:///test/document.dws"
+	testDocumentURI    = "file:///test/document.dws"
+	testVarDeclaration = "var x: Integer;"
 )
 
 func TestDidOpen(t *testing.T) {
@@ -74,7 +75,7 @@ func TestDidClose(t *testing.T) {
 	uri := testDocumentURI
 	doc := &server.Document{
 		URI:        uri,
-		Text:       "var x: Integer;",
+		Text:       testVarDeclaration,
 		Version:    1,
 		LanguageID: "dwscript",
 	}
@@ -116,7 +117,7 @@ func TestDidChange_FullSync(t *testing.T) {
 
 	// First, open a document
 	uri := testDocumentURI
-	originalText := "var x: Integer;"
+	originalText := testVarDeclaration
 	doc := &server.Document{
 		URI:        uri,
 		Text:       originalText,
@@ -177,7 +178,7 @@ func TestDidChange_IncrementalSync_SingleLine(t *testing.T) {
 
 	// First, open a document
 	uri := testDocumentURI
-	originalText := "var x: Integer;"
+	originalText := testVarDeclaration
 	doc := &server.Document{
 		URI:        uri,
 		Text:       originalText,
@@ -241,7 +242,7 @@ func TestDidChange_IncrementalSync_MultiLine(t *testing.T) {
 	SetServer(srv)
 
 	// First, open a document with multiple lines
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	originalText := "var x: Integer;\nvar y: String;\nPrintLn(x);"
 	doc := &server.Document{
 		URI:        uri,
@@ -301,7 +302,7 @@ func TestDidChange_IncrementalSync_Insertion(t *testing.T) {
 	SetServer(srv)
 
 	// First, open a document
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	originalText := "var x: Integer;\nPrintLn(x);"
 	doc := &server.Document{
 		URI:        uri,
@@ -360,8 +361,8 @@ func TestDidChange_VersionTracking(t *testing.T) {
 	SetServer(srv)
 
 	// Open a document
-	uri := "file:///test/document.dws"
-	originalText := "var x: Integer;"
+	uri := testDocumentURI
+	originalText := testVarDeclaration
 	doc := &server.Document{
 		URI:        uri,
 		Text:       originalText,
@@ -413,7 +414,7 @@ func TestDidChange_MultipleChanges(t *testing.T) {
 	SetServer(srv)
 
 	// Open a document
-	uri := "file:///test/document.dws"
+	uri := testDocumentURI
 	originalText := "var x: Integer;\nvar y: Integer;"
 	doc := &server.Document{
 		URI:        uri,
@@ -484,7 +485,7 @@ func TestDidOpen_NonexistentServer(t *testing.T) {
 
 	params := &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
-			URI:        "file:///test/document.dws",
+			URI:        testDocumentURI,
 			LanguageID: "dwscript",
 			Version:    1,
 			Text:       "var x: Integer;",

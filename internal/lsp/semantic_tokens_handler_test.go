@@ -10,6 +10,10 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const (
+	testVarDeclarationWithValue = "var x: Integer = 42;"
+)
+
 // parseCodeToDocument is a helper function to compile DWScript code for testing.
 func parseCodeToDocument(t *testing.T, code string, uri string) *server.Document {
 	t.Helper()
@@ -128,7 +132,7 @@ func TestSemanticTokensFullDelta_ValidPreviousResultID(t *testing.T) {
 	srv := setupTestServer(t)
 
 	// Create initial document
-	code := `var x: Integer = 42;`
+	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
 	doc := parseCodeToDocument(t, code, string(uri))
 	uri = protocol.URI("file:///test.dws")
@@ -187,7 +191,7 @@ func TestSemanticTokensFullDelta_ValidPreviousResultID(t *testing.T) {
 func TestSemanticTokensFullDelta_InvalidPreviousResultID(t *testing.T) {
 	srv := setupTestServer(t)
 
-	code := `var x: Integer = 42;`
+	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
 	doc := parseCodeToDocument(t, code, string(uri))
 	uri = protocol.URI("file:///test.dws")
@@ -220,7 +224,7 @@ func TestSemanticTokensFullDelta_InvalidPreviousResultID(t *testing.T) {
 func TestSemanticTokensFullDelta_NoPreviousResultID(t *testing.T) {
 	srv := setupTestServer(t)
 
-	code := `var x: Integer = 42;`
+	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
 	doc := parseCodeToDocument(t, code, string(uri))
 	uri = protocol.URI("file:///test.dws")
@@ -250,7 +254,7 @@ func TestSemanticTokensFullDelta_NoPreviousResultID(t *testing.T) {
 func TestSemanticTokensFullDelta_NoChanges(t *testing.T) {
 	srv := setupTestServer(t)
 
-	code := `var x: Integer = 42;`
+	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
 	doc := parseCodeToDocument(t, code, string(uri))
 	uri = protocol.URI("file:///test.dws")
@@ -356,7 +360,7 @@ var g, h, i: Boolean;`
 func TestSemanticTokens_CacheInvalidationOnChange(t *testing.T) {
 	srv := setupTestServer(t)
 
-	code := `var x: Integer = 42;`
+	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
 	doc := parseCodeToDocument(t, code, string(uri))
 	uri = protocol.URI("file:///test.dws")

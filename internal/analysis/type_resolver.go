@@ -303,7 +303,7 @@ func GetTypeMembers(doc *server.Document, typeName string) ([]protocol.Completio
 
 // extractClassMembers extracts all members from a class declaration.
 func extractClassMembers(program *ast.Program, className string) []protocol.CompletionItem {
-	var items []protocol.CompletionItem
+	items := make([]protocol.CompletionItem, 0, 30)
 
 	// Find the class declaration
 	var classDecl *ast.ClassDecl
@@ -461,7 +461,7 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 
 // extractRecordMembers extracts all fields from a record declaration.
 func extractRecordMembers(program *ast.Program, recordName string) []protocol.CompletionItem {
-	var items []protocol.CompletionItem
+	items := make([]protocol.CompletionItem, 0, 10)
 
 	// Find the record declaration
 	var recordDecl *ast.RecordDecl

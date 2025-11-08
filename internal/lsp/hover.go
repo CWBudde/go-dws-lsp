@@ -186,7 +186,7 @@ func getVariableHover(varDecl *ast.VarDeclStatement) string {
 		return ""
 	}
 
-	var parts []string
+	parts := make([]string, 0, len(varDecl.Names))
 
 	for _, name := range varDecl.Names {
 		var decl strings.Builder

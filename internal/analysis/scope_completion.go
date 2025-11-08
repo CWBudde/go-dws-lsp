@@ -85,7 +85,7 @@ func CollectScopeCompletions(doc *server.Document, cache *server.CompletionCache
 // getKeywordCompletions returns completion items for DWScript keywords.
 // Task 9.15: Includes snippet support for control structures.
 func getKeywordCompletions() []protocol.CompletionItem {
-	var items []protocol.CompletionItem
+	items := make([]protocol.CompletionItem, 0, 40)
 	kind := protocol.CompletionItemKindKeyword
 
 	// Control structures with snippets
@@ -180,7 +180,7 @@ func getKeywordCompletions() []protocol.CompletionItem {
 
 // getLocalCompletions returns completion items for local variables and parameters.
 func getLocalCompletions(program *ast.Program, line, column int) []protocol.CompletionItem {
-	var items []protocol.CompletionItem
+	items := make([]protocol.CompletionItem, 0, 10)
 
 	// Find the enclosing function at the cursor position
 	enclosingFunc := findEnclosingFunctionAt(program, line, column)
@@ -604,7 +604,7 @@ func buildSnippetFromSignature(functionName, signature string) (string, protocol
 
 // getBuiltInCompletions returns completion items for built-in functions and types.
 func getBuiltInCompletions() []protocol.CompletionItem {
-	var items []protocol.CompletionItem
+	items := make([]protocol.CompletionItem, 0, 40)
 
 	// Built-in types
 	builtInTypes := []string{

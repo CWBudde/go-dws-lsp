@@ -99,7 +99,7 @@ func getTextBeforeCursor(text string, line, character int) string {
 	}
 
 	// Get all lines before the cursor line
-	var beforeLines []string
+	beforeLines := make([]string, 0, line)
 	for i := range line {
 		beforeLines = append(beforeLines, lines[i])
 	}

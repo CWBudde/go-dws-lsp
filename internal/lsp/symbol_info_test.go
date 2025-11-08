@@ -7,6 +7,9 @@ import (
 	"github.com/cwbudde/go-dws/pkg/token"
 )
 
+const testClassNameMyClass = "MyClass"
+const testFieldName = "field"
+
 func TestIdentifySymbolAtPosition_Identifier(t *testing.T) {
 	ident := &ast.Identifier{
 		Value: "myVar",
@@ -79,7 +82,7 @@ func TestIdentifySymbolAtPosition_FunctionDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_ClassDecl(t *testing.T) {
 	classDecl := &ast.ClassDecl{
 		Name: &ast.Identifier{
-			Value: "MyClass",
+			Value: testClassNameMyClass,
 			Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 		},
 		Fields:  []*ast.FieldDecl{},
@@ -92,7 +95,7 @@ func TestIdentifySymbolAtPosition_ClassDecl(t *testing.T) {
 		t.Fatal("Expected symbol info for class declaration, got nil")
 	}
 
-	if info.Name != "MyClass" {
+	if info.Name != testClassNameMyClass {
 		t.Errorf("Expected name 'MyClass', got '%s'", info.Name)
 	}
 
@@ -129,7 +132,7 @@ func TestIdentifySymbolAtPosition_ConstDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_EnumDecl(t *testing.T) {
 	enumDecl := &ast.EnumDecl{
 		Name: &ast.Identifier{
-			Value: "TColor",
+			Value: testEnumTypeTColor,
 			Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 		},
 		Values: []ast.EnumValue{
@@ -144,7 +147,7 @@ func TestIdentifySymbolAtPosition_EnumDecl(t *testing.T) {
 		t.Fatal("Expected symbol info for enum declaration, got nil")
 	}
 
-	if info.Name != "TColor" {
+	if info.Name != testEnumTypeTColor {
 		t.Errorf("Expected name 'TColor', got '%s'", info.Name)
 	}
 
@@ -184,7 +187,7 @@ func TestIdentifySymbolAtPosition_MemberExpression(t *testing.T) {
 			Token: token.Token{Pos: token.Position{Line: 5, Column: 1}},
 		},
 		Member: &ast.Identifier{
-			Value: "field",
+			Value: testFieldName,
 			Token: token.Token{Pos: token.Position{Line: 5, Column: 5}},
 		},
 	}
@@ -195,7 +198,7 @@ func TestIdentifySymbolAtPosition_MemberExpression(t *testing.T) {
 		t.Fatal("Expected symbol info for member expression, got nil")
 	}
 
-	if info.Name != "field" {
+	if info.Name != testFieldName {
 		t.Errorf("Expected name 'field', got '%s'", info.Name)
 	}
 

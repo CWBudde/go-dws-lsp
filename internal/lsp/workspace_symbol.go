@@ -58,7 +58,7 @@ func WorkspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolPara
 	log.Printf("Found %d workspace symbols matching query %q\n", len(symbolLocations), query)
 
 	// Convert to SymbolInformation array
-	var symbols []protocol.SymbolInformation
+	symbols := make([]protocol.SymbolInformation, 0, len(symbolLocations))
 
 	for _, symLoc := range symbolLocations {
 		// Build SymbolInformation

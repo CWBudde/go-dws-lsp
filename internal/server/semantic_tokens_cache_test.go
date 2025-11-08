@@ -10,6 +10,9 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+const testResultID1 = "result-1"
+const testResultID2 = "result-2"
+
 func TestNewSemanticTokensCache(t *testing.T) {
 	cache := NewSemanticTokensCache()
 	assert.NotNil(t, cache)
@@ -53,8 +56,8 @@ func TestSemanticTokensCache_InvalidateDocument(t *testing.T) {
 	cache := NewSemanticTokensCache()
 
 	uri := protocol.URI("file:///test.dws")
-	resultID1 := "result-1"
-	resultID2 := "result-2"
+	resultID1 := testResultID1
+	resultID2 := testResultID2
 	tokens := []SemanticToken{
 		{Line: 0, StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
 	}
@@ -80,8 +83,8 @@ func TestSemanticTokensCache_InvalidateResult(t *testing.T) {
 	cache := NewSemanticTokensCache()
 
 	uri := protocol.URI("file:///test.dws")
-	resultID1 := "result-1"
-	resultID2 := "result-2"
+	resultID1 := testResultID1
+	resultID2 := testResultID2
 	tokens := []SemanticToken{
 		{Line: 0, StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
 	}
@@ -107,8 +110,8 @@ func TestSemanticTokensCache_GetLatestResultID(t *testing.T) {
 	cache := NewSemanticTokensCache()
 
 	uri := protocol.URI("file:///test.dws")
-	resultID1 := "result-1"
-	resultID2 := "result-2"
+	resultID1 := testResultID1
+	resultID2 := testResultID2
 	tokens := []SemanticToken{
 		{Line: 0, StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
 	}
@@ -143,8 +146,8 @@ func TestSemanticTokensCache_Clear(t *testing.T) {
 	}
 
 	// Store multiple documents
-	cache.Store(uri1, "result-1", tokens)
-	cache.Store(uri2, "result-2", tokens)
+	cache.Store(uri1, testResultID1, tokens)
+	cache.Store(uri2, testResultID2, tokens)
 	assert.Equal(t, 2, cache.Size())
 
 	// Clear cache
@@ -307,7 +310,7 @@ func TestSemanticTokensCache_InvalidateNonexistentDocument(t *testing.T) {
 		{Line: 0, StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
 	}
 
-	cache.Store(uri, "result-1", tokens)
+	cache.Store(uri, testResultID1, tokens)
 	initialSize := cache.Size()
 
 	// Invalidating nonexistent document should not affect cache
@@ -317,7 +320,7 @@ func TestSemanticTokensCache_InvalidateNonexistentDocument(t *testing.T) {
 	assert.Equal(t, initialSize, cache.Size())
 
 	// Original document should still be there
-	_, found := cache.Retrieve(uri, "result-1")
+	_, found := cache.Retrieve(uri, testResultID1)
 	assert.True(t, found)
 }
 

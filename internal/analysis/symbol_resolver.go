@@ -283,7 +283,7 @@ func (sr *SymbolResolver) resolveWorkspace(symbolName string) []protocol.Locatio
 	}
 
 	// Convert workspace.SymbolLocation to protocol.Location
-	var locations []protocol.Location
+	locations := make([]protocol.Location, 0, 10)
 
 	for _, symLoc := range symbolLocations {
 		// Skip symbols from the current file (already handled by resolveGlobal)

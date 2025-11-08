@@ -257,7 +257,7 @@ func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 	// Normalize query for case-insensitive search
 	queryLower := strings.ToLower(query)
 
-	var results []SymbolLocation
+	results := make([]SymbolLocation, 0, 100)
 
 	// If query is empty, return all symbols (up to limit)
 	if query == "" {
