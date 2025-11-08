@@ -1181,105 +1181,105 @@ The implementation is organized into the following phases:
   - [x] Optionally set `PrepareProvider: true` to support textDocument/prepareRename
   - [x] Verify capability is advertised to client
 
-- [ ] **11.3 Identify symbol at rename position**
-  - [ ] Reuse `FindNodeAtPosition` from hover/definition implementations
-  - [ ] Get AST node at the rename position
-  - [ ] Check if node is an identifier or declaration
-  - [ ] Extract symbol name from node
-  - [ ] Determine symbol kind (variable, function, class, etc.)
-  - [ ] Return error if not on a renameable symbol
-  - [ ] Log symbol for debugging
+- [x] **11.3 Identify symbol at rename position**
+  - [x] Reuse `FindNodeAtPosition` from hover/definition implementations
+  - [x] Get AST node at the rename position
+  - [x] Check if node is an identifier or declaration
+  - [x] Extract symbol name from node
+  - [x] Determine symbol kind (variable, function, class, etc.)
+  - [x] Return error if not on a renameable symbol
+  - [x] Log symbol for debugging
 
-- [ ] **11.4 Validate that symbol can be renamed (reject keywords, built-ins)**
-  - [ ] Create `CanRename(symbolName string, symbolKind SymbolKind) (bool, error)`
-  - [ ] Reject DWScript keywords:
-    - [ ] `begin`, `end`, `if`, `then`, `else`, `while`, `for`, `do`, etc.
-  - [ ] Reject built-in type names:
-    - [ ] `Integer`, `String`, `Float`, `Boolean`, `Variant`
-  - [ ] Reject built-in function names:
-    - [ ] `PrintLn`, `Length`, `Copy`, etc.
-  - [ ] Return error message explaining why rename not allowed
-  - [ ] Allow renaming of user-defined symbols only
+- [x] **11.4 Validate that symbol can be renamed (reject keywords, built-ins)**
+  - [x] Create `CanRename(symbolName string, symbolKind SymbolKind) (bool, error)`
+  - [x] Reject DWScript keywords:
+    - [x] `begin`, `end`, `if`, `then`, `else`, `while`, `for`, `do`, etc.
+  - [x] Reject built-in type names:
+    - [x] `Integer`, `String`, `Float`, `Boolean`, `Variant`
+  - [x] Reject built-in function names:
+    - [x] `PrintLn`, `Length`, `Copy`, etc.
+  - [x] Return error message explaining why rename not allowed
+  - [x] Allow renaming of user-defined symbols only
 
-- [ ] **11.5 Find all references of the symbol using references handler**
-  - [ ] Reuse find references implementation from Phase 6
-  - [ ] Call `FindReferences(doc, position, includeDeclaration: true)`
-  - [ ] Get array of all reference locations (definition + uses)
-  - [ ] Ensure all files in workspace are searched
-  - [ ] Handle case where symbol not found (error)
-  - [ ] Log number of references found
-  - [ ] Sort locations by file URI for grouped edits
+- [x] **11.5 Find all references of the symbol using references handler**
+  - [x] Reuse find references implementation from Phase 6
+  - [x] Call `FindReferences(doc, position, includeDeclaration: true)`
+  - [x] Get array of all reference locations (definition + uses)
+  - [x] Ensure all files in workspace are searched
+  - [x] Handle case where symbol not found (error)
+  - [x] Log number of references found
+  - [x] Sort locations by file URI for grouped edits
 
-- [ ] **11.6 Prepare WorkspaceEdit with TextEdit for each reference**
-  - [ ] Create `protocol.WorkspaceEdit` struct
-  - [ ] Use `DocumentChanges` field (preferred over `Changes`)
-  - [ ] For each reference location:
-    - [ ] Create `protocol.TextEdit` struct
-    - [ ] Set `Range` to the symbol's range at that location
-    - [ ] Set `NewText` to the new symbol name from params
-  - [ ] Group edits by document URI
-  - [ ] Add all edits to WorkspaceEdit
+- [x] **11.6 Prepare WorkspaceEdit with TextEdit for each reference**
+  - [x] Create `protocol.WorkspaceEdit` struct
+  - [x] Use `DocumentChanges` field (preferred over `Changes`)
+  - [x] For each reference location:
+    - [x] Create `protocol.TextEdit` struct
+    - [x] Set `Range` to the symbol's range at that location
+    - [x] Set `NewText` to the new symbol name from params
+  - [x] Group edits by document URI
+  - [x] Add all edits to WorkspaceEdit
 
-- [ ] **11.7 Create TextEdit to replace old name with new name at each location**
-  - [ ] For each reference:
-    - [ ] Extract range covering the symbol identifier
-    - [ ] Ensure range only covers the identifier (not surrounding whitespace)
-    - [ ] Create TextEdit with Range and NewText
-    - [ ] Validate that old text at range matches expected symbol name
-  - [ ] Handle partial matches if symbol is qualified (e.g., `obj.field`)
-  - [ ] Only replace the identifier part, not the qualifier
+- [x] **11.7 Create TextEdit to replace old name with new name at each location**
+  - [x] For each reference:
+    - [x] Extract range covering the symbol identifier
+    - [x] Ensure range only covers the identifier (not surrounding whitespace)
+    - [x] Create TextEdit with Range and NewText
+    - [x] Validate that old text at range matches expected symbol name
+  - [x] Handle partial matches if symbol is qualified (e.g., `obj.field`)
+  - [x] Only replace the identifier part, not the qualifier
 
-- [ ] **11.8 Group TextEdits by file in WorkspaceEdit.DocumentChanges**
-  - [ ] Organize edits by document URI
-  - [ ] For each document with changes:
-    - [ ] Create `protocol.TextDocumentEdit` struct
-    - [ ] Set `TextDocument` with URI and version
-    - [ ] Set `Edits` array with all TextEdits for that document
-  - [ ] Add all TextDocumentEdits to `WorkspaceEdit.DocumentChanges` array
-  - [ ] Ensure edits are sorted by position (reverse order for application)
-  - [ ] This allows atomic multi-file rename
+- [x] **11.8 Group TextEdits by file in WorkspaceEdit.DocumentChanges**
+  - [x] Organize edits by document URI
+  - [x] For each document with changes:
+    - [x] Create `protocol.TextDocumentEdit` struct
+    - [x] Set `TextDocument` with URI and version
+    - [x] Set `Edits` array with all TextEdits for that document
+  - [x] Add all TextDocumentEdits to `WorkspaceEdit.DocumentChanges` array
+  - [x] Ensure edits are sorted by position (reverse order for application)
+  - [x] This allows atomic multi-file rename
 
-- [ ] **11.9 Handle document version checking to avoid stale renames**
-  - [ ] For each document being edited:
-    - [ ] Get current version from DocumentStore
-    - [ ] Set `TextDocumentIdentifier.Version` in TextDocumentEdit
-  - [ ] Client will reject edit if version doesn't match
-  - [ ] This prevents applying edits to stale document state
-  - [ ] Handle version mismatch error gracefully
-  - [ ] Log warning if versions don't match
+- [x] **11.9 Handle document version checking to avoid stale renames**
+  - [x] For each document being edited:
+    - [x] Get current version from DocumentStore
+    - [x] Set `TextDocumentIdentifier.Version` in TextDocumentEdit
+  - [x] Client will reject edit if version doesn't match
+  - [x] This prevents applying edits to stale document state
+  - [x] Handle version mismatch error gracefully
+  - [x] Log warning if versions don't match
 
-- [ ] **11.10 Implement textDocument/prepareRename handler (optional)**
-  - [ ] Create handler: `func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) (interface{}, error)`
-  - [ ] Extract document URI and position
-  - [ ] Identify symbol at position
-  - [ ] Validate symbol can be renamed (call CanRename)
-  - [ ] If renameable: return range and placeholder
-  - [ ] If not renameable: return error with reason
-  - [ ] This allows client to show error before user types new name
-  - [ ] Register handler in server initialization
+- [x] **11.10 Implement textDocument/prepareRename handler (optional)**
+  - [x] Create handler: `func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) (interface{}, error)`
+  - [x] Extract document URI and position
+  - [x] Identify symbol at position
+  - [x] Validate symbol can be renamed (call CanRename)
+  - [x] If renameable: return range and placeholder
+  - [x] If not renameable: return error with reason
+  - [x] This allows client to show error before user types new name
+  - [x] Register handler in server initialization
 
-- [ ] **11.11 Return symbol range and placeholder text in prepareRename**
-  - [ ] Create response with:
-    - [ ] `Range`: the range of the symbol identifier
-    - [ ] `Placeholder`: the current symbol name (pre-filled in rename dialog)
-  - [ ] OR return `PrepareRenameResult` struct with range and placeholder
-  - [ ] This provides better UX: rename dialog pre-filled with current name
-  - [ ] Client can highlight the range before rename
-  - [ ] Test in VSCode: F2 should highlight symbol and show dialog with current name
+- [x] **11.11 Return symbol range and placeholder text in prepareRename**
+  - [x] Create response with:
+    - [x] `Range`: the range of the symbol identifier
+    - [x] `Placeholder`: the current symbol name (pre-filled in rename dialog)
+  - [x] OR return `PrepareRenameResult` struct with range and placeholder
+  - [x] This provides better UX: rename dialog pre-filled with current name
+  - [x] Client can highlight the range before rename
+  - [x] Test in VSCode: F2 should highlight symbol and show dialog with current name
 
-- [ ] **11.12 Write unit tests for variable/function rename**
-  - [ ] Create `internal/lsp/rename_test.go`
-  - [ ] Test case: rename local variable
-    - [ ] Code: `var x: Integer; x := 5; PrintLn(x);`
-    - [ ] Rename `x` to `y`
-    - [ ] Verify 3 edits (declaration + 2 uses)
-    - [ ] Verify all edits have correct ranges
-  - [ ] Test case: rename function
-    - [ ] Define function `foo`
-    - [ ] Call `foo` multiple times
-    - [ ] Rename to `bar`
-    - [ ] Verify all calls updated
-  - [ ] Verify WorkspaceEdit structure is correct
+- [x] **11.12 Write unit tests for variable/function rename**
+  - [x] Create `internal/lsp/rename_test.go`
+  - [x] Test case: rename local variable
+    - [x] Code: `var x: Integer; x := 5; PrintLn(x);`
+    - [x] Rename `x` to `y`
+    - [x] Verify 3 edits (declaration + 2 uses)
+    - [x] Verify all edits have correct ranges
+  - [x] Test case: rename function
+    - [x] Define function `foo`
+    - [x] Call `foo` multiple times
+    - [x] Rename to `bar`
+    - [x] Verify all calls updated
+  - [x] Verify WorkspaceEdit structure is correct
 
 - [ ] **11.13 Write unit tests for rename across multiple files**
   - [ ] Create test workspace with 3 files:
