@@ -1115,31 +1115,29 @@ The implementation is organized into the following phases:
   - [x] Test with overloaded built-in functions
   - [x] Verify VSCode shows all overloads with arrows to switch
 
-- [ ] **10.16 Write unit tests for signature help with multi-parameter functions**
-  - [ ] Create `internal/lsp/signature_help_test.go`
-  - [ ] Test case: cursor after opening parenthesis
-    - [ ] Code: `function foo(x: Integer, y: String); begin foo(|)`
-    - [ ] Expected: activeParameter = 0, signature shown
-  - [ ] Test case: cursor after first parameter
-    - [ ] Code: `foo(5, |)`
-    - [ ] Expected: activeParameter = 1
-  - [ ] Test case: cursor in middle of parameter
-    - [ ] Code: `foo(5|)`
-    - [ ] Expected: activeParameter = 0
-  - [ ] Test with 0-parameter, 1-parameter, and 5-parameter functions
-  - [ ] Verify signature label formatting
+- [x] **10.16 Write unit tests for signature help with multi-parameter functions**
+  - [x] Create `internal/analysis/call_context_test.go`
+  - [x] Test case: cursor after opening parenthesis
+    - [x] Code: `foo(` - Expected: activeParameter = 0
+  - [x] Test case: cursor after first parameter
+    - [x] Code: `foo(5, ` - Expected: activeParameter = 1
+  - [x] Test case: cursor in middle of parameter
+    - [x] Code: `foo(5` - Expected: activeParameter = 0
+  - [x] Test with 0-parameter, 1-parameter, and 5-parameter functions
+  - [x] Verify signature label formatting
+  - [x] Test CountParameterIndex with 10 different scenarios
+  - [x] Test FindFunctionAtCall with 6 different scenarios
+  - [x] Test DetermineCallContextWithTempAST with complete and incomplete code
 
-- [ ] **10.17 Verify activeParameter highlighting at different cursor positions**
-  - [ ] Test cursor positions within a call:
-    - [ ] Before parameters: `foo(|x, y)`
-    - [ ] After first param: `foo(x|, y)`
-    - [ ] After comma: `foo(x,| y)`
-    - [ ] After second param: `foo(x, y|)`
-    - [ ] After all params: `foo(x, y|)`
-  - [ ] For each position, verify correct activeParameter index
-  - [ ] Test with nested calls: `foo(bar(|), baz())`
-  - [ ] Verify innermost call is analyzed
-  - [ ] Test with incomplete calls (missing closing paren)
+- [x] **10.17 Verify activeParameter highlighting at different cursor positions**
+  - [x] Created integration test suite in `test/integration/signature_help_integration_test.go`
+  - [x] Test cursor positions within a call (6 different positions tested)
+  - [x] Test with nested calls: `foo(bar(`, baz())`
+  - [x] Verify innermost call is analyzed
+  - [x] Test with incomplete calls (missing closing paren)
+  - [x] Test with built-in functions
+  - [x] Test with zero-parameter functions
+  - [x] Comprehensive unit tests verify correct activeParameter index for all scenarios
 
 - [ ] **10.18 Manually test signature help in VSCode during function calls**
   - [ ] Open DWScript file in VSCode
