@@ -66,6 +66,13 @@ test-integration:
 # Run all tests (unit + integration)
 test-all: test test-integration
 
+# Run unit and integration tests for CI (with race detection)
+test-unit:
+    @echo "Running unit tests with race detection..."
+    go test -v -race ./...
+    @echo "Running integration tests..."
+    go test -v -tags=integration ./test/integration/...
+
 # Run tests in watch mode (requires entr)
 test-watch:
     @echo "Watching for changes and running tests..."
@@ -121,6 +128,13 @@ check-fmt:
         echo "treefmt not found, using gofumpt check fallback..."; \
         test -z "$(gofumpt -l .)" || (echo "Files need formatting:" && gofumpt -l . && exit 1); \
     fi
+
+# Check if go.mod and go.sum are tidy (for CI)
+check-tidy:
+    @echo "Checking if go.mod is tidy..."
+    @go mod tidy
+    @git diff --exit-code go.mod go.sum || (echo "go.mod or go.sum needs tidying. Run 'go mod tidy' and commit the changes." && exit 1)
+    @echo "go.mod and go.sum are tidy!"
 
 # Development: build and run the LSP server
 dev: build
