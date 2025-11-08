@@ -90,7 +90,7 @@ func GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *server.Document, ur
 			log.Printf("Generating quick fixes for undeclared identifier: %s\n", identifierName)
 
 			// Create "Declare variable" quick fix
-			action := createDeclareVariableAction(diagnostic, identifierName, uri)
+			action := createDeclareVariableAction(diagnostic, identifierName, uri, doc)
 			if action != nil {
 				actions = append(actions, *action)
 			}
@@ -156,23 +156,109 @@ func extractIdentifierName(diagnostic protocol.Diagnostic) string {
 }
 
 // createDeclareVariableAction creates a quick fix action to declare an undeclared variable.
-func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName string, uri string) *protocol.CodeAction {
+func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName string, uri string, doc *server.Document) *protocol.CodeAction {
 	title := "Declare variable '" + identifierName + "'"
 
-	// For now, we'll create a placeholder action
-	// Tasks 13.5 and 13.6 will implement the actual WorkspaceEdit
-	// to insert the variable declaration at the appropriate location
+	// Infer the type for the variable (Task 13.5)
+	varType := inferTypeFromContext(diagnostic, identifierName, doc)
 
-	action := protocol.CodeAction{
-		Title: title,
-		Kind:  stringPtr(string(protocol.CodeActionKindQuickFix)),
-		Diagnostics: []protocol.Diagnostic{diagnostic},
-		// TODO (Task 13.5): Add WorkspaceEdit to insert variable declaration
-		// TODO (Task 13.6): Determine insertion location (function top or global)
+	// Generate the declaration text
+	declarationText := generateVariableDeclaration(identifierName, varType)
+
+	// Create the TextEdit to insert the declaration
+	// For now (Task 13.5), insert at the beginning of the line where the error occurred
+	// Task 13.6 will improve this to find the appropriate location (function top or global)
+	insertPosition := protocol.Position{
+		Line:      diagnostic.Range.Start.Line,
+		Character: 0,
 	}
 
-	log.Printf("Created quick fix: %s\n", title)
+	textEdit := protocol.TextEdit{
+		Range: protocol.Range{
+			Start: insertPosition,
+			End:   insertPosition,
+		},
+		NewText: declarationText + "\n",
+	}
+
+	// Create WorkspaceEdit
+	changes := make(map[string][]protocol.TextEdit)
+	changes[uri] = []protocol.TextEdit{textEdit}
+
+	workspaceEdit := protocol.WorkspaceEdit{
+		Changes: changes,
+	}
+
+	action := protocol.CodeAction{
+		Title:       title,
+		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Diagnostics: []protocol.Diagnostic{diagnostic},
+		Edit:        &workspaceEdit,
+	}
+
+	log.Printf("Created quick fix: %s (type: %s)\n", title, varType)
 	return &action
+}
+
+// inferTypeFromContext attempts to infer the type of a variable from its usage context.
+// For Task 13.5, this provides basic type inference:
+// - Integer literals → Integer
+// - String literals → String
+// - Default → Variant
+func inferTypeFromContext(diagnostic protocol.Diagnostic, identifierName string, doc *server.Document) string {
+	// For now, we'll use a simple heuristic by looking at the line of code
+	// More sophisticated analysis would examine the AST
+
+	// Get the document text
+	if doc.Text == "" {
+		return "Variant" // Default type if no text available
+	}
+
+	// Get the line where the error occurred
+	lines := strings.Split(doc.Text, "\n")
+	if int(diagnostic.Range.Start.Line) >= len(lines) {
+		return "Variant"
+	}
+
+	line := lines[diagnostic.Range.Start.Line]
+
+	// Simple pattern matching for common cases
+	// Look for assignment patterns like: x := value or x = value
+	assignmentPattern := regexp.MustCompile(identifierName + `\s*:?=\s*(.+?)[;,\n]`)
+	matches := assignmentPattern.FindStringSubmatch(line)
+
+	if len(matches) >= 2 {
+		value := strings.TrimSpace(matches[1])
+
+		// Check for integer literal
+		if matched, _ := regexp.MatchString(`^-?\d+$`, value); matched {
+			return "Integer"
+		}
+
+		// Check for float literal
+		if matched, _ := regexp.MatchString(`^-?\d+\.\d+$`, value); matched {
+			return "Float"
+		}
+
+		// Check for string literal
+		if strings.HasPrefix(value, "'") || strings.HasPrefix(value, "\"") {
+			return "String"
+		}
+
+		// Check for boolean literal
+		lowerValue := strings.ToLower(value)
+		if lowerValue == "true" || lowerValue == "false" {
+			return "Boolean"
+		}
+	}
+
+	// Default to Variant if we can't infer the type
+	return "Variant"
+}
+
+// generateVariableDeclaration generates the variable declaration text.
+func generateVariableDeclaration(identifierName string, varType string) string {
+	return "var " + identifierName + ": " + varType + ";"
 }
 
 // stringPtr is a helper function to create a pointer to a string.

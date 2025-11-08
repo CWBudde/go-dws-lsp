@@ -1673,17 +1673,19 @@ The implementation is organized into the following phases:
   - [x] Set `Kind` to `CodeActionKind.QuickFix`
   - [x] Set `Title` to clear description (e.g., "Declare variable 'x'")
 
-- [ ] **13.5 Suggest 'Declare variable X' action with default type**
-  - [ ] For undeclared identifier quick fix:
-  - [ ] Create CodeAction with title: `"Declare variable 'x'"`
-  - [ ] Infer type if possible from usage context:
-    - [ ] If assigned from integer literal: `Integer`
-    - [ ] If assigned from string literal: `String`
-    - [ ] Default: `Variant` if cannot infer
-  - [ ] Generate declaration text: `var x: Integer;`
-  - [ ] Create WorkspaceEdit with TextEdit to insert declaration
-  - [ ] Attach diagnostic as `Diagnostics` field
-  - [ ] Add to code actions array
+- [x] **13.5 Suggest 'Declare variable X' action with default type**
+  - [x] For undeclared identifier quick fix:
+  - [x] Create CodeAction with title: `"Declare variable 'x'"`
+  - [x] Infer type if possible from usage context:
+    - [x] If assigned from integer literal: `Integer`
+    - [x] If assigned from string literal: `String`
+    - [x] If assigned from float literal: `Float`
+    - [x] If assigned from boolean literal: `Boolean`
+    - [x] Default: `Variant` if cannot infer
+  - [x] Generate declaration text: `var x: Integer;`
+  - [x] Create WorkspaceEdit with TextEdit to insert declaration
+  - [x] Attach diagnostic as `Diagnostics` field
+  - [x] Add to code actions array
 
 - [ ] **13.6 Insert var declaration at appropriate location (function top or global)**
   - [ ] Determine insertion location based on context:
