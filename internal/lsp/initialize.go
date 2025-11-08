@@ -61,6 +61,18 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 	trueVal := true
 	falseVal := false
 
+	// Get semantic tokens legend from server
+	var semanticTokensProvider *protocol.SemanticTokensOptions
+	if ok && srv != nil {
+		legend := srv.SemanticTokensLegend()
+		if legend != nil {
+			semanticTokensProvider = &protocol.SemanticTokensOptions{
+				Legend: legend.ToProtocolLegend(),
+				Full:   &trueVal, // Support full document semantic tokens
+			}
+		}
+	}
+
 	capabilities := protocol.ServerCapabilities{
 		// Text document synchronization
 		TextDocumentSync: protocol.TextDocumentSyncOptions{
@@ -105,33 +117,8 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 		},
 
 		// Semantic tokens (semantic highlighting)
-		SemanticTokensProvider: &protocol.SemanticTokensOptions{
-			Legend: protocol.SemanticTokensLegend{
-				TokenTypes: []string{
-					"keyword",
-					"string",
-					"number",
-					"comment",
-					"variable",
-					"parameter",
-					"property",
-					"function",
-					"method",
-					"class",
-					"interface",
-					"enum",
-					"type",
-					"operator",
-				},
-				TokenModifiers: []string{
-					"declaration",
-					"readonly",
-					"static",
-					"deprecated",
-				},
-			},
-			Full: &[]bool{true}[0], // Support full document semantic tokens
-		},
+		// Uses the legend from the server instance for consistency
+		SemanticTokensProvider: semanticTokensProvider,
 
 		// Code actions (quick fixes, refactorings)
 		CodeActionProvider: &protocol.CodeActionOptions{
