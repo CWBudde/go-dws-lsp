@@ -27,7 +27,7 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in CodeAction")
-		return nil, nil
+		return []protocol.CodeAction{}, nil
 	}
 
 	// Extract document URI, range, and context from params
@@ -48,7 +48,7 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found for code action: %s\n", uri)
-		return nil, nil
+		return []protocol.CodeAction{}, nil
 	}
 
 	// Check if document has AST available

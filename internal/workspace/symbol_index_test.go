@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -611,9 +610,4 @@ func TestSymbolIndex_Search_PrefixVsSubstring(t *testing.T) {
 			t.Errorf("Result %d (%s) should contain 'get'", i, results[i].Name)
 		}
 	}
-}
-
-// Helper function for tests.
-func contains(slice []string, item string) bool {
-	return slices.Contains(slice, item)
 }

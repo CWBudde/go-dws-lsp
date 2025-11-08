@@ -20,7 +20,7 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, 
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in Definition")
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	// Extract document URI and position from params
@@ -34,20 +34,20 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, 
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found for definition: %s\n", uri)
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	// Check if document and AST are available
 	if doc.Program == nil {
 		log.Printf("No AST available for definition (document has parse errors): %s\n", uri)
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	// Get AST from Program
 	programAST := doc.Program.AST()
 	if programAST == nil {
 		log.Printf("AST is nil for document: %s\n", uri)
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	// Convert LSP position (0-based, UTF-16) to AST position (1-based, UTF-8)
@@ -59,14 +59,14 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, 
 	node := analysis.FindNodeAtPosition(programAST, astLine, astColumn)
 	if node == nil {
 		log.Printf("No AST node found at position %d:%d for definition\n", astLine, astColumn)
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	// Identify what symbol we're on (Task 5.2)
 	symbolInfo := IdentifySymbolAtPosition(node)
 	if symbolInfo == nil {
 		log.Printf("Position %d:%d is not on a symbol\n", astLine, astColumn)
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	log.Printf("Symbol at position: %s (kind: %s)", symbolInfo.Name, symbolInfo.Kind)
@@ -89,7 +89,7 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, 
 	locations := resolver.ResolveSymbol(symbolInfo.Name)
 	if len(locations) == 0 {
 		log.Printf("No definition found for symbol %s at position %d:%d\n", symbolInfo.Name, astLine, astColumn)
-		return nil, nil
+		return []protocol.Location{}, nil
 	}
 
 	// Return the first location (or all locations if we support multiple definitions)

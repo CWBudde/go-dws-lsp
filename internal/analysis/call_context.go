@@ -30,14 +30,14 @@ type CallContext struct {
 
 // DetermineCallContext analyzes the cursor position to determine if it's inside a function call
 // Returns nil if the cursor is not inside a function call.
-func DetermineCallContext(doc *server.Document, line, character int) (*CallContext, error) {
+func DetermineCallContext(doc *server.Document, line, character int) *CallContext {
 	if doc.Program == nil {
-		return nil, nil
+		return nil
 	}
 
 	programAST := doc.Program.AST()
 	if programAST == nil {
-		return nil, nil
+		return nil
 	}
 
 	// Convert LSP position (0-based) to AST position (1-based)
@@ -50,14 +50,14 @@ func DetermineCallContext(doc *server.Document, line, character int) (*CallConte
 	callNode := findEnclosingCallExpression(programAST, astLine, astColumn)
 	if callNode == nil {
 		log.Printf("No enclosing call expression found\n")
-		return nil, nil
+		return nil
 	}
 
 	// Extract function name based on node type
 	functionName, objectExpr := extractFunctionName(callNode)
 	if functionName == "" {
 		log.Printf("Could not extract function name from call node\n")
-		return nil, nil
+		return nil
 	}
 
 	log.Printf("Found call expression: function=%s\n", functionName)
@@ -74,7 +74,7 @@ func DetermineCallContext(doc *server.Document, line, character int) (*CallConte
 		ObjectExpr:     objectExpr,
 		ParameterIndex: paramIndex,
 		IsInsideCall:   true,
-	}, nil
+	}
 }
 
 // findEnclosingCallExpression traverses the AST to find the innermost CallExpression
@@ -474,9 +474,9 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 	}
 
 	// First try the normal approach with the actual AST
-	ctx, err := DetermineCallContext(doc, line, character)
-	if ctx != nil || err != nil {
-		return ctx, err
+	ctx := DetermineCallContext(doc, line, character)
+	if ctx != nil {
+		return ctx, nil
 	}
 
 	log.Printf("DetermineCallContextWithTempAST: Normal approach failed, trying with temporary AST\n")

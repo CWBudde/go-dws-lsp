@@ -166,7 +166,7 @@ func PositionToOffset(text string, line, character int) (int, error) {
 
 // OffsetToPosition converts a byte offset to a line/character position.
 // Returns positions in UTF-16 code units (as expected by LSP).
-func OffsetToPosition(text string, offset int) (line, character int, err error) {
+func OffsetToPosition(text string, offset int) (int, int, error) {
 	if offset < 0 || offset > len(text) {
 		return 0, 0, fmt.Errorf("offset %d out of range (0-%d)", offset, len(text))
 	}

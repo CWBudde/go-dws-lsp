@@ -26,7 +26,7 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in Completion")
-		return nil, nil
+		return []protocol.CompletionItem{}, nil
 	}
 
 	// Extract document URI and position from params
@@ -40,7 +40,7 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found for completion: %s\n", uri)
-		return nil, nil
+		return &protocol.CompletionList{IsIncomplete: false, Items: []protocol.CompletionItem{}}, nil
 	}
 
 	// Check if document and AST are available
@@ -75,9 +75,9 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 		}, nil
 	}
 
-	// If context is nil, we're in a location where completion shouldn't be provided
+	// If context is nil or type is None, we're in a location where completion shouldn't be provided
 	// (e.g., inside a comment or string)
-	if completionContext == nil {
+	if completionContext == nil || completionContext.Type == analysis.CompletionContextNone {
 		log.Println("Completion suppressed (inside comment or string)")
 
 		return &protocol.CompletionList{
@@ -121,11 +121,9 @@ func Completion(context *glsp.Context, params *protocol.CompletionParams) (any, 
 		if completionContext.ParentIdentifier != "" {
 			log.Printf("Resolving type of parent identifier: %s", completionContext.ParentIdentifier)
 
-			typeInfo, err := analysis.ResolveMemberType(doc, completionContext.ParentIdentifier,
+			typeInfo := analysis.ResolveMemberType(doc, completionContext.ParentIdentifier,
 				int(position.Line), int(position.Character))
-			if err != nil {
-				log.Printf("Error resolving member type: %v", err)
-			} else if typeInfo != nil {
+			if typeInfo != nil {
 				log.Printf("Resolved parent type: %s (built-in: %v)", typeInfo.TypeName, typeInfo.IsBuiltIn)
 
 				// Task 9.5-9.6: Get members of the resolved type
