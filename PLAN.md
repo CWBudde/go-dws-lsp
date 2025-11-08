@@ -1662,16 +1662,16 @@ The implementation is organized into the following phases:
   - [x] Set `CodeActionProvider.CodeActionKinds` to array of supported kinds
   - [x] Client may request specific kinds
 
-- [ ] **13.4 Implement quick fix for 'Undeclared identifier' error**
-  - [ ] Create `GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *Document) ([]CodeAction, error)`
-  - [ ] Check if diagnostic code or message indicates "undeclared identifier"
-  - [ ] Extract identifier name from diagnostic message
-  - [ ] Suggest code actions:
-    1. [ ] Declare variable with inferred type
-    2. [ ] Declare function (if identifier used as call)
-  - [ ] Create CodeAction for each suggestion
-  - [ ] Set `Kind` to `CodeActionKind.QuickFix`
-  - [ ] Set `Title` to clear description (e.g., "Declare variable 'x'")
+- [x] **13.4 Implement quick fix for 'Undeclared identifier' error**
+  - [x] Create `GenerateQuickFixes(diagnostic protocol.Diagnostic, doc *Document) ([]CodeAction, error)`
+  - [x] Check if diagnostic code or message indicates "undeclared identifier"
+  - [x] Extract identifier name from diagnostic message
+  - [x] Suggest code actions:
+    1. [x] Declare variable with inferred type (placeholder for Task 13.5)
+    2. [ ] Declare function (if identifier used as call) (defer to later)
+  - [x] Create CodeAction for each suggestion
+  - [x] Set `Kind` to `CodeActionKind.QuickFix`
+  - [x] Set `Title` to clear description (e.g., "Declare variable 'x'")
 
 - [ ] **13.5 Suggest 'Declare variable X' action with default type**
   - [ ] For undeclared identifier quick fix:
