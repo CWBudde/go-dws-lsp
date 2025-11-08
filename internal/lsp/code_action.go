@@ -71,6 +71,10 @@ func CodeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, 
 		actions = append(actions, quickFixes...)
 	}
 
+	// Generate source actions (refactoring actions)
+	sourceActions := GenerateSourceActions(doc, uri, actionContext)
+	actions = append(actions, sourceActions...)
+
 	// TODO: Generate code actions based on:
 	// 2. Code context (refactoring actions)
 	// 3. Selected range (extract method, etc.)
@@ -670,4 +674,200 @@ func generateVariableDeclaration(identifierName string, varType string) string {
 // stringPtr is a helper function to create a pointer to a string.
 func stringPtr(s string) *string {
 	return &s
+}
+
+// GenerateSourceActions generates source code actions (refactorings) for a document.
+// These are actions that aren't tied to specific diagnostics but operate on the entire source.
+func GenerateSourceActions(doc *server.Document, uri string, context protocol.CodeActionContext) []protocol.CodeAction {
+	var actions []protocol.CodeAction
+
+	// Check if source actions are requested
+	// If only specific kinds are requested, check if source actions are included
+	if context.Only != nil && len(context.Only) > 0 {
+		hasSourceKind := false
+		for _, kind := range context.Only {
+			if kind == protocol.CodeActionKindSource ||
+			   kind == protocol.CodeActionKindSourceOrganizeImports ||
+			   strings.HasPrefix(string(kind), string(protocol.CodeActionKindSource)) {
+				hasSourceKind = true
+				break
+			}
+		}
+		if !hasSourceKind {
+			return actions
+		}
+	}
+
+	// Create "Organize units" source action
+	organizeAction := createOrganizeUnitsAction(doc, uri)
+	if organizeAction != nil {
+		actions = append(actions, *organizeAction)
+	}
+
+	return actions
+}
+
+// createOrganizeUnitsAction creates a source action to organize the uses clause.
+// For task 13.10, this implements basic alphabetical sorting of units.
+func createOrganizeUnitsAction(doc *server.Document, uri string) *protocol.CodeAction {
+	title := "Organize units"
+
+	if doc.Text == "" {
+		log.Println("Cannot organize units: document text is empty")
+		return nil
+	}
+
+	// Extract and organize the uses clause
+	edit := organizeUsesClause(doc.Text, uri)
+	if edit == nil {
+		log.Println("No uses clause found or no changes needed")
+		return nil
+	}
+
+	action := protocol.CodeAction{
+		Title: title,
+		Kind:  stringPtr(string(protocol.CodeActionKindSourceOrganizeImports)),
+		Edit:  edit,
+	}
+
+	log.Printf("Created source action: %s\n", title)
+	return &action
+}
+
+// organizeUsesClause extracts the uses clause, sorts the units, and creates a WorkspaceEdit.
+// Returns nil if no uses clause is found or no changes are needed.
+func organizeUsesClause(text string, uri string) *protocol.WorkspaceEdit {
+	lines := strings.Split(text, "\n")
+
+	// Find the uses clause
+	usesStart := -1
+	usesEnd := -1
+
+	for i, line := range lines {
+		lowerLine := strings.TrimSpace(strings.ToLower(line))
+
+		// Look for "uses" keyword
+		if strings.HasPrefix(lowerLine, "uses ") || lowerLine == "uses" {
+			usesStart = i
+
+			// Find the end of the uses clause (ends with semicolon)
+			for j := i; j < len(lines); j++ {
+				if strings.Contains(lines[j], ";") {
+					usesEnd = j
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if usesStart == -1 || usesEnd == -1 {
+		return nil
+	}
+
+	// Extract the uses clause text
+	usesText := ""
+	for i := usesStart; i <= usesEnd; i++ {
+		usesText += lines[i]
+		if i < usesEnd {
+			usesText += "\n"
+		}
+	}
+
+	// Parse unit names from the uses clause
+	units := parseUnitsFromUsesClause(usesText)
+	if len(units) == 0 {
+		return nil
+	}
+
+	// Check if already sorted
+	sortedUnits := make([]string, len(units))
+	copy(sortedUnits, units)
+	sortUnits(sortedUnits)
+
+	// If already sorted, no changes needed
+	if unitsEqual(units, sortedUnits) {
+		log.Println("Units already organized")
+		return nil
+	}
+
+	// Generate new uses clause
+	newUsesClause := formatUsesClause(sortedUnits)
+
+	// Create text edit to replace the uses clause
+	textEdit := protocol.TextEdit{
+		Range: protocol.Range{
+			Start: protocol.Position{Line: uint32(usesStart), Character: 0},
+			End:   protocol.Position{Line: uint32(usesEnd), Character: uint32(len(lines[usesEnd]))},
+		},
+		NewText: newUsesClause,
+	}
+
+	changes := make(map[string][]protocol.TextEdit)
+	changes[uri] = []protocol.TextEdit{textEdit}
+
+	workspaceEdit := protocol.WorkspaceEdit{
+		Changes: changes,
+	}
+
+	log.Printf("Organized %d units in uses clause\n", len(units))
+	return &workspaceEdit
+}
+
+// parseUnitsFromUsesClause extracts unit names from a uses clause.
+func parseUnitsFromUsesClause(usesText string) []string {
+	var units []string
+
+	// Remove "uses" keyword and semicolon
+	text := usesText
+	text = regexp.MustCompile(`(?i)\buses\b`).ReplaceAllString(text, "")
+	text = strings.ReplaceAll(text, ";", "")
+	text = strings.TrimSpace(text)
+
+	// Split by comma
+	parts := strings.Split(text, ",")
+	for _, part := range parts {
+		unit := strings.TrimSpace(part)
+		if unit != "" {
+			units = append(units, unit)
+		}
+	}
+
+	return units
+}
+
+// sortUnits sorts a slice of unit names alphabetically (case-insensitive).
+func sortUnits(units []string) {
+	// Simple bubble sort for small lists
+	n := len(units)
+	for i := 0; i < n-1; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if strings.ToLower(units[j]) > strings.ToLower(units[j+1]) {
+				units[j], units[j+1] = units[j+1], units[j]
+			}
+		}
+	}
+}
+
+// unitsEqual checks if two unit slices are equal.
+func unitsEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// formatUsesClause formats a uses clause from a list of sorted units.
+func formatUsesClause(units []string) string {
+	if len(units) == 0 {
+		return ""
+	}
+
+	// Simple format: uses unit1, unit2, unit3;
+	return "uses " + strings.Join(units, ", ") + ";"
 }

@@ -1729,10 +1729,10 @@ The implementation is organized into the following phases:
     - [x] This preserves declaration but indicates intentional non-use
   - [x] Add both actions to result array
 
-- [ ] **13.10 Implement refactoring: Organize uses/imports**
-  - [ ] Create source action: "Organize units"
-  - [ ] Set Kind to `CodeActionKind.SourceOrganizeImports`
-  - [ ] Analyze current uses/imports clause
+- [x] **13.10 Implement refactoring: Organize uses/imports**
+  - [x] Create source action: "Organize units"
+  - [x] Set Kind to `CodeActionKind.SourceOrganizeImports`
+  - [x] Analyze current uses/imports clause
   - [ ] Remove unused unit references:
     - [ ] Parse unit names in uses clause
     - [ ] Check if any symbols from each unit are used
@@ -1742,8 +1742,8 @@ The implementation is organized into the following phases:
     - [ ] Search workspace index for definitions
     - [ ] Determine which unit contains definition
     - [ ] Add unit to uses clause
-  - [ ] Sort units alphabetically (optional)
-  - [ ] Create WorkspaceEdit to replace uses clause
+  - [x] Sort units alphabetically (optional)
+  - [x] Create WorkspaceEdit to replace uses clause
 
 - [ ] **13.11 Remove unused unit references from uses clause**
   - [ ] Implement `FindUnusedUnits(doc *Document) ([]string, error)`
