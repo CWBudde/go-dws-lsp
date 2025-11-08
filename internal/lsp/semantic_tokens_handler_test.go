@@ -52,11 +52,11 @@ func TestSemanticTokensFull_FirstRequest(t *testing.T) {
 var y: String = "hello";`
 
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///test.dws")
 
 	// Add document to server store
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// Create request params
 	params := &protocol.SemanticTokensParams{
@@ -90,10 +90,10 @@ func TestSemanticTokensFull_EmptyDocument(t *testing.T) {
 
 	code := ""
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///empty.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	params := &protocol.SemanticTokensParams{
 		TextDocument: protocol.TextDocumentIdentifier{
@@ -134,10 +134,10 @@ func TestSemanticTokensFullDelta_ValidPreviousResultID(t *testing.T) {
 	// Create initial document
 	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///test.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// First request to get initial resultID
 	fullParams := &protocol.SemanticTokensParams{
@@ -155,10 +155,10 @@ func TestSemanticTokensFullDelta_ValidPreviousResultID(t *testing.T) {
 
 	// Modify document slightly
 	code2 := `var x: Integer = 43;` // Changed value
-	doc2 := parseCodeToDocument(t, code2, string(uri))
+	doc2 := parseCodeToDocument(t, code2, uri)
 	doc2.Version = 2
 
-	srv.Documents().Set(string(uri), doc2)
+	srv.Documents().Set(uri, doc2)
 
 	// Delta request with previous resultID
 	deltaParams := &protocol.SemanticTokensDeltaParams{
@@ -193,10 +193,10 @@ func TestSemanticTokensFullDelta_InvalidPreviousResultID(t *testing.T) {
 
 	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///test.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// Use invalid previous resultID
 	invalidResultID := "invalid-result-id-12345"
@@ -226,10 +226,10 @@ func TestSemanticTokensFullDelta_NoPreviousResultID(t *testing.T) {
 
 	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///test.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// Delta request without previous resultID
 	deltaParams := &protocol.SemanticTokensDeltaParams{
@@ -256,10 +256,10 @@ func TestSemanticTokensFullDelta_NoChanges(t *testing.T) {
 
 	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///test.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// First request
 	fullParams := &protocol.SemanticTokensParams{
@@ -301,9 +301,9 @@ func TestSemanticTokensFullDelta_LargeChanges(t *testing.T) {
 var y: Integer = 2;`
 
 	uri := protocol.URI("file:///test.dws")
-	doc1 := parseCodeToDocument(t, code1, string(uri))
+	doc1 := parseCodeToDocument(t, code1, uri)
 
-	srv.Documents().Set(string(uri), doc1)
+	srv.Documents().Set(uri, doc1)
 
 	// Get initial resultID
 	fullParams := &protocol.SemanticTokensParams{
@@ -327,10 +327,10 @@ var a, b, c: String;
 var d, e, f: Integer;
 var g, h, i: Boolean;`
 
-	doc2 := parseCodeToDocument(t, code2, string(uri))
+	doc2 := parseCodeToDocument(t, code2, uri)
 	doc2.Version = 2
 
-	srv.Documents().Set(string(uri), doc2)
+	srv.Documents().Set(uri, doc2)
 
 	// Delta request
 	deltaParams := &protocol.SemanticTokensDeltaParams{
@@ -362,10 +362,10 @@ func TestSemanticTokens_CacheInvalidationOnChange(t *testing.T) {
 
 	code := testVarDeclarationWithValue
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///test.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// Get initial tokens
 	fullParams := &protocol.SemanticTokensParams{
@@ -405,10 +405,10 @@ func TestSemanticTokens_MultipleDocuments(t *testing.T) {
 	uri2 := protocol.URI("file:///test2.dws")
 
 	doc1 := parseCodeToDocument(t, code1, string(uri1))
-	doc2 := parseCodeToDocument(t, code2, string(uri2))
+	doc2 := parseCodeToDocument(t, code2, uri2)
 
 	srv.Documents().Set(string(uri1), doc1)
-	srv.Documents().Set(string(uri2), doc2)
+	srv.Documents().Set(uri2, doc2)
 
 	// Get tokens for both documents
 	result1, err1 := SemanticTokensFull(nil, &protocol.SemanticTokensParams{
@@ -496,10 +496,10 @@ begin
 end;`
 
 	uri := protocol.URI("file:///test.dws")
-	doc := parseCodeToDocument(t, code, string(uri))
+	doc := parseCodeToDocument(t, code, uri)
 	uri = protocol.URI("file:///complex.dws")
 
-	srv.Documents().Set(string(uri), doc)
+	srv.Documents().Set(uri, doc)
 
 	// Get semantic tokens
 	params := &protocol.SemanticTokensParams{

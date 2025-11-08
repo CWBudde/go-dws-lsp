@@ -209,7 +209,7 @@ func TestSemanticTokensCache_ConcurrentAccess(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 
-			uri := protocol.URI(fmt.Sprintf("file:///test%d.dws", id))
+			uri := fmt.Sprintf("file:///test%d.dws", id)
 			tokens := []SemanticToken{
 				{Line: uint32(id), StartChar: 0, Length: 3, TokenType: 0, Modifiers: 0},
 			}

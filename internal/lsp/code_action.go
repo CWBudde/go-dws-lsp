@@ -596,7 +596,7 @@ func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName 
 
 	action := protocol.CodeAction{
 		Title:       title,
-		Kind:        stringPtr(string(protocol.CodeActionKindQuickFix)),
+		Kind:        stringPtr(protocol.CodeActionKindQuickFix),
 		Diagnostics: []protocol.Diagnostic{diagnostic},
 		Edit:        &workspaceEdit,
 	}
