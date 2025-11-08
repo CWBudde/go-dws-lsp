@@ -462,6 +462,7 @@ func TestSymbolIndex_Search_RelevanceSorting(t *testing.T) {
 		nameLower := strings.ToLower(result.Name)
 
 		var currentMatchType matchType
+
 		switch {
 		case nameLower == "test":
 			currentMatchType = matchExact

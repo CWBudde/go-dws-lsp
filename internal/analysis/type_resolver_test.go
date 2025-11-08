@@ -42,6 +42,7 @@ end.`
 	// Resolve type of 'x' at the position where the cursor would be
 	// Line 3 (0-based), character 2 (after 'x')
 	typeInfo := ResolveMemberType(doc, "x", 3, 2)
+
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -84,6 +85,7 @@ end;`
 
 	// Resolve type of parameter 's'
 	typeInfo := ResolveMemberType(doc, "s", 3, 2)
+
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -132,6 +134,7 @@ end;`
 
 	// Resolve type of field 'FValue'
 	typeInfo := ResolveMemberType(doc, "FValue", 9, 2)
+
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -179,6 +182,7 @@ end.`
 
 	// Resolve type of 'p'
 	typeInfo := ResolveMemberType(doc, "p", 8, 2)
+
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}
@@ -217,6 +221,7 @@ func TestResolveMemberType_UnknownIdentifier(t *testing.T) {
 
 	// Try to resolve a non-existent identifier
 	typeInfo := ResolveMemberType(doc, "unknown", 3, 2)
+
 	if err != nil {
 		t.Fatalf("ResolveMemberType returned error: %v", err)
 	}

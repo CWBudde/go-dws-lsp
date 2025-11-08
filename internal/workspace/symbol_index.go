@@ -281,6 +281,7 @@ func (si *SymbolIndex) Search(query string, maxResults int) []SymbolLocation {
 
 		// Determine match type
 		var mType matchType
+
 		switch {
 		case nameLower == queryLower:
 			mType = matchExact
