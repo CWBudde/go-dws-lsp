@@ -90,6 +90,12 @@ func DidClose(context *glsp.Context, params *protocol.DidCloseTextDocumentParams
 		log.Printf("Invalidated completion cache for closed document: %s", uri)
 	}
 
+	// Invalidate semantic tokens cache for this document (task 12.20)
+	if srv.SemanticTokensCache() != nil {
+		srv.SemanticTokensCache().InvalidateDocument(uri)
+		log.Printf("Invalidated semantic tokens cache for closed document: %s", uri)
+	}
+
 	log.Printf("Document closed: %s\n", uri)
 
 	// Send empty diagnostics to clear error markers in the editor
@@ -181,6 +187,12 @@ func DidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentPara
 	if srv.CompletionCache() != nil {
 		srv.CompletionCache().InvalidateDocument(uri)
 		log.Printf("Invalidated completion cache for %s", uri)
+	}
+
+	// Invalidate semantic tokens cache for this document (task 12.20)
+	if srv.SemanticTokensCache() != nil {
+		srv.SemanticTokensCache().InvalidateDocument(uri)
+		log.Printf("Invalidated semantic tokens cache for %s", uri)
 	}
 
 	// Publish updated diagnostics to the client

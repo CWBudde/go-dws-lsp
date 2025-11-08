@@ -34,6 +34,9 @@ type Server struct {
 	// semanticTokensLegend defines the token types and modifiers for semantic highlighting
 	semanticTokensLegend *SemanticTokensLegend
 
+	// semanticTokensCache stores previous semantic tokens for delta computation (task 12.20)
+	semanticTokensCache *SemanticTokensCache
+
 	// mutex protects server state
 	mu sync.RWMutex
 
@@ -58,6 +61,7 @@ func New() *Server {
 		workspaceIndex:       workspace.NewSymbolIndex(),
 		completionCache:      NewCompletionCache(),
 		semanticTokensLegend: NewSemanticTokensLegend(),
+		semanticTokensCache:  NewSemanticTokensCache(),
 		config: &Config{
 			MaxProblems: 100,
 			Trace:       "off",
@@ -174,4 +178,9 @@ func (s *Server) CompletionCache() *CompletionCache {
 // The legend is immutable and shared across all requests.
 func (s *Server) SemanticTokensLegend() *SemanticTokensLegend {
 	return s.semanticTokensLegend
+}
+
+// SemanticTokensCache returns the semantic tokens cache for delta support.
+func (s *Server) SemanticTokensCache() *SemanticTokensCache {
+	return s.semanticTokensCache
 }

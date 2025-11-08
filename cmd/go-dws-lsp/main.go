@@ -108,7 +108,8 @@ func main() {
 		TextDocumentPrepareRename: lsp.PrepareRename,
 
 		// Text document requests (Phase 12: Semantic Tokens)
-		TextDocumentSemanticTokensFull: lsp.SemanticTokensFull,
+		TextDocumentSemanticTokensFull:      lsp.SemanticTokensFull,
+		TextDocumentSemanticTokensFullDelta: lsp.SemanticTokensFullDelta,
 	}
 
 	// Create GLSP server
