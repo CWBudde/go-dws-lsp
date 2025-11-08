@@ -1687,16 +1687,16 @@ The implementation is organized into the following phases:
   - [x] Attach diagnostic as `Diagnostics` field
   - [x] Add to code actions array
 
-- [ ] **13.6 Insert var declaration at appropriate location (function top or global)**
-  - [ ] Determine insertion location based on context:
-    - [ ] If inside function: insert at start of function body (after `begin`)
-    - [ ] If at global scope: insert at start of file or after existing `var` block
-  - [ ] Calculate insertion position (line, character)
-  - [ ] Create TextEdit with:
-    - [ ] Range: zero-length at insertion point
-    - [ ] NewText: declaration with appropriate indentation and newline
-  - [ ] Example: `\n  var x: Integer;\n`
-  - [ ] Handle existing var blocks (append to block vs create new)
+- [x] **13.6 Insert var declaration at appropriate location (function top or global)**
+  - [x] Determine insertion location based on context:
+    - [x] If inside function: insert at start of function body (after `begin`)
+    - [x] If at global scope: insert at start of file or after existing `var` block
+  - [x] Calculate insertion position (line, character)
+  - [x] Create TextEdit with:
+    - [x] Range: zero-length at insertion point
+    - [x] NewText: declaration with appropriate indentation and newline
+  - [x] Example: `\n  var x: Integer;\n`
+  - [x] Handle existing var blocks (append to block vs create new)
 
 - [ ] **13.7 Implement quick fix for 'Missing semicolon' error**
   - [ ] Check diagnostic for "missing semicolon" or "expected ';'"

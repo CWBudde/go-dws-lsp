@@ -162,16 +162,11 @@ func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName 
 	// Infer the type for the variable (Task 13.5)
 	varType := inferTypeFromContext(diagnostic, identifierName, doc)
 
-	// Generate the declaration text
-	declarationText := generateVariableDeclaration(identifierName, varType)
+	// Find the appropriate insertion location (Task 13.6)
+	insertPosition, indentation := findInsertionLocation(diagnostic, doc)
 
-	// Create the TextEdit to insert the declaration
-	// For now (Task 13.5), insert at the beginning of the line where the error occurred
-	// Task 13.6 will improve this to find the appropriate location (function top or global)
-	insertPosition := protocol.Position{
-		Line:      diagnostic.Range.Start.Line,
-		Character: 0,
-	}
+	// Generate the declaration text with proper indentation
+	declarationText := indentation + generateVariableDeclaration(identifierName, varType)
 
 	textEdit := protocol.TextEdit{
 		Range: protocol.Range{
@@ -196,7 +191,7 @@ func createDeclareVariableAction(diagnostic protocol.Diagnostic, identifierName 
 		Edit:        &workspaceEdit,
 	}
 
-	log.Printf("Created quick fix: %s (type: %s)\n", title, varType)
+	log.Printf("Created quick fix: %s (type: %s) at line %d\n", title, varType, insertPosition.Line)
 	return &action
 }
 
@@ -254,6 +249,153 @@ func inferTypeFromContext(diagnostic protocol.Diagnostic, identifierName string,
 
 	// Default to Variant if we can't infer the type
 	return "Variant"
+}
+
+// findInsertionLocation determines where to insert a variable declaration.
+// Returns the position and indentation string.
+// Task 13.6: Insert at function top (after begin) or global scope (after var block)
+func findInsertionLocation(diagnostic protocol.Diagnostic, doc *server.Document) (protocol.Position, string) {
+	if doc.Text == "" {
+		// Default to beginning of file if no text
+		return protocol.Position{Line: 0, Character: 0}, ""
+	}
+
+	lines := strings.Split(doc.Text, "\n")
+	errorLine := int(diagnostic.Range.Start.Line)
+
+	// Look backwards from error line to find context
+	// Strategy:
+	// 1. Find if we're inside a function (look for "begin" keyword)
+	// 2. If yes, insert after the "begin" line
+	// 3. If no, look for global "var" declarations and insert after them
+	// 4. Otherwise, insert at beginning of file
+
+	// Look for "begin" keyword indicating function body
+	functionBeginLine := findFunctionBegin(lines, errorLine)
+	if functionBeginLine >= 0 {
+		// We're inside a function, insert after the begin line
+		insertLine := functionBeginLine + 1
+		indentation := detectIndentation(lines, insertLine)
+		return protocol.Position{Line: uint32(insertLine), Character: 0}, indentation
+	}
+
+	// Not in a function, look for global var declarations
+	lastVarLine := findLastGlobalVarDeclaration(lines, errorLine)
+	if lastVarLine >= 0 {
+		// Insert after the last var declaration
+		insertLine := lastVarLine + 1
+		return protocol.Position{Line: uint32(insertLine), Character: 0}, ""
+	}
+
+	// No var block found, insert at beginning of file
+	// Look for program header/uses clause and insert after
+	insertAfterLine := findProgramHeader(lines)
+	return protocol.Position{Line: uint32(insertAfterLine), Character: 0}, ""
+}
+
+// findFunctionBegin looks backwards from errorLine to find a "begin" keyword.
+// Returns the line number of the begin, or -1 if not found.
+func findFunctionBegin(lines []string, errorLine int) int {
+	// Look backwards up to 50 lines
+	maxLookback := 50
+	for i := errorLine - 1; i >= 0 && i >= errorLine-maxLookback; i-- {
+		line := strings.TrimSpace(lines[i])
+		lowerLine := strings.ToLower(line)
+
+		// Check if this line has "begin"
+		if lowerLine == "begin" || strings.HasPrefix(lowerLine, "begin ") || strings.HasPrefix(lowerLine, "begin;") {
+			return i
+		}
+
+		// Stop if we hit "end" or other block terminators
+		if lowerLine == "end;" || lowerLine == "end" || strings.HasPrefix(lowerLine, "end;") {
+			break
+		}
+	}
+	return -1
+}
+
+// findLastGlobalVarDeclaration finds the last global "var" declaration before errorLine.
+// Returns the line number, or -1 if not found.
+func findLastGlobalVarDeclaration(lines []string, errorLine int) int {
+	lastVarLine := -1
+
+	// Look from start of file to error line
+	for i := 0; i < errorLine && i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		lowerLine := strings.ToLower(line)
+
+		// Check for "var" keyword at the start of line (global var)
+		if strings.HasPrefix(lowerLine, "var ") {
+			lastVarLine = i
+		}
+
+		// Stop if we hit "begin" (start of code)
+		if lowerLine == "begin" || strings.HasPrefix(lowerLine, "begin ") {
+			break
+		}
+	}
+
+	return lastVarLine
+}
+
+// findProgramHeader finds where to insert after program header/uses clauses.
+// Returns the line number to insert after.
+func findProgramHeader(lines []string) int {
+	insertAfter := 0
+
+	for i := 0; i < len(lines) && i < 20; i++ {
+		line := strings.TrimSpace(lines[i])
+		lowerLine := strings.ToLower(line)
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "//") {
+			continue
+		}
+
+		// Check for program/unit/uses declarations
+		if strings.HasPrefix(lowerLine, "program ") ||
+			strings.HasPrefix(lowerLine, "unit ") ||
+			strings.HasPrefix(lowerLine, "uses ") {
+			insertAfter = i + 1
+			continue
+		}
+
+		// If we hit actual code, stop
+		if strings.HasPrefix(lowerLine, "var ") ||
+			strings.HasPrefix(lowerLine, "function ") ||
+			strings.HasPrefix(lowerLine, "procedure ") ||
+			strings.HasPrefix(lowerLine, "begin") {
+			break
+		}
+	}
+
+	return insertAfter
+}
+
+// detectIndentation detects the indentation used around the given line.
+// Returns a string of spaces (typically 2 or 4 spaces).
+func detectIndentation(lines []string, nearLine int) string {
+	// Look at nearby lines to detect indentation
+	for i := nearLine; i < len(lines) && i < nearLine+5; i++ {
+		if i >= len(lines) {
+			break
+		}
+		line := lines[i]
+		if len(line) > 0 && line[0] == ' ' {
+			// Count leading spaces
+			spaces := 0
+			for j := 0; j < len(line) && line[j] == ' '; j++ {
+				spaces++
+			}
+			if spaces > 0 {
+				return strings.Repeat(" ", spaces)
+			}
+		}
+	}
+
+	// Default to 2 spaces
+	return "  "
 }
 
 // generateVariableDeclaration generates the variable declaration text.
