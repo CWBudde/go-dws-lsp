@@ -20,7 +20,7 @@ func Hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover
 	srv, ok := serverInstance.(*server.Server)
 	if !ok || srv == nil {
 		log.Println("Warning: server instance not available in Hover")
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response for no hover
 	}
 
 	// Extract document URI and position from params
@@ -34,20 +34,20 @@ func Hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover
 	doc, exists := srv.Documents().Get(uri)
 	if !exists {
 		log.Printf("Document not found for hover: %s\n", uri)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response for no hover
 	}
 
 	// Check if document and AST are available
 	if doc.Program == nil {
 		log.Printf("No AST available for hover (document has parse errors): %s\n", uri)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response for no hover
 	}
 
 	// Get AST from Program
 	programAST := doc.Program.AST()
 	if programAST == nil {
 		log.Printf("AST is nil for document: %s\n", uri)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response for no hover
 	}
 
 	// Convert LSP position (0-based, UTF-16) to AST position (1-based, UTF-8)
@@ -59,14 +59,14 @@ func Hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover
 	node := analysis.FindNodeAtPosition(programAST, astLine, astColumn)
 	if node == nil {
 		log.Printf("No AST node found at position %d:%d\n", astLine, astColumn)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response for no hover
 	}
 
 	// Get hover information based on node type
 	hoverContent := getHoverContent(node, doc)
 	if hoverContent == "" {
 		// No hover information available for this node
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil is valid LSP response for no hover
 	}
 
 	hover := &protocol.Hover{
