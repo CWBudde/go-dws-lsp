@@ -68,8 +68,8 @@ func Initialize(context *glsp.Context, params *protocol.InitializeParams) (inter
 		if legend != nil {
 			semanticTokensProvider = &protocol.SemanticTokensOptions{
 				Legend: legend.ToProtocolLegend(),
-				Full: &protocol.SemanticTokensFullOptions{
-					Delta: &trueVal, // Support delta incremental updates
+				Full: map[string]interface{}{
+					"delta": true, // Support delta incremental updates
 				},
 			}
 		}

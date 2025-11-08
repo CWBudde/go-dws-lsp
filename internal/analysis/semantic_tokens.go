@@ -12,24 +12,15 @@ import (
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
-// SemanticToken represents a raw semantic token with position and classification.
-type SemanticToken struct {
-	Line      uint32 // 0-based line number
-	StartChar uint32 // 0-based start character
-	Length    uint32 // Token length
-	TokenType uint32 // Index into legend.TokenTypes
-	Modifiers uint32 // Bit flags for modifiers
-}
-
 // CollectSemanticTokens traverses the AST and collects semantic tokens.
-func CollectSemanticTokens(astRoot *ast.Program, legend *server.SemanticTokensLegend) ([]SemanticToken, error) {
+func CollectSemanticTokens(astRoot *ast.Program, legend *server.SemanticTokensLegend) ([]server.SemanticToken, error) {
 	if astRoot == nil || legend == nil {
 		return nil, nil
 	}
 
 	collector := &tokenCollector{
 		legend: legend,
-		tokens: make([]SemanticToken, 0),
+		tokens: make([]server.SemanticToken, 0),
 	}
 
 	// Traverse the AST
@@ -49,7 +40,7 @@ func CollectSemanticTokens(astRoot *ast.Program, legend *server.SemanticTokensLe
 // tokenCollector holds state during AST traversal.
 type tokenCollector struct {
 	legend *server.SemanticTokensLegend
-	tokens []SemanticToken
+	tokens []server.SemanticToken
 }
 
 // visit is called for each AST node during traversal.
@@ -246,7 +237,7 @@ func (tc *tokenCollector) addToken(pos token.Position, length int, tokenType str
 		return
 	}
 
-	tc.tokens = append(tc.tokens, SemanticToken{
+	tc.tokens = append(tc.tokens, server.SemanticToken{
 		Line:      line,
 		StartChar: startChar,
 		Length:    uint32(length),
@@ -258,7 +249,7 @@ func (tc *tokenCollector) addToken(pos token.Position, length int, tokenType str
 // EncodeSemanticTokens encodes tokens in LSP delta format.
 // The LSP protocol uses a delta encoding where each token is represented as:
 // [deltaLine, deltaStartChar, length, tokenType, tokenModifiers]
-func EncodeSemanticTokens(tokens []SemanticToken) []uint32 {
+func EncodeSemanticTokens(tokens []server.SemanticToken) []uint32 {
 	if len(tokens) == 0 {
 		return []uint32{}
 	}

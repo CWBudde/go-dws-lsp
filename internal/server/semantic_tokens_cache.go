@@ -7,15 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // CachedTokens represents a cached set of semantic tokens for a document.
 type CachedTokens struct {
-	ResultID  string                   // Unique identifier for this token set
-	Tokens    []analysis.SemanticToken // Raw tokens (not encoded)
-	Timestamp time.Time                // When this cache entry was created
+	ResultID  string          // Unique identifier for this token set
+	Tokens    []SemanticToken // Raw tokens (not encoded)
+	Timestamp time.Time       // When this cache entry was created
 }
 
 // SemanticTokensCache manages cached semantic tokens for delta computation.
@@ -51,7 +50,7 @@ func GenerateResultID(uri protocol.DocumentUri, version int) string {
 }
 
 // Store saves a set of semantic tokens in the cache with the given resultId.
-func (c *SemanticTokensCache) Store(uri protocol.DocumentUri, resultID string, tokens []analysis.SemanticToken) {
+func (c *SemanticTokensCache) Store(uri protocol.DocumentUri, resultID string, tokens []SemanticToken) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
