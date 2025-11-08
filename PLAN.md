@@ -1718,16 +1718,16 @@ The implementation is organized into the following phases:
   - [x] Create CodeAction for each suggestion
   - [x] Set Kind to QuickFix
 
-- [ ] **13.9 Suggest removing or prefixing with underscore**
-  - [ ] Code action 1: "Remove unused variable 'x'"
-    - [ ] Find variable declaration in AST
-    - [ ] Create TextEdit to delete entire declaration statement
-    - [ ] Handle formatting (remove blank line if appropriate)
-  - [ ] Code action 2: "Rename to '\_x'"
-    - [ ] Reuse rename functionality from Phase 11
-    - [ ] Create WorkspaceEdit to rename `x` to `_x`
-    - [ ] This preserves declaration but indicates intentional non-use
-  - [ ] Add both actions to result array
+- [x] **13.9 Suggest removing or prefixing with underscore**
+  - [x] Code action 1: "Remove unused variable 'x'"
+    - [x] Find variable declaration in AST
+    - [x] Create TextEdit to delete entire declaration statement
+    - [x] Handle formatting (remove blank line if appropriate)
+  - [x] Code action 2: "Rename to '\_x'"
+    - [x] Reuse rename functionality from Phase 11
+    - [x] Create WorkspaceEdit to rename `x` to `_x`
+    - [x] This preserves declaration but indicates intentional non-use
+  - [x] Add both actions to result array
 
 - [ ] **13.10 Implement refactoring: Organize uses/imports**
   - [ ] Create source action: "Organize units"
