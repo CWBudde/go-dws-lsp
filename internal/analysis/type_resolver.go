@@ -321,6 +321,7 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 	}
 
 	// Extract fields
+	plainTextFormat := protocol.InsertTextFormatPlainText
 	for _, field := range classDecl.Fields {
 		if field.Name == nil {
 			continue
@@ -330,9 +331,10 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		sortText := "0field~" + field.Name.Value
 
 		item := protocol.CompletionItem{
-			Label:    field.Name.Value,
-			Kind:     &kind,
-			SortText: &sortText,
+			Label:            field.Name.Value,
+			Kind:             &kind,
+			SortText:         &sortText,
+			InsertTextFormat: &plainTextFormat,
 		}
 
 		// Add type information in detail
@@ -407,9 +409,10 @@ func extractClassMembers(program *ast.Program, className string) []protocol.Comp
 		sortText := "2property~" + prop.Name.Value
 
 		item := protocol.CompletionItem{
-			Label:    prop.Name.Value,
-			Kind:     &kind,
-			SortText: &sortText,
+			Label:            prop.Name.Value,
+			Kind:             &kind,
+			SortText:         &sortText,
+			InsertTextFormat: &plainTextFormat,
 		}
 
 		// Add type information in detail
@@ -468,6 +471,7 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 	}
 
 	// Extract fields
+	plainTextFormat := protocol.InsertTextFormatPlainText
 	for _, field := range recordDecl.Fields {
 		if field.Name == nil {
 			continue
@@ -477,9 +481,10 @@ func extractRecordMembers(program *ast.Program, recordName string) []protocol.Co
 		sortText := "0field~" + field.Name.Value
 
 		item := protocol.CompletionItem{
-			Label:    field.Name.Value,
-			Kind:     &kind,
-			SortText: &sortText,
+			Label:            field.Name.Value,
+			Kind:             &kind,
+			SortText:         &sortText,
+			InsertTextFormat: &plainTextFormat,
 		}
 
 		// Add type information in detail

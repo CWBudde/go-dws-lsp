@@ -832,11 +832,27 @@ The implementation is organized into the following phases:
     - Functions with parameters use Snippet format, no-parameter functions use PlainText
     - Snippet syntax: `FunctionName(${1:param1}, ${2:param2})$0` with proper tabstops
 
-- [ ] **9.15 Set insertTextFormat to Snippet where appropriate**
-  - [ ] For functions with parameters: use Snippet
-  - [ ] For control structures (if-then, for-do): use Snippet
-  - [ ] For simple identifiers: use PlainText
-  - [ ] Ensure editor supports snippets (check client capabilities)
+- [x] **9.15 Set insertTextFormat to Snippet where appropriate** ✅
+  - [x] For functions with parameters: use Snippet
+  - [x] For control structures (if-then, for-do): use Snippet
+  - [x] For simple identifiers: use PlainText
+  - [x] Ensure editor supports snippets (check client capabilities)
+  - **Implementation**:
+    - Added `SupportsSnippets()` method to Server to check client capabilities
+    - Client capabilities stored during initialization in `internal/lsp/initialize.go:34`
+    - Control structure keywords now use Snippet format with proper syntax:
+      - `if`: `if ${1:condition} then\n\t$0\nend;`
+      - `for`: `for ${1:i} := ${2:0} to ${3:10} do\n\t$0\nend;`
+      - `while`: `while ${1:condition} do\n\t$0\nend;`
+      - `repeat`: `repeat\n\t$0\nuntil ${1:condition};`
+      - `case`: `case ${1:expression} of\n\t${2:value}: $0\nend;`
+      - `try`: `try\n\t$0\nexcept\n\ton E: Exception do\n\t\tRaise;\nend;`
+      - `function`, `procedure`, `class` declarations also have snippets
+    - All completion items now explicitly set `InsertTextFormat`:
+      - Functions with parameters: `InsertTextFormatSnippet`
+      - Simple identifiers (variables, types, fields, properties): `InsertTextFormatPlainText`
+      - Keywords without structure: `InsertTextFormatPlainText`
+    - Locations: `internal/analysis/scope_completion.go`, `internal/analysis/type_resolver.go`, `internal/server/server.go`
 
 - [ ] **9.16 Optionally implement completionItem/resolve for lazy resolution**
   - [ ] Mark `CompletionProvider.ResolveProvider = true` in capabilities
