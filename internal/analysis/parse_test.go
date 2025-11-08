@@ -59,44 +59,44 @@ end.`,
 	}
 }
 
-func TestParseDocument_SyntaxErrors(t *testing.T) {
-	tests := []struct {
-		name              string
-		source            string
-		expectedErrorsMin int
-	}{
-		{
-			name: "missing semicolon",
-			source: `var x: Integer
+var syntaxErrorTests = []struct {
+	name              string
+	source            string
+	expectedErrorsMin int
+}{
+	{
+		name: "missing semicolon",
+		source: `var x: Integer
 begin
 	x := 42;
 end.`,
-			expectedErrorsMin: 1,
-		},
-		{
-			name: "unclosed string",
-			source: `begin
+		expectedErrorsMin: 1,
+	},
+	{
+		name: "unclosed string",
+		source: `begin
 	PrintLn('Hello World);
 end.`,
-			expectedErrorsMin: 1,
-		},
-		{
-			name: "undefined variable",
-			source: `begin
+		expectedErrorsMin: 1,
+	},
+	{
+		name: "undefined variable",
+		source: `begin
 	x := 42;
 end.`,
-			expectedErrorsMin: 1,
-		},
-		{
-			name: "missing end keyword",
-			source: `begin
+		expectedErrorsMin: 1,
+	},
+	{
+		name: "missing end keyword",
+		source: `begin
 	PrintLn('test');
 .`,
-			expectedErrorsMin: 1,
-		},
-	}
+		expectedErrorsMin: 1,
+	},
+}
 
-	for _, tt := range tests {
+func TestParseDocument_SyntaxErrors(t *testing.T) {
+	for _, tt := range syntaxErrorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, diagnostics, err := ParseDocument(tt.source, "test.dws")
 			if err != nil {
@@ -137,52 +137,52 @@ func TestParseDocument_EmptySource(t *testing.T) {
 	_ = diagnostics // Just verify we got a result
 }
 
-func TestConvertStructuredErrors(t *testing.T) {
-	tests := []struct {
-		name   string
-		errors []*dwscript.Error
-	}{
-		{
-			name:   "empty errors",
-			errors: []*dwscript.Error{},
-		},
-		{
-			name: "single error",
-			errors: []*dwscript.Error{
-				{
-					Message:  "Syntax Error: unexpected token",
-					Line:     5,
-					Column:   10,
-					Length:   5,
-					Severity: dwscript.SeverityError,
-					Code:     "",
-				},
+var structuredErrorTests = []struct {
+	name   string
+	errors []*dwscript.Error
+}{
+	{
+		name:   "empty errors",
+		errors: []*dwscript.Error{},
+	},
+	{
+		name: "single error",
+		errors: []*dwscript.Error{
+			{
+				Message:  "Syntax Error: unexpected token",
+				Line:     5,
+				Column:   10,
+				Length:   5,
+				Severity: dwscript.SeverityError,
+				Code:     "",
 			},
 		},
-		{
-			name: "multiple errors with different severities",
-			errors: []*dwscript.Error{
-				{
-					Message:  "Undefined identifier",
-					Line:     1,
-					Column:   5,
-					Length:   8,
-					Severity: dwscript.SeverityError,
-					Code:     "E_UNDEFINED_VAR",
-				},
-				{
-					Message:  "Unused variable",
-					Line:     3,
-					Column:   10,
-					Length:   4,
-					Severity: dwscript.SeverityWarning,
-					Code:     "W_UNUSED_VAR",
-				},
+	},
+	{
+		name: "multiple errors with different severities",
+		errors: []*dwscript.Error{
+			{
+				Message:  "Undefined identifier",
+				Line:     1,
+				Column:   5,
+				Length:   8,
+				Severity: dwscript.SeverityError,
+				Code:     "E_UNDEFINED_VAR",
+			},
+			{
+				Message:  "Unused variable",
+				Line:     3,
+				Column:   10,
+				Length:   4,
+				Severity: dwscript.SeverityWarning,
+				Code:     "W_UNUSED_VAR",
 			},
 		},
-	}
+	},
+}
 
-	for _, tt := range tests {
+func TestConvertStructuredErrors(t *testing.T) {
+	for _, tt := range structuredErrorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			diagnostics := convertStructuredErrors(tt.errors)
 
