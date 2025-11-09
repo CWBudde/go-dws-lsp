@@ -335,7 +335,7 @@ func findOpeningParenthesis(runes []rune) int {
 			parenDepth++
 		} else if r == '(' {
 			if parenDepth == 0 {
-				return i
+				return index
 			}
 
 			parenDepth--
