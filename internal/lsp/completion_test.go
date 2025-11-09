@@ -577,11 +577,7 @@ func verifyRecordMemberCompletion(t *testing.T, items []protocol.CompletionItem)
 
 // Task 9.20: Test member access returns all members (no prefix).
 func TestCompletion_MemberAccessAllMembers(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: class with multiple members
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 type TData = class
@@ -596,101 +592,34 @@ var data: TData;
 begin
   data.GetValue := 1;
 end.`
-
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor right after "data." (testing all members)
-	// Testing that member access returns all members of the type
+	createAndAddTestDocument(t, srv, source, testURI)
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      12, // On the "data.GetValue := 1;" line (0-indexed)
-				Character: 7,  // After "data." -> "  data." = 2 + 4 + 1 = 7
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 12, 7, &triggerChar)
+	completionList := callCompletion(t, params)
+	verifyAllMembersPresent(t, completionList.Items)
+}
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
+// verifyAllMembersPresent checks that all four class members are in completion results.
+func verifyAllMembersPresent(t *testing.T, items []protocol.CompletionItem) {
+	expectedMembers := []string{"GetValue", "GetName", "SetValue", "Count"}
+	foundMembers := make(map[string]bool)
 
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: All four members should be in results
-	foundGetValue := false
-	foundGetName := false
-	foundSetValue := false
-	foundCount := false
-
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
-
-		if item.Label == "GetValue" {
-			foundGetValue = true
-		}
-
-		if item.Label == "GetName" {
-			foundGetName = true
-		}
-
-		if item.Label == "SetValue" {
-			foundSetValue = true
-		}
-
-		if item.Label == "Count" {
-			foundCount = true
+		for _, expected := range expectedMembers {
+			if item.Label == expected {
+				foundMembers[expected] = true
+			}
 		}
 	}
 
-	// Verify: All four members should be in results
-	if !foundGetValue {
-		t.Error("Expected 'GetValue' to be in completion results")
+	for _, member := range expectedMembers {
+		if !foundMembers[member] {
+			t.Errorf("Expected '%s' to be in completion results", member)
+		}
 	}
 
-	if !foundGetName {
-		t.Error("Expected 'GetName' to be in completion results")
-	}
-
-	if !foundSetValue {
-		t.Error("Expected 'SetValue' to be in completion results")
-	}
-
-	if !foundCount {
-		t.Error("Expected 'Count' to be in completion results")
-	}
-
-	t.Logf("Member access all members test passed: found all 4 members (GetValue=%v, GetName=%v, SetValue=%v, Count=%v)",
-		foundGetValue, foundGetName, foundSetValue, foundCount)
+	t.Logf("Member access all members test passed: found all 4 members")
 }
 
 // Task 9.21: Test keyword completion at statement start.
