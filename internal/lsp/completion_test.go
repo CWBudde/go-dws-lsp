@@ -530,11 +530,7 @@ func verifyClassMemberCompletion(t *testing.T, items []protocol.CompletionItem) 
 
 // Task 9.20: Test member access on record type.
 func TestCompletion_MemberAccessOnRecord(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: record type with fields
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 type TPoint = record
@@ -547,77 +543,31 @@ var point: TPoint;
 begin
   point.X := 10;
 end.`
-
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor after "point." (after the dot)
-	// Testing member access completion on record
+	createAndAddTestDocument(t, srv, source, testURI)
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      10, // On the "point.X := 10;" line (0-indexed)
-				Character: 8,  // After "point." -> "  point." = 2 + 5 + 1 = 8
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 10, 8, &triggerChar)
+	completionList := callCompletion(t, params)
+	verifyRecordMemberCompletion(t, completionList.Items)
+}
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: X and Y from TPoint record
+// verifyRecordMemberCompletion checks that X and Y record fields are in completion results.
+func verifyRecordMemberCompletion(t *testing.T, items []protocol.CompletionItem) {
 	foundX := false
 	foundY := false
 
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
-
 		if item.Label == "X" {
 			foundX = true
 		}
-
 		if item.Label == "Y" {
 			foundY = true
 		}
 	}
 
-	// Verify: X and Y should be in results
 	if !foundX {
 		t.Error("Expected 'X' to be in completion results for record member access")
 	}
-
 	if !foundY {
 		t.Error("Expected 'Y' to be in completion results for record member access")
 	}
