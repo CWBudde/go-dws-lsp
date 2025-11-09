@@ -294,12 +294,12 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 	var stringChar rune
 	openParenIndex := -1
 
-	for i := len(runes) - 1; i >= 0; i-- {
-		r := runes[i]
+	for index := len(runes) - 1; index >= 0; index-- {
+		r := runes[index]
 
 		// Handle string literals
 		if r == '"' || r == '\'' {
-			if i == 0 || runes[i-1] != '\\' {
+			if index == 0 || runes[index-1] != '\\' {
 				if inString && r == stringChar {
 					inString = false
 				} else if !inString {
@@ -321,7 +321,7 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 		} else if r == '(' {
 			if parenDepth == 0 {
 				// Found the opening parenthesis
-				openParenIndex = i
+				openParenIndex = index
 				break
 			}
 
@@ -336,23 +336,23 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 
 	// Now scan backward from the opening parenthesis to find the function identifier
 	// Skip whitespace first
-	i := openParenIndex - 1
-	for i >= 0 && isWhitespace(runes[i]) {
-		i--
+	index := openParenIndex - 1
+	for index >= 0 && isWhitespace(runes[index]) {
+		index--
 	}
 
-	if i < 0 {
+	if index < 0 {
 		return "", nil
 	}
 
 	// Collect the function name (may include dots for qualified names)
 	var functionNameRunes []rune
 
-	for i >= 0 {
-		r := runes[i]
+	for index >= 0 {
+		r := runes[index]
 		if isIdentifierChar(r) || r == '.' {
 			functionNameRunes = append([]rune{r}, functionNameRunes...)
-			i--
+			index--
 		} else {
 			break
 		}
