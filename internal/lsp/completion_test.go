@@ -624,11 +624,7 @@ func verifyAllMembersPresent(t *testing.T, items []protocol.CompletionItem) {
 
 // Task 9.21: Test keyword completion at statement start.
 func TestCompletion_KeywordsAtStatementStart(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: function with cursor at beginning of line
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 function DoSomething(): Integer;
@@ -638,99 +634,40 @@ end;
 
 begin
 end.`
+	createAndAddTestDocument(t, srv, source, testURI)
+	params := createCompletionParams(testURI, 4, 2, nil)
+	completionList := callCompletion(t, params)
+	verifyKeywordCompletion(t, completionList.Items)
+}
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor at beginning of line inside function (after "begin")
-	// Testing keyword completion at statement start
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      4, // On the "  Result := 0;" line (0-indexed)
-				Character: 2, // At the beginning after indent
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Keywords like if, while, for, var, etc. should be in results
-	foundIf := false
-	foundWhile := false
-	foundFor := false
-	foundVar := false
-	foundBegin := false
-
+// verifyKeywordCompletion checks that expected keywords are in completion results.
+func verifyKeywordCompletion(t *testing.T, items []protocol.CompletionItem) {
+	expectedKeywords := []string{testKeywordIf, testKeywordWhile, testKeywordFor}
+	foundKeywords := make(map[string]bool)
 	keywordCount := 0
 
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindKeyword {
 			keywordCount++
-
-			switch item.Label {
-			case testKeywordIf:
-				foundIf = true
-			case testKeywordWhile:
-				foundWhile = true
-			case testKeywordFor:
-				foundFor = true
-			case testKeywordVar:
-				foundVar = true
-			case testKeywordBegin:
-				foundBegin = true
+			for _, expected := range expectedKeywords {
+				if item.Label == expected {
+					foundKeywords[expected] = true
+				}
 			}
 		}
 	}
 
-	// Verify: Control flow keywords should be in results
-	if !foundIf {
-		t.Error("Expected 'if' keyword to be in completion results")
+	for _, keyword := range expectedKeywords {
+		if !foundKeywords[keyword] {
+			t.Errorf("Expected '%s' keyword to be in completion results", keyword)
+		}
 	}
 
-	if !foundWhile {
-		t.Error("Expected 'while' keyword to be in completion results")
-	}
-
-	if !foundFor {
-		t.Error("Expected 'for' keyword to be in completion results")
-	}
-
-	// Verify we have a reasonable number of keywords
 	if keywordCount < 10 {
 		t.Errorf("Expected at least 10 keywords, found %d", keywordCount)
 	}
 
-	t.Logf("Keyword completion test passed: found %d keywords (if=%v, while=%v, for=%v, var=%v, begin=%v)",
-		keywordCount, foundIf, foundWhile, foundFor, foundVar, foundBegin)
+	t.Logf("Keyword completion test passed: found %d keywords", keywordCount)
 }
 
 // Task 9.21: Test built-in function completion.
