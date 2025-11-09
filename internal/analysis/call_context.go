@@ -309,12 +309,12 @@ func findOpeningParenthesis(runes []rune) int {
 	inString := false
 	var stringChar rune
 
-	for i := len(runes) - 1; i >= 0; i-- {
-		r := runes[i]
+	for index := len(runes) - 1; index >= 0; index-- {
+		r := runes[index]
 
 		// Handle string literals
 		if r == '"' || r == '\'' {
-			if i == 0 || runes[i-1] != '\\' {
+			if index == 0 || runes[index-1] != '\\' {
 				if inString && r == stringChar {
 					inString = false
 				} else if !inString {
@@ -360,11 +360,11 @@ func extractFunctionNameFromRunes(runes []rune, openParenIndex int) string {
 	// Collect the function name (may include dots for qualified names)
 	var functionNameRunes []rune
 
-	for i >= 0 {
-		r := runes[i]
+	for index >= 0 {
+		r := runes[index]
 		if isIdentifierChar(r) || r == '.' {
 			functionNameRunes = append([]rune{r}, functionNameRunes...)
-			i--
+			index--
 		} else {
 			break
 		}
