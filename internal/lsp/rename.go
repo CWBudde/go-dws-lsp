@@ -161,38 +161,17 @@ func Rename(context *glsp.Context, params *protocol.RenameParams) (*protocol.Wor
 //
 // This handler is called before the actual rename to provide early feedback to the user.
 func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) (any, error) {
-	// Get server instance
-	srv, ok := serverInstance.(*server.Server)
-	if !ok || srv == nil {
-		log.Println("Warning: server instance not available in PrepareRename")
-		return nil, errors.New("server instance not available")
-	}
-
-	// Extract request details
 	uri := params.TextDocument.URI
 	position := params.Position
 
 	log.Printf("PrepareRename request at %s line %d, character %d\n",
 		uri, position.Line, position.Character)
 
-	// Retrieve document from store
-	doc, exists := srv.Documents().Get(uri)
-	if !exists {
-		log.Printf("Document not found for prepareRename: %s\n", uri)
-		return nil, fmt.Errorf("document not found: %s", uri)
+	// Validate and get required components
+	programAST, astLine, astColumn, err := validateRenameRequest(uri, position)
+	if err != nil {
+		return nil, err
 	}
-
-	// Ensure we have a parsed program/AST
-	if doc.Program == nil || doc.Program.AST() == nil {
-		log.Printf("No AST available for prepareRename (document has parse errors): %s\n", uri)
-		return nil, errors.New("cannot rename in document with parse errors")
-	}
-
-	// Convert LSP (0-based) to AST (1-based)
-	astLine := int(position.Line) + 1
-	astColumn := int(position.Character) + 1
-
-	programAST := doc.Program.AST()
 
 	// Identify symbol at position
 	sym := analysis.IdentifySymbolAtPosition(programAST, astLine, astColumn)
@@ -210,12 +189,29 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 		return nil, fmt.Errorf("cannot rename '%s': %s", symbolName, reason)
 	}
 
-	// Get the range of the symbol
-	// Find the node at the position to get its range
+	// Get the symbol range
+	symbolRange, err := getSymbolRange(programAST, astLine, astColumn, symbolName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return range with placeholder
+	result := map[string]any{
+		"range":       symbolRange,
+		"placeholder": symbolName,
+	}
+
+	log.Printf("PrepareRename successful for symbol %s at range %v\n", symbolName, symbolRange)
+
+	return result, nil
+}
+
+// getSymbolRange finds and returns the LSP range for a symbol at the given position.
+func getSymbolRange(programAST *ast.Program, astLine, astColumn int, symbolName string) (protocol.Range, error) {
 	node := analysis.FindNodeAtPosition(programAST, astLine, astColumn)
 	if node == nil {
 		log.Printf("No AST node at position %d:%d for prepareRename\n", astLine, astColumn)
-		return nil, errors.New("no symbol found at cursor position")
+		return protocol.Range{}, errors.New("no symbol found at cursor position")
 	}
 
 	// Get the identifier node
@@ -233,21 +229,20 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 					return false
 				}
 			}
-
 			return true
 		})
 	}
 
 	if identNode == nil {
 		log.Printf("No identifier node found for symbol %s\n", symbolName)
-		return nil, errors.New("cannot determine symbol range")
+		return protocol.Range{}, errors.New("cannot determine symbol range")
 	}
 
 	// Convert AST positions (1-based) to LSP positions (0-based)
 	start := identNode.Pos()
 	end := identNode.End()
 
-	symbolRange := protocol.Range{
+	return protocol.Range{
 		Start: protocol.Position{
 			Line:      uint32(max(0, start.Line-1)),
 			Character: uint32(max(0, start.Column-1)),
@@ -256,18 +251,34 @@ func PrepareRename(context *glsp.Context, params *protocol.PrepareRenameParams) 
 			Line:      uint32(max(0, end.Line-1)),
 			Character: uint32(max(0, end.Column-1)),
 		},
+	}, nil
+}
+
+// validateRenameRequest validates the rename request and returns the AST and position.
+func validateRenameRequest(uri string, position protocol.Position) (*ast.Program, int, int, error) {
+	srv, ok := serverInstance.(*server.Server)
+	if !ok || srv == nil {
+		log.Println("Warning: server instance not available in PrepareRename")
+		return nil, 0, 0, errors.New("server instance not available")
 	}
 
-	// Return range with placeholder
-	// According to LSP spec, we can return either a Range or a RangeWithPlaceholder
-	result := map[string]any{
-		"range":       symbolRange,
-		"placeholder": symbolName,
+	doc, exists := srv.Documents().Get(uri)
+	if !exists {
+		log.Printf("Document not found for prepareRename: %s\n", uri)
+		return nil, 0, 0, fmt.Errorf("document not found: %s", uri)
 	}
 
-	log.Printf("PrepareRename successful for symbol %s at range %v\n", symbolName, symbolRange)
+	if doc.Program == nil || doc.Program.AST() == nil {
+		log.Printf("No AST available for prepareRename (document has parse errors): %s\n", uri)
+		return nil, 0, 0, errors.New("cannot rename in document with parse errors")
+	}
 
-	return result, nil
+	// Convert LSP (0-based) to AST (1-based)
+	astLine := int(position.Line) + 1
+	astColumn := int(position.Character) + 1
+	programAST := doc.Program.AST()
+
+	return programAST, astLine, astColumn, nil
 }
 
 // canRenameSymbol checks whether a symbol can be renamed.

@@ -347,96 +347,62 @@ func createClassSymbol(classDecl *ast.ClassDecl) *protocol.DocumentSymbol {
 
 	// Add class members as children (fields, methods, properties)
 	children := make([]protocol.DocumentSymbol, 0, 20)
+	addClassFields(&children, classDecl.Fields)
+	addClassMethods(&children, classDecl.Methods)
+	addClassProperties(&children, classDecl.Properties)
 
-	// Add fields
-	for _, field := range classDecl.Fields {
+	if len(children) > 0 {
+		symbol.Children = children
+	}
+
+	return symbol
+}
+
+// addClassFields adds field symbols to the children list.
+func addClassFields(children *[]protocol.DocumentSymbol, fields []*ast.FieldDecl) {
+	for _, field := range fields {
 		if field == nil || field.Name == nil {
 			continue
 		}
 
 		fieldDetail := "field"
-
 		if field.Type != nil {
-			// TypeExpression is an interface, try to get type name
 			if typeAnnot, ok := field.Type.(*ast.TypeAnnotation); ok && typeAnnot.Name != "" {
 				fieldDetail += ": " + typeAnnot.Name
 			}
 		}
 
-		fieldStart := field.Pos()
-		fieldEnd := field.End()
-		fieldNameStart := field.Name.Pos()
-		fieldNameEnd := field.Name.End()
-
-		children = append(children, protocol.DocumentSymbol{
-			Name:   field.Name.Value,
-			Kind:   protocol.SymbolKindField,
-			Detail: &fieldDetail,
-			Range: protocol.Range{
-				Start: protocol.Position{
-					Line:      uint32(max(0, fieldStart.Line-1)),
-					Character: uint32(max(0, fieldStart.Column-1)),
-				},
-				End: protocol.Position{
-					Line:      uint32(max(0, fieldEnd.Line-1)),
-					Character: uint32(max(0, fieldEnd.Column-1)),
-				},
-			},
-			SelectionRange: protocol.Range{
-				Start: protocol.Position{
-					Line:      uint32(max(0, fieldNameStart.Line-1)),
-					Character: uint32(max(0, fieldNameStart.Column-1)),
-				},
-				End: protocol.Position{
-					Line:      uint32(max(0, fieldNameEnd.Line-1)),
-					Character: uint32(max(0, fieldNameEnd.Column-1)),
-				},
-			},
-		})
+		*children = append(*children, createDocSymbol(
+			field.Name.Value,
+			protocol.SymbolKindField,
+			fieldDetail,
+			field,
+			field.Name,
+		))
 	}
+}
 
-	// Add methods
-	for _, method := range classDecl.Methods {
+// addClassMethods adds method symbols to the children list.
+func addClassMethods(children *[]protocol.DocumentSymbol, methods []*ast.FunctionDecl) {
+	for _, method := range methods {
 		if method == nil || method.Name == nil {
 			continue
 		}
 
 		methodDetail := buildFunctionSignature(method)
-
-		methodStart := method.Pos()
-		methodEnd := method.End()
-		methodNameStart := method.Name.Pos()
-		methodNameEnd := method.Name.End()
-
-		children = append(children, protocol.DocumentSymbol{
-			Name:   method.Name.Value,
-			Kind:   protocol.SymbolKindMethod,
-			Detail: &methodDetail,
-			Range: protocol.Range{
-				Start: protocol.Position{
-					Line:      uint32(max(0, methodStart.Line-1)),
-					Character: uint32(max(0, methodStart.Column-1)),
-				},
-				End: protocol.Position{
-					Line:      uint32(max(0, methodEnd.Line-1)),
-					Character: uint32(max(0, methodEnd.Column-1)),
-				},
-			},
-			SelectionRange: protocol.Range{
-				Start: protocol.Position{
-					Line:      uint32(max(0, methodNameStart.Line-1)),
-					Character: uint32(max(0, methodNameStart.Column-1)),
-				},
-				End: protocol.Position{
-					Line:      uint32(max(0, methodNameEnd.Line-1)),
-					Character: uint32(max(0, methodNameEnd.Column-1)),
-				},
-			},
-		})
+		*children = append(*children, createDocSymbol(
+			method.Name.Value,
+			protocol.SymbolKindMethod,
+			methodDetail,
+			method,
+			method.Name,
+		))
 	}
+}
 
-	// Add properties
-	for _, prop := range classDecl.Properties {
+// addClassProperties adds property symbols to the children list.
+func addClassProperties(children *[]protocol.DocumentSymbol, properties []*ast.PropertyDecl) {
+	for _, prop := range properties {
 		if prop == nil || prop.Name == nil {
 			continue
 		}
@@ -446,43 +412,48 @@ func createClassSymbol(classDecl *ast.ClassDecl) *protocol.DocumentSymbol {
 			propDetail += ": " + prop.Type.Name
 		}
 
-		propStart := prop.Pos()
-		propEnd := prop.End()
-		propNameStart := prop.Name.Pos()
-		propNameEnd := prop.Name.End()
-
-		children = append(children, protocol.DocumentSymbol{
-			Name:   prop.Name.Value,
-			Kind:   protocol.SymbolKindProperty,
-			Detail: &propDetail,
-			Range: protocol.Range{
-				Start: protocol.Position{
-					Line:      uint32(max(0, propStart.Line-1)),
-					Character: uint32(max(0, propStart.Column-1)),
-				},
-				End: protocol.Position{
-					Line:      uint32(max(0, propEnd.Line-1)),
-					Character: uint32(max(0, propEnd.Column-1)),
-				},
-			},
-			SelectionRange: protocol.Range{
-				Start: protocol.Position{
-					Line:      uint32(max(0, propNameStart.Line-1)),
-					Character: uint32(max(0, propNameStart.Column-1)),
-				},
-				End: protocol.Position{
-					Line:      uint32(max(0, propNameEnd.Line-1)),
-					Character: uint32(max(0, propNameEnd.Column-1)),
-				},
-			},
-		})
+		*children = append(*children, createDocSymbol(
+			prop.Name.Value,
+			protocol.SymbolKindProperty,
+			propDetail,
+			prop,
+			prop.Name,
+		))
 	}
+}
 
-	if len(children) > 0 {
-		symbol.Children = children
+// createDocSymbol creates a DocumentSymbol from an AST node with ranges.
+func createDocSymbol(name string, kind protocol.SymbolKind, detail string, node ast.Node, nameNode ast.Node) protocol.DocumentSymbol {
+	nodeStart := node.Pos()
+	nodeEnd := node.End()
+	nameStart := nameNode.Pos()
+	nameEnd := nameNode.End()
+
+	return protocol.DocumentSymbol{
+		Name:   name,
+		Kind:   kind,
+		Detail: &detail,
+		Range: protocol.Range{
+			Start: protocol.Position{
+				Line:      uint32(max(0, nodeStart.Line-1)),
+				Character: uint32(max(0, nodeStart.Column-1)),
+			},
+			End: protocol.Position{
+				Line:      uint32(max(0, nodeEnd.Line-1)),
+				Character: uint32(max(0, nodeEnd.Column-1)),
+			},
+		},
+		SelectionRange: protocol.Range{
+			Start: protocol.Position{
+				Line:      uint32(max(0, nameStart.Line-1)),
+				Character: uint32(max(0, nameStart.Column-1)),
+			},
+			End: protocol.Position{
+				Line:      uint32(max(0, nameEnd.Line-1)),
+				Character: uint32(max(0, nameEnd.Column-1)),
+			},
+		},
 	}
-
-	return symbol
 }
 
 // createRecordSymbol creates a DocumentSymbol for a record declaration.

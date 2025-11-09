@@ -26,6 +26,9 @@ type CallContext struct {
 
 	// Whether cursor is inside the parentheses of a call
 	IsInsideCall bool
+
+	// Temporary Program created for incomplete code (may be nil)
+	TempProgram *dwscript.Program
 }
 
 // DetermineCallContext analyzes the cursor position to determine if it's inside a function call
@@ -143,8 +146,18 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 		return 0
 	}
 
-	// Find the opening parenthesis in the text
-	// We need to scan from the start of the call to find '('
+	textBefore := buildTextBeforeCursor(lines, line, currentLine, character)
+	commaCount := countCommasBeforeCursor(textBefore)
+
+	log.Printf("Counted %d commas before cursor\n", commaCount)
+
+	// Parameter index is the number of commas we found
+	// (0 commas = first parameter, 1 comma = second parameter, etc.)
+	return commaCount
+}
+
+// buildTextBeforeCursor constructs the text content from start of document to cursor position.
+func buildTextBeforeCursor(lines []string, line int, currentLine string, character int) string {
 	var textBeforeCursor strings.Builder
 
 	// Get all text from start of document up to cursor
@@ -154,9 +167,11 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 	}
 
 	textBeforeCursor.WriteString(currentLine[:character])
+	return textBeforeCursor.String()
+}
 
-	textBefore := textBeforeCursor.String()
-
+// countCommasBeforeCursor scans backward from cursor to count parameter-separating commas.
+func countCommasBeforeCursor(textBefore string) int {
 	// Scan backward from cursor to find the opening parenthesis of this call
 	// Track nesting level to handle nested calls
 	parenDepth := 0
@@ -224,10 +239,6 @@ func findParameterIndex(text string, line, character int, callNode ast.Node) int
 		return 0
 	}
 
-	log.Printf("Counted %d commas before cursor\n", commaCount)
-
-	// Parameter index is the number of commas we found
-	// (0 commas = first parameter, 1 comma = second parameter, etc.)
 	return commaCount
 }
 
@@ -272,27 +283,38 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 	}
 
 	currentLine := lines[line]
-	if character < 0 || character > len(currentLine) {
+	if character < 0 {
+		return "", nil
+	}
+	// Clamp character to line length if it's beyond (cursor at end of line)
+	if character > len(currentLine) {
+		character = len(currentLine)
+	}
+
+	textBefore := buildTextBeforeCursor(lines, line, currentLine, character)
+	runes := []rune(textBefore)
+
+	openParenIndex := findOpeningParenthesis(runes)
+	if openParenIndex == -1 {
+		log.Printf("FindFunctionAtCall: No opening parenthesis found\n")
 		return "", nil
 	}
 
-	// Build the text before the cursor
-	var textBeforeCursor strings.Builder
-	for i := range line {
-		textBeforeCursor.WriteString(lines[i])
-		textBeforeCursor.WriteString("\n")
+	functionName := extractFunctionNameFromRunes(runes, openParenIndex)
+	if functionName == "" {
+		log.Printf("FindFunctionAtCall: No function identifier found\n")
+		return "", nil
 	}
 
-	textBeforeCursor.WriteString(currentLine[:character])
+	log.Printf("FindFunctionAtCall: Found function '%s'\n", functionName)
+	return functionName, nil
+}
 
-	textBefore := textBeforeCursor.String()
-	runes := []rune(textBefore)
-
-	// Scan backward from cursor to find opening parenthesis
+// findOpeningParenthesis scans backward to locate the opening parenthesis of a function call.
+func findOpeningParenthesis(runes []rune) int {
 	parenDepth := 0
 	inString := false
 	var stringChar rune
-	openParenIndex := -1
 
 	for index := len(runes) - 1; index >= 0; index-- {
 		r := runes[index]
@@ -320,29 +342,26 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 			parenDepth++
 		} else if r == '(' {
 			if parenDepth == 0 {
-				// Found the opening parenthesis
-				openParenIndex = index
-				break
+				return index
 			}
 
 			parenDepth--
 		}
 	}
 
-	if openParenIndex == -1 {
-		log.Printf("FindFunctionAtCall: No opening parenthesis found\n")
-		return "", nil
-	}
+	return -1
+}
 
-	// Now scan backward from the opening parenthesis to find the function identifier
-	// Skip whitespace first
+// extractFunctionNameFromRunes extracts the function name before the opening parenthesis.
+func extractFunctionNameFromRunes(runes []rune, openParenIndex int) string {
+	// Skip whitespace before the opening parenthesis
 	index := openParenIndex - 1
 	for index >= 0 && isWhitespace(runes[index]) {
 		index--
 	}
 
 	if index < 0 {
-		return "", nil
+		return ""
 	}
 
 	// Collect the function name (may include dots for qualified names)
@@ -358,15 +377,7 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 		}
 	}
 
-	if len(functionNameRunes) == 0 {
-		log.Printf("FindFunctionAtCall: No function identifier found\n")
-		return "", nil
-	}
-
-	functionName := string(functionNameRunes)
-	log.Printf("FindFunctionAtCall: Found function '%s'\n", functionName)
-
-	return functionName, nil
+	return string(functionNameRunes)
 }
 
 // isWhitespace checks if a rune is whitespace.
@@ -384,9 +395,9 @@ func isIdentifierChar(r rune) bool {
 
 // ParseWithTemporaryClosingParen handles incomplete AST by temporarily inserting a closing parenthesis
 // This helps parse incomplete function calls like `foo(x, ` to get a complete AST
-// Returns the temporary AST or nil if parsing fails
-// The temporary AST should be discarded after use and not stored.
-func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Program {
+// Returns the temporary Program or nil if parsing fails
+// The temporary Program should be discarded after use and not stored.
+func ParseWithTemporaryClosingParen(text string, line, character int) *dwscript.Program {
 	if text == "" {
 		return nil
 	}
@@ -397,8 +408,14 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 	}
 
 	currentLine := lines[line]
-	if character < 0 || character > len(currentLine) {
+	// Allow character to be at the end of the line (one past last character)
+	// This is valid in LSP when cursor is at end of line
+	if character < 0 {
 		return nil
+	}
+	// Clamp character to line length if it's beyond
+	if character > len(currentLine) {
+		character = len(currentLine)
 	}
 
 	// Create modified text with `)` inserted at cursor position
@@ -410,8 +427,17 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 		modifiedText.WriteString("\n")
 	}
 
-	// Add the current line up to cursor, then insert `)`, then rest of line
-	modifiedText.WriteString(currentLine[:character])
+	// Add the current line up to cursor
+	prefix := currentLine[:character]
+	modifiedText.WriteString(prefix)
+
+	// If cursor is right after a comma or opening paren, insert a dummy value before the )
+	// This helps parse incomplete calls like "foo(5," -> "foo(5,0)" or "foo(" -> "foo(0)"
+	trimmedPrefix := strings.TrimSpace(prefix)
+	if strings.HasSuffix(trimmedPrefix, ",") || strings.HasSuffix(trimmedPrefix, "(") {
+		modifiedText.WriteString("0")
+	}
+
 	modifiedText.WriteString(")")
 	modifiedText.WriteString(currentLine[character:])
 
@@ -451,8 +477,8 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 
 	log.Printf("ParseWithTemporaryClosingParen: Successfully parsed modified source\n")
 
-	// Return the temporary AST (caller should discard it after use)
-	return tempAST
+	// Return the temporary Program (caller should discard it after use)
+	return tempProgram
 }
 
 // DetermineCallContextWithTempAST uses a temporary AST with closing paren inserted
@@ -483,9 +509,16 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 	log.Printf("DetermineCallContextWithTempAST: Normal approach failed, trying with temporary AST\n")
 
 	// Try parsing with a temporary closing parenthesis
-	tempAST := ParseWithTemporaryClosingParen(doc.Text, line, character)
-	if tempAST == nil {
+	tempProgram := ParseWithTemporaryClosingParen(doc.Text, line, character)
+	if tempProgram == nil {
 		log.Printf("DetermineCallContextWithTempAST: Temporary parsing failed, falling back to token-based analysis\n")
+		return buildFallbackContext()
+	}
+
+	// Get AST from temporary Program
+	tempAST := tempProgram.AST()
+	if tempAST == nil {
+		log.Printf("DetermineCallContextWithTempAST: Temporary AST is nil, falling back to token-based analysis\n")
 		return buildFallbackContext()
 	}
 
@@ -511,15 +544,14 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 	// Use text-based analysis for parameter index (more reliable than AST during typing)
 	paramIndex := findParameterIndex(doc.Text, line, character, callNode)
 
-	// Discard the temporary AST (don't store it)
-	// Go's garbage collector will clean it up
-
+	// Return the CallContext with the temporary Program for signature lookup
 	return &CallContext{
 		CallNode:       callNode,
 		FunctionName:   functionName,
 		ObjectExpr:     objectExpr,
 		ParameterIndex: paramIndex,
 		IsInsideCall:   true,
+		TempProgram:    tempProgram,
 	}, nil
 }
 
@@ -541,83 +573,8 @@ func CountParameterIndex(text string, line, character int) (int, error) {
 		return 0, nil
 	}
 
-	// Build text before cursor
-	var textBeforeCursor strings.Builder
-	for i := range line {
-		textBeforeCursor.WriteString(lines[i])
-		textBeforeCursor.WriteString("\n")
-	}
-
-	textBeforeCursor.WriteString(currentLine[:character])
-
-	textBefore := textBeforeCursor.String()
-	runes := []rune(textBefore)
-
-	// Scan backward from cursor position character-by-character
-	parenDepth := 0     // Track parenthesis depth for nested calls
-	bracketDepth := 0   // Track bracket depth for array indexing
-	commaCount := 0     // Count commas at the same nesting level
-	inString := false   // Track if we're inside a string literal
-	var stringChar rune // The quote character that started the string
-	foundOpenParen := false
-
-	// Traverse backward through the text
-	for i := len(runes) - 1; i >= 0; i-- {
-		r := runes[i]
-
-		// Handle string literals (skip everything inside strings)
-		if r == '"' || r == '\'' {
-			// Check if not escaped
-			if i == 0 || runes[i-1] != '\\' {
-				if inString && r == stringChar {
-					inString = false
-				} else if !inString {
-					inString = true
-					stringChar = r
-				}
-			}
-
-			continue
-		}
-
-		// Skip characters inside strings
-		if inString {
-			continue
-		}
-
-		// Handle parentheses - track nesting depth
-		switch r {
-		case ')':
-			parenDepth++
-		case '(':
-			if parenDepth == 0 {
-				// Found the opening parenthesis of current call - stop here
-				foundOpenParen = true
-				break
-			}
-
-			parenDepth--
-		case ']':
-			// Track array indexing depth
-			bracketDepth++
-		case '[':
-			if bracketDepth > 0 {
-				bracketDepth--
-			}
-		case ',':
-			// Count commas at the same parenthesis nesting level
-			// Only count commas when we're at depth 0 (same level as our call)
-			if parenDepth == 0 && bracketDepth == 0 {
-				commaCount++
-			}
-		}
-	}
-
-	if !foundOpenParen {
-		log.Printf("CountParameterIndex: No opening parenthesis found\n")
-		// Could be incomplete call, return 0
-		return 0, nil
-	}
+	textBefore := buildTextBeforeCursor(lines, line, currentLine, character)
+	commaCount := countCommasBeforeCursor(textBefore)
 
 	log.Printf("CountParameterIndex: Found %d commas, parameter index = %d\n", commaCount, commaCount)
 
@@ -639,61 +596,6 @@ func findParameterIndexFromText(text string, line, character int) int {
 		return 0
 	}
 
-	// Get text before cursor
-	var textBefore strings.Builder
-	for i := range line {
-		textBefore.WriteString(lines[i])
-		textBefore.WriteString("\n")
-	}
-
-	textBefore.WriteString(currentLine[:character])
-
-	text = textBefore.String()
-	runes := []rune(text)
-
-	// Count commas backward until we find the opening paren
-	parenDepth := 0
-	commaCount := 0
-	inString := false
-	var stringChar rune
-
-	for i := len(runes) - 1; i >= 0; i-- {
-		r := runes[i]
-
-		// Handle strings
-		if r == '"' || r == '\'' {
-			if i == 0 || runes[i-1] != '\\' {
-				if inString && r == stringChar {
-					inString = false
-				} else if !inString {
-					inString = true
-					stringChar = r
-				}
-			}
-
-			continue
-		}
-
-		if inString {
-			continue
-		}
-
-		// Handle parentheses and commas
-		switch r {
-		case ')':
-			parenDepth++
-		case '(':
-			if parenDepth == 0 {
-				break
-			}
-
-			parenDepth--
-		case ',':
-			if parenDepth == 0 {
-				commaCount++
-			}
-		}
-	}
-
-	return commaCount
+	textBefore := buildTextBeforeCursor(lines, line, currentLine, character)
+	return countCommasBeforeCursor(textBefore)
 }

@@ -11,6 +11,104 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// controlStructureSnippets contains keyword completion snippets for control structures.
+var controlStructureSnippets = map[string]struct {
+	snippet string
+	detail  string
+}{
+	"if": {
+		snippet: "if ${1:condition} then\n\t$0\nend;",
+		detail:  "if-then-end statement",
+	},
+	"for": {
+		snippet: "for ${1:i} := ${2:0} to ${3:10} do\n\t$0\nend;",
+		detail:  "for-to-do loop",
+	},
+	"while": {
+		snippet: "while ${1:condition} do\n\t$0\nend;",
+		detail:  "while-do loop",
+	},
+	"repeat": {
+		snippet: "repeat\n\t$0\nuntil ${1:condition};",
+		detail:  "repeat-until loop",
+	},
+	"case": {
+		snippet: "case ${1:expression} of\n\t${2:value}: $0\nend;",
+		detail:  "case-of statement",
+	},
+	"try": {
+		snippet: "try\n\t$0\nexcept\n\ton E: Exception do\n\t\tRaise;\nend;",
+		detail:  "try-except block",
+	},
+	"function": {
+		snippet: "function ${1:FunctionName}(${2:params}): ${3:ReturnType};\nbegin\n\t$0\nend;",
+		detail:  "function declaration",
+	},
+	"procedure": {
+		snippet: "procedure ${1:ProcedureName}(${2:params});\nbegin\n\t$0\nend;",
+		detail:  "procedure declaration",
+	},
+	"class": {
+		snippet: "class ${1:ClassName}\nprivate\n\t$0\npublic\nend;",
+		detail:  "class declaration",
+	},
+}
+
+// simpleKeywordsList contains basic DWScript keywords without custom snippets.
+var simpleKeywordsList = []string{
+	"begin", "end", "then", "else", "do", "to", "downto", "until", "of",
+	"var", "const", "type", "record", "interface", "implementation", "uses",
+	"unit", "program", "except", "finally", "raise", "on", "as", "is", "in",
+	"not", "and", "or", "xor", "div", "mod", "shl", "shr", "array", "set",
+	"property", "read", "write", "private", "protected", "public", "published",
+	"constructor", "destructor", "inherited", "nil", "true", "false", "exit",
+	"break", "continue", "with",
+}
+
+// builtInTypesList contains DWScript built-in types.
+var builtInTypesList = []string{
+	"Integer", "Float", "String", "Boolean", "Variant",
+	"TObject", "TClass", "DateTime", "Currency",
+	"Byte", "Word", "Cardinal", "Int64", "UInt64",
+	"Single", "Double", "Extended", "Char",
+}
+
+// builtInFunctionsMap contains DWScript built-in functions with their signatures.
+var builtInFunctionsMap = map[string]string{
+	"Print":          "Print(value: Variant)",
+	"PrintLn":        "PrintLn(value: Variant)",
+	"Length":         "Length(s: String): Integer",
+	"Copy":           "Copy(s: String, index, count: Integer): String",
+	"Pos":            "Pos(substr, str: String): Integer",
+	"UpperCase":      "UpperCase(s: String): String",
+	"LowerCase":      "LowerCase(s: String): String",
+	"Trim":           "Trim(s: String): String",
+	"IntToStr":       "IntToStr(value: Integer): String",
+	"StrToInt":       "StrToInt(s: String): Integer",
+	"FloatToStr":     "FloatToStr(value: Float): String",
+	"StrToFloat":     "StrToFloat(s: String): Float",
+	"Now":            "Now(): DateTime",
+	"Date":           "Date(): DateTime",
+	"Time":           "Time(): DateTime",
+	"FormatDateTime": "FormatDateTime(format: String, dt: DateTime): String",
+	"Inc":            "Inc(var x: Integer; increment: Integer = 1)",
+	"Dec":            "Dec(var x: Integer; decrement: Integer = 1)",
+	"Chr":            "Chr(code: Integer): Char",
+	"Ord":            "Ord(ch: Char): Integer",
+	"Round":          "Round(value: Float): Integer",
+	"Trunc":          "Trunc(value: Float): Integer",
+	"Abs":            "Abs(value: Float): Float",
+	"Sqrt":           "Sqrt(value: Float): Float",
+	"Sqr":            "Sqr(value: Float): Float",
+	"Sin":            "Sin(angle: Float): Float",
+	"Cos":            "Cos(angle: Float): Float",
+	"Tan":            "Tan(angle: Float): Float",
+	"Exp":            "Exp(value: Float): Float",
+	"Ln":             "Ln(value: Float): Float",
+	"Random":         "Random(): Float",
+	"Randomize":      "Randomize()",
+}
+
 // CollectScopeCompletions gathers all completion items available in the current scope.
 // This includes keywords, local variables, parameters, global symbols, and built-in functions.
 // Task 9.17: Uses caching for keywords, built-ins, and global symbols.
@@ -88,51 +186,8 @@ func getKeywordCompletions() []protocol.CompletionItem {
 	items := make([]protocol.CompletionItem, 0, 40)
 	kind := protocol.CompletionItemKindKeyword
 
-	// Control structures with snippets
-	controlStructures := map[string]struct {
-		snippet string
-		detail  string
-	}{
-		"if": {
-			snippet: "if ${1:condition} then\n\t$0\nend;",
-			detail:  "if-then-end statement",
-		},
-		"for": {
-			snippet: "for ${1:i} := ${2:0} to ${3:10} do\n\t$0\nend;",
-			detail:  "for-to-do loop",
-		},
-		"while": {
-			snippet: "while ${1:condition} do\n\t$0\nend;",
-			detail:  "while-do loop",
-		},
-		"repeat": {
-			snippet: "repeat\n\t$0\nuntil ${1:condition};",
-			detail:  "repeat-until loop",
-		},
-		"case": {
-			snippet: "case ${1:expression} of\n\t${2:value}: $0\nend;",
-			detail:  "case-of statement",
-		},
-		"try": {
-			snippet: "try\n\t$0\nexcept\n\ton E: Exception do\n\t\tRaise;\nend;",
-			detail:  "try-except block",
-		},
-		"function": {
-			snippet: "function ${1:FunctionName}(${2:params}): ${3:ReturnType};\nbegin\n\t$0\nend;",
-			detail:  "function declaration",
-		},
-		"procedure": {
-			snippet: "procedure ${1:ProcedureName}(${2:params});\nbegin\n\t$0\nend;",
-			detail:  "procedure declaration",
-		},
-		"class": {
-			snippet: "class ${1:ClassName}\nprivate\n\t$0\npublic\nend;",
-			detail:  "class declaration",
-		},
-	}
-
 	// Add control structures with snippets
-	for keyword, info := range controlStructures {
+	for keyword, info := range controlStructureSnippets {
 		sortText := "~keyword~" + keyword
 		detail := info.detail
 		insertTextFormat := protocol.InsertTextFormatSnippet
@@ -148,20 +203,10 @@ func getKeywordCompletions() []protocol.CompletionItem {
 		items = append(items, item)
 	}
 
-	// Simple keywords without snippets (use PlainText format)
-	simpleKeywords := []string{
-		"begin", "end", "then", "else", "do", "to", "downto", "until", "of",
-		"var", "const", "type", "record", "interface", "implementation", "uses",
-		"unit", "program", "except", "finally", "raise", "on", "as", "is", "in",
-		"not", "and", "or", "xor", "div", "mod", "shl", "shr", "array", "set",
-		"property", "read", "write", "private", "protected", "public", "published",
-		"constructor", "destructor", "inherited", "nil", "true", "false", "exit",
-		"break", "continue", "with",
-	}
-
+	// Add simple keywords without snippets
 	plainTextFormat := protocol.InsertTextFormatPlainText
 
-	for _, keyword := range simpleKeywords {
+	for _, keyword := range simpleKeywordsList {
 		detail := "DWScript keyword"
 		sortText := "~keyword~" + keyword
 		item := protocol.CompletionItem{
@@ -606,18 +651,10 @@ func buildSnippetFromSignature(functionName, signature string) (string, protocol
 func getBuiltInCompletions() []protocol.CompletionItem {
 	items := make([]protocol.CompletionItem, 0, 40)
 
-	// Built-in types
-	builtInTypes := []string{
-		"Integer", "Float", "String", "Boolean", "Variant",
-		"TObject", "TClass", "DateTime", "Currency",
-		"Byte", "Word", "Cardinal", "Int64", "UInt64",
-		"Single", "Double", "Extended", "Char",
-	}
-
 	typeKind := protocol.CompletionItemKindClass
 	plainTextFormat := protocol.InsertTextFormatPlainText
 
-	for _, typeName := range builtInTypes {
+	for _, typeName := range builtInTypesList {
 		detail := "Built-in type"
 		sortText := "2builtin~" + typeName
 		item := protocol.CompletionItem{
@@ -630,45 +667,9 @@ func getBuiltInCompletions() []protocol.CompletionItem {
 		items = append(items, item)
 	}
 
-	// Built-in functions
-	builtInFunctions := map[string]string{
-		"Print":          "Print(value: Variant)",
-		"PrintLn":        "PrintLn(value: Variant)",
-		"Length":         "Length(s: String): Integer",
-		"Copy":           "Copy(s: String, index, count: Integer): String",
-		"Pos":            "Pos(substr, str: String): Integer",
-		"UpperCase":      "UpperCase(s: String): String",
-		"LowerCase":      "LowerCase(s: String): String",
-		"Trim":           "Trim(s: String): String",
-		"IntToStr":       "IntToStr(value: Integer): String",
-		"StrToInt":       "StrToInt(s: String): Integer",
-		"FloatToStr":     "FloatToStr(value: Float): String",
-		"StrToFloat":     "StrToFloat(s: String): Float",
-		"Now":            "Now(): DateTime",
-		"Date":           "Date(): DateTime",
-		"Time":           "Time(): DateTime",
-		"FormatDateTime": "FormatDateTime(format: String, dt: DateTime): String",
-		"Inc":            "Inc(var x: Integer; increment: Integer = 1)",
-		"Dec":            "Dec(var x: Integer; decrement: Integer = 1)",
-		"Chr":            "Chr(code: Integer): Char",
-		"Ord":            "Ord(ch: Char): Integer",
-		"Round":          "Round(value: Float): Integer",
-		"Trunc":          "Trunc(value: Float): Integer",
-		"Abs":            "Abs(value: Float): Float",
-		"Sqrt":           "Sqrt(value: Float): Float",
-		"Sqr":            "Sqr(value: Float): Float",
-		"Sin":            "Sin(angle: Float): Float",
-		"Cos":            "Cos(angle: Float): Float",
-		"Tan":            "Tan(angle: Float): Float",
-		"Exp":            "Exp(value: Float): Float",
-		"Ln":             "Ln(value: Float): Float",
-		"Random":         "Random(): Float",
-		"Randomize":      "Randomize()",
-	}
-
 	funcKind := protocol.CompletionItemKindFunction
 
-	for name, signature := range builtInFunctions {
+	for name, signature := range builtInFunctionsMap {
 		detail := signature
 		sortText := "2builtin~" + name
 

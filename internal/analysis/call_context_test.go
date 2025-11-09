@@ -6,88 +6,88 @@ import (
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 )
 
+var countParameterIndexTests = []struct {
+	name      string
+	code      string
+	line      int
+	character int
+	expected  int
+}{
+	{
+		name:      "cursor after opening parenthesis",
+		code:      "foo(",
+		line:      0,
+		character: 4,
+		expected:  0,
+	},
+	{
+		name:      "cursor in first parameter",
+		code:      "foo(x",
+		line:      0,
+		character: 5,
+		expected:  0,
+	},
+	{
+		name:      "cursor after comma",
+		code:      "foo(x, ",
+		line:      0,
+		character: 7,
+		expected:  1,
+	},
+	{
+		name:      "cursor in second parameter",
+		code:      "foo(x, y",
+		line:      0,
+		character: 8,
+		expected:  1,
+	},
+	{
+		name:      "cursor after second comma",
+		code:      "foo(x, y, ",
+		line:      0,
+		character: 10,
+		expected:  2,
+	},
+	{
+		name:      "nested function call - outer",
+		code:      "foo(bar(",
+		line:      0,
+		character: 8,
+		expected:  0, // Inside bar()
+	},
+	{
+		name:      "nested function call - after inner",
+		code:      "foo(bar(), ",
+		line:      0,
+		character: 11,
+		expected:  1,
+	},
+	{
+		name:      "string with comma inside",
+		code:      `foo("x, y", `,
+		line:      0,
+		character: 12,
+		expected:  1, // Comma inside string shouldn't count
+	},
+	{
+		name:      "empty parameter list",
+		code:      "foo()",
+		line:      0,
+		character: 4,
+		expected:  0,
+	},
+	{
+		name:      "five parameters",
+		code:      "foo(a, b, c, d, e",
+		line:      0,
+		character: 17,
+		expected:  4,
+	},
+}
+
 // TestCountParameterIndex tests parameter index counting at various positions.
 func TestCountParameterIndex(t *testing.T) {
-	tests := []struct {
-		name      string
-		code      string
-		line      int
-		character int
-		expected  int
-	}{
-		{
-			name:      "cursor after opening parenthesis",
-			code:      "foo(",
-			line:      0,
-			character: 4,
-			expected:  0,
-		},
-		{
-			name:      "cursor in first parameter",
-			code:      "foo(x",
-			line:      0,
-			character: 5,
-			expected:  0,
-		},
-		{
-			name:      "cursor after comma",
-			code:      "foo(x, ",
-			line:      0,
-			character: 7,
-			expected:  1,
-		},
-		{
-			name:      "cursor in second parameter",
-			code:      "foo(x, y",
-			line:      0,
-			character: 8,
-			expected:  1,
-		},
-		{
-			name:      "cursor after second comma",
-			code:      "foo(x, y, ",
-			line:      0,
-			character: 10,
-			expected:  2,
-		},
-		{
-			name:      "nested function call - outer",
-			code:      "foo(bar(",
-			line:      0,
-			character: 8,
-			expected:  0, // Inside bar()
-		},
-		{
-			name:      "nested function call - after inner",
-			code:      "foo(bar(), ",
-			line:      0,
-			character: 11,
-			expected:  1,
-		},
-		{
-			name:      "string with comma inside",
-			code:      `foo("x, y", `,
-			line:      0,
-			character: 12,
-			expected:  1, // Comma inside string shouldn't count
-		},
-		{
-			name:      "empty parameter list",
-			code:      "foo()",
-			line:      0,
-			character: 4,
-			expected:  0,
-		},
-		{
-			name:      "five parameters",
-			code:      "foo(a, b, c, d, e",
-			line:      0,
-			character: 17,
-			expected:  4,
-		},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range countParameterIndexTests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := CountParameterIndex(tt.code, tt.line, tt.character)
 			if err != nil {
@@ -102,60 +102,60 @@ func TestCountParameterIndex(t *testing.T) {
 	}
 }
 
+var findFunctionAtCallTests = []struct {
+	name      string
+	code      string
+	line      int
+	character int
+	expected  string
+}{
+	{
+		name:      "simple function call",
+		code:      "PrintLn(",
+		line:      0,
+		character: 8,
+		expected:  "PrintLn",
+	},
+	{
+		name:      "function with parameters",
+		code:      "foo(x, y",
+		line:      0,
+		character: 8,
+		expected:  "foo",
+	},
+	{
+		name:      "qualified name",
+		code:      "obj.Method(",
+		line:      0,
+		character: 11,
+		expected:  "obj.Method",
+	},
+	{
+		name:      "function with whitespace",
+		code:      "Calculate  (x",
+		line:      0,
+		character: 13,
+		expected:  "Calculate",
+	},
+	{
+		name:      "nested call - inner function",
+		code:      "foo(bar(",
+		line:      0,
+		character: 8,
+		expected:  "bar",
+	},
+	{
+		name:      "multiline call",
+		code:      "foo(\n  x",
+		line:      1,
+		character: 3,
+		expected:  "foo",
+	},
+}
+
 // TestFindFunctionAtCall tests finding function names from cursor position.
 func TestFindFunctionAtCall(t *testing.T) {
-	tests := []struct {
-		name      string
-		code      string
-		line      int
-		character int
-		expected  string
-	}{
-		{
-			name:      "simple function call",
-			code:      "PrintLn(",
-			line:      0,
-			character: 8,
-			expected:  "PrintLn",
-		},
-		{
-			name:      "function with parameters",
-			code:      "foo(x, y",
-			line:      0,
-			character: 8,
-			expected:  "foo",
-		},
-		{
-			name:      "qualified name",
-			code:      "obj.Method(",
-			line:      0,
-			character: 11,
-			expected:  "obj.Method",
-		},
-		{
-			name:      "function with whitespace",
-			code:      "Calculate  (x",
-			line:      0,
-			character: 13,
-			expected:  "Calculate",
-		},
-		{
-			name:      "nested call - inner function",
-			code:      "foo(bar(",
-			line:      0,
-			character: 8,
-			expected:  "bar",
-		},
-		{
-			name:      "multiline call",
-			code:      "foo(\n  x",
-			line:      1,
-			character: 3,
-			expected:  "foo",
-		},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range findFunctionAtCallTests {
 		t.Run(tt.name, func(t *testing.T) {
 			doc := &server.Document{
 				Text: tt.code,
@@ -233,60 +233,60 @@ func TestFindParameterIndexFromText(t *testing.T) {
 }
 
 // TestDetermineCallContextWithTempAST tests call context determination with temporary AST.
-func TestDetermineCallContextWithTempAST(t *testing.T) {
-	tests := []struct {
-		name             string
-		code             string
-		line             int
-		character        int
-		expectContext    bool
-		expectedFunction string
-		expectedParamIdx int
-	}{
-		{
-			name: "complete function call",
-			code: `function foo(x: Integer, y: String);
+var determineCallContextTests = []struct {
+	name             string
+	code             string
+	line             int
+	character        int
+	expectContext    bool
+	expectedFunction string
+	expectedParamIdx int
+}{
+	{
+		name: "complete function call",
+		code: `function foo(x: Integer, y: String);
 begin
 end;
 
 begin
   foo(42, 'test');
 end.`,
-			line:             5,
-			character:        7, // After '('
-			expectContext:    true,
-			expectedFunction: "foo",
-			expectedParamIdx: 0,
-		},
-		{
-			name: "incomplete function call",
-			code: `function bar(a: Integer);
+		line:             5,
+		character:        7, // After '('
+		expectContext:    true,
+		expectedFunction: "foo",
+		expectedParamIdx: 0,
+	},
+	{
+		name: "incomplete function call",
+		code: `function bar(a: Integer);
 begin
 end;
 
 begin
   bar(
 end.`,
-			line:             5,
-			character:        6, // After '('
-			expectContext:    true,
-			expectedFunction: "bar",
-			expectedParamIdx: 0,
-		},
-		{
-			name: "built-in function call",
-			code: `begin
+		line:             5,
+		character:        6, // After '('
+		expectContext:    true,
+		expectedFunction: "bar",
+		expectedParamIdx: 0,
+	},
+	{
+		name: "built-in function call",
+		code: `begin
   PrintLn('Hello',
 end.`,
-			line:             1,
-			character:        18, // After comma
-			expectContext:    true,
-			expectedFunction: "PrintLn",
-			expectedParamIdx: 1,
-		},
-	}
+		line:             1,
+		character:        18, // After comma
+		expectContext:    true,
+		expectedFunction: "PrintLn",
+		expectedParamIdx: 1,
+	},
+}
 
-	for _, tt := range tests {
+func TestDetermineCallContextWithTempAST(t *testing.T) {
+	for _, tt := range determineCallContextTests {
 		t.Run(tt.name, func(t *testing.T) {
 			doc := &server.Document{
 				Text: tt.code,

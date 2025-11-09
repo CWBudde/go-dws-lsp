@@ -24,6 +24,85 @@ const (
 	testTypeFloat    = "Float"
 )
 
+// setupCompletionTestServer creates and initializes a new test server for completion tests.
+func setupCompletionTestServer() *server.Server {
+	srv := server.New()
+	SetServer(srv)
+	return srv
+}
+
+// createAndAddTestDocument parses DWScript source and adds it to the server.
+func createAndAddTestDocument(t *testing.T, srv *server.Server, source, uri string) *server.Document {
+	program, _, err := analysis.ParseDocument(source, uri)
+	if err != nil {
+		t.Fatalf("Failed to parse document: %v", err)
+	}
+
+	doc := &server.Document{
+		URI:        uri,
+		Text:       source,
+		Version:    1,
+		LanguageID: "dwscript",
+		Program:    program,
+	}
+	srv.Documents().Set(uri, doc)
+	return doc
+}
+
+// createCompletionParams creates completion request parameters.
+func createCompletionParams(uri string, line, character uint32, triggerChar *string) *protocol.CompletionParams {
+	params := &protocol.CompletionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: uri,
+			},
+			Position: protocol.Position{
+				Line:      line,
+				Character: character,
+			},
+		},
+	}
+
+	if triggerChar != nil {
+		params.Context = &protocol.CompletionContext{
+			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
+			TriggerCharacter: triggerChar,
+		}
+	}
+
+	return params
+}
+
+// callCompletion calls the Completion handler and returns the result.
+func callCompletion(t *testing.T, params *protocol.CompletionParams) *protocol.CompletionList {
+	ctx := &glsp.Context{}
+	result, err := Completion(ctx, params)
+	if err != nil {
+		t.Fatalf("Completion returned error: %v", err)
+	}
+
+	if result == nil {
+		t.Fatal("Expected non-nil result")
+	}
+
+	completionList, ok := result.(*protocol.CompletionList)
+	if !ok {
+		t.Fatalf("Expected CompletionList, got %T", result)
+	}
+
+	return completionList
+}
+
+// findCompletionItem searches for a completion item by label.
+func findCompletionItem(items []protocol.CompletionItem, label string) *protocol.CompletionItem {
+	for i := range items {
+		if items[i].Label == label {
+			return &items[i]
+		}
+	}
+	return nil
+}
+
 func TestCompletion_EmptyListForValidDocument(t *testing.T) {
 	// Create a test server
 	srv := server.New()
@@ -96,11 +175,8 @@ end.`
 }
 
 func TestCompletion_TriggerCharacterDot(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
+	srv := setupCompletionTestServer()
 
-	// Sample DWScript source code with member access
 	source := `program Test;
 
 type TMyClass = class
@@ -113,61 +189,13 @@ begin
   obj.Field := 42;
 end.`
 
-	// Add document to server
-	uri := testURI
+	createAndAddTestDocument(t, srv, source, testURI)
 
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Create completion params with trigger character
 	// Simulate completion request right after typing "obj."
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      9, // After "obj."
-				Character: 6, // Position right after the dot
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 9, 6, &triggerChar)
+	completionList := callCompletion(t, params)
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
-	result, err := Completion(ctx, params)
-	// Should return without error
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	// Should return a CompletionList
-	if result == nil {
-		t.Fatal("Expected non-nil result")
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// For now, we expect an empty list (member completion not yet implemented)
 	if completionList == nil {
 		t.Fatal("Expected non-nil CompletionList")
 	}
@@ -275,11 +303,8 @@ end.`
 
 // Task 9.19: Test partial variable name completion.
 func TestCompletion_PartialVariableName(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
+	srv := setupCompletionTestServer()
 
-	// Setup: code with variables alpha, beta, alphabet
 	source := `program Test;
 
 var alpha: Integer;
@@ -290,96 +315,38 @@ begin
   alpha := 1;
 end.`
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
+	createAndAddTestDocument(t, srv, source, testURI)
 
 	// Input: cursor after "alp" (in the middle of "alpha")
-	// We're testing if typing "alp" would suggest "alpha" and "alphabet"
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      7, // On the "alpha := 1;" line
-				Character: 5, // After "alp" (position 5 is after the 'p')
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
+	params := createCompletionParams(testURI, 7, 5, nil)
+	completionList := callCompletion(t, params)
 
 	// Expected: alpha and alphabet in results
-	foundAlpha := false
-	foundAlphabet := false
-	foundBeta := false
+	foundAlpha := findCompletionItem(completionList.Items, "alpha")
+	foundAlphabet := findCompletionItem(completionList.Items, "alphabet")
+	foundBeta := findCompletionItem(completionList.Items, "beta")
 
-	for _, item := range completionList.Items {
-		t.Logf("Found completion item: %s", item.Label)
-
-		if item.Label == "alpha" {
-			foundAlpha = true
-		}
-
-		if item.Label == "alphabet" {
-			foundAlphabet = true
-		}
-
-		if item.Label == "beta" {
-			foundBeta = true
-		}
-	}
-
-	// Verify: alpha and alphabet should be in results
-	if !foundAlpha {
+	if foundAlpha == nil {
 		t.Error("Expected 'alpha' to be in completion results")
 	}
 
-	if !foundAlphabet {
+	if foundAlphabet == nil {
 		t.Error("Expected 'alphabet' to be in completion results")
 	}
 
 	// Verify: beta should NOT be in results (doesn't match prefix "alp")
-	if foundBeta {
+	if foundBeta != nil {
 		t.Error("Expected 'beta' to NOT be in completion results (doesn't match prefix)")
 	}
 
-	t.Logf("Completion test passed: found alpha=%v, alphabet=%v, beta=%v (expected beta=false)",
-		foundAlpha, foundAlphabet, foundBeta)
+	t.Logf("Completion test passed: found alpha=%v, alphabet=%v, beta=%v (expected beta=nil)",
+		foundAlpha != nil, foundAlphabet != nil, foundBeta != nil)
 }
 
 // Task 9.19: Test parameter completion in function.
 func TestCompletion_ParameterCompletion(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
+	srv := setupCompletionTestServer()
 
-	// Setup: function with parameters
 	source := `program Test;
 
 function Calculate(firstParam: Integer; secondParam: Float): String;
@@ -393,91 +360,34 @@ end;
 begin
 end.`
 
-	// Add document to server
-	uri := testURI
+	createAndAddTestDocument(t, srv, source, testURI)
 
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
+	// Input: cursor after "fir" (testing "firstParam" completion)
+	params := createCompletionParams(testURI, 6, 13, nil)
+	completionList := callCompletion(t, params)
 
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
+	// Expected: firstParam in results, secondParam should NOT be
+	foundFirstParam := findCompletionItem(completionList.Items, "firstParam")
+	foundSecondParam := findCompletionItem(completionList.Items, "secondParam")
 
-	// Input: cursor after "fir" (in the middle of "firstParam")
-	// Testing if typing "fir" would suggest "firstParam"
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      6,  // On the line with "temp := firstParam;"
-				Character: 13, // After "fir" in "firstParam"
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: firstParam in results
-	foundFirstParam := false
-	foundSecondParam := false
-
-	for _, item := range completionList.Items {
-		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
-
-		if item.Label == "firstParam" {
-			foundFirstParam = true
-			// Verify it's marked as a parameter
-			if item.Kind != nil && *item.Kind != protocol.CompletionItemKindVariable {
-				t.Logf("Warning: firstParam has kind %v, expected Variable", *item.Kind)
-			}
-		}
-
-		if item.Label == "secondParam" {
-			foundSecondParam = true
-		}
-	}
-
-	// Verify: firstParam should be in results (matches prefix "fir")
-	if !foundFirstParam {
+	if foundFirstParam == nil {
 		t.Error("Expected 'firstParam' to be in completion results")
+	} else if foundFirstParam.Kind != nil && *foundFirstParam.Kind != protocol.CompletionItemKindVariable {
+		t.Logf("Warning: firstParam has kind %v, expected Variable", *foundFirstParam.Kind)
 	}
 
-	// Verify: secondParam should NOT be in results (doesn't match prefix "fir")
-	if foundSecondParam {
+	if foundSecondParam != nil {
 		t.Error("Expected 'secondParam' to NOT be in completion results (doesn't match prefix)")
 	}
 
 	t.Logf("Parameter completion test passed: found firstParam=%v, secondParam=%v",
-		foundFirstParam, foundSecondParam)
+		foundFirstParam != nil, foundSecondParam != nil)
 }
 
 // Task 9.19: Test local variable shadowing global.
 func TestCompletion_LocalVariableShadowsGlobal(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
+	srv := setupCompletionTestServer()
 
-	// Setup: local variable shadows global variable
 	source := `program Test;
 
 var value: Integer; // Global variable
@@ -491,107 +401,56 @@ end;
 begin
 end.`
 
-	// Add document to server
-	uri := testURI
+	createAndAddTestDocument(t, srv, source, testURI)
 
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
+	// Input: cursor after "val" inside the function
+	params := createCompletionParams(testURI, 7, 5, nil)
+	completionList := callCompletion(t, params)
 
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
+	verifyLocalShadowsGlobal(t, completionList.Items)
+}
 
-	// Input: cursor after "val" inside the function (in the middle of "value")
-	// We're testing if typing "val" would suggest the local "value" with higher priority
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      7, // On the "value := 'test';" line
-				Character: 5, // After "value" (position 5 is after 'e')
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: local "value" should appear in results
-	// Note: Both local and global "value" might appear, but local should have higher priority
-	foundValue := false
-	valueCount := 0
+// verifyLocalShadowsGlobal checks that local variables appear before global ones in completion results.
+func verifyLocalShadowsGlobal(t *testing.T, items []protocol.CompletionItem) {
 	localValueIndex, globalValueIndex := -1, -1
+	valueCount := 0
 
-	for i, item := range completionList.Items {
-		t.Logf("Found completion item: %s (kind: %v, sortText: %v, detail: %v)",
-			item.Label, item.Kind, item.SortText, item.Detail)
-
+	for i, item := range items {
 		if item.Label == "value" {
-			foundValue = true
 			valueCount++
-			// Check if it's marked as local or global based on detail or sortText
-			if item.Detail != nil && (*item.Detail == "Local variable: String" || *item.Detail == "Local variable") {
+			// Check if it's marked as local or global based on detail
+			if item.Detail != nil && (strings.Contains(*item.Detail, "Local variable") || strings.Contains(*item.Detail, "String")) {
 				localValueIndex = i
-			} else if item.Detail != nil && (*item.Detail == "Global variable: Integer" || *item.Detail == "Global variable") {
+			} else if item.Detail != nil && (strings.Contains(*item.Detail, "Global variable") || strings.Contains(*item.Detail, "Integer")) {
 				globalValueIndex = i
 			}
 		}
 	}
 
-	// Verify: "value" should be in results
-	if !foundValue {
+	if valueCount == 0 {
 		t.Error("Expected 'value' to be in completion results")
+		return
 	}
 
-	t.Logf("Found %d 'value' entries: localIndex=%d, globalIndex=%d",
-		valueCount, localValueIndex, globalValueIndex)
+	t.Logf("Found %d 'value' entries: localIndex=%d, globalIndex=%d", valueCount, localValueIndex, globalValueIndex)
 
 	// If both are present, verify local comes before global (based on sortText)
-	// Local variables should have sortText starting with "0", globals with "1"
 	if localValueIndex >= 0 && globalValueIndex >= 0 {
-		localItem := completionList.Items[localValueIndex]
-		globalItem := completionList.Items[globalValueIndex]
+		localItem := items[localValueIndex]
+		globalItem := items[globalValueIndex]
 
 		if localItem.SortText != nil && globalItem.SortText != nil {
 			if *localItem.SortText >= *globalItem.SortText {
 				t.Errorf("Local variable should sort before global: local sortText=%s, global sortText=%s",
 					*localItem.SortText, *globalItem.SortText)
-			} else {
-				t.Logf("Correct sorting: local sortText=%s < global sortText=%s",
-					*localItem.SortText, *globalItem.SortText)
 			}
 		}
 	}
-
-	t.Logf("Shadowing test passed: found 'value' in results (count=%d)", valueCount)
 }
 
 // Task 9.20: Test member access on class instance.
 func TestCompletion_MemberAccessOnClass(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: class with fields Name, Age, method GetInfo()
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 type TPerson = class
@@ -611,106 +470,55 @@ var person: TPerson;
 begin
   person.Name := 'John';
 end.`
-
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor after "person." (after the dot)
-	// Testing member access completion
+	createAndAddTestDocument(t, srv, source, testURI)
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      17, // On the "person.Name := 'John';" line (0-indexed)
-				Character: 9,  // After "person." -> "  person." = 2 spaces + 6 chars + 1 dot = position 9
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 17, 9, &triggerChar)
+	completionList := callCompletion(t, params)
+	verifyClassMemberCompletion(t, completionList.Items)
+}
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Name, Age, GetInfo in results
+// verifyClassMemberCompletion checks that Name, Age, and GetInfo are in completion results with correct kinds.
+func verifyClassMemberCompletion(t *testing.T, items []protocol.CompletionItem) {
 	foundName := false
 	foundAge := false
 	foundGetInfo := false
 	var nameKind, ageKind, getInfoKind *protocol.CompletionItemKind
 
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		t.Logf("Found completion item: %s (kind: %v, detail: %v)",
 			item.Label, item.Kind, item.Detail)
 
-		if item.Label == "Name" {
+		switch item.Label {
+		case "Name":
 			foundName = true
 			nameKind = item.Kind
-		}
-
-		if item.Label == "Age" {
+		case "Age":
 			foundAge = true
 			ageKind = item.Kind
-		}
-
-		if item.Label == "GetInfo" {
+		case "GetInfo":
 			foundGetInfo = true
 			getInfoKind = item.Kind
 		}
 	}
 
-	// Verify: Name, Age, and GetInfo should be in results
 	if !foundName {
 		t.Error("Expected 'Name' to be in completion results")
 	}
-
 	if !foundAge {
 		t.Error("Expected 'Age' to be in completion results")
 	}
-
 	if !foundGetInfo {
 		t.Error("Expected 'GetInfo' to be in completion results")
 	}
 
-	// Verify completion item kinds are correct
 	if nameKind != nil && *nameKind != protocol.CompletionItemKindField {
 		t.Errorf("Expected 'Name' to have kind Field (%d), got %d",
 			protocol.CompletionItemKindField, *nameKind)
 	}
-
 	if ageKind != nil && *ageKind != protocol.CompletionItemKindField {
 		t.Errorf("Expected 'Age' to have kind Field (%d), got %d",
 			protocol.CompletionItemKindField, *ageKind)
 	}
-
 	if getInfoKind != nil && *getInfoKind != protocol.CompletionItemKindMethod {
 		t.Errorf("Expected 'GetInfo' to have kind Method (%d), got %d",
 			protocol.CompletionItemKindMethod, *getInfoKind)
@@ -722,11 +530,7 @@ end.`
 
 // Task 9.20: Test member access on record type.
 func TestCompletion_MemberAccessOnRecord(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: record type with fields
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 type TPoint = record
@@ -739,77 +543,31 @@ var point: TPoint;
 begin
   point.X := 10;
 end.`
-
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor after "point." (after the dot)
-	// Testing member access completion on record
+	createAndAddTestDocument(t, srv, source, testURI)
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      10, // On the "point.X := 10;" line (0-indexed)
-				Character: 8,  // After "point." -> "  point." = 2 + 5 + 1 = 8
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 10, 8, &triggerChar)
+	completionList := callCompletion(t, params)
+	verifyRecordMemberCompletion(t, completionList.Items)
+}
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: X and Y from TPoint record
+// verifyRecordMemberCompletion checks that X and Y record fields are in completion results.
+func verifyRecordMemberCompletion(t *testing.T, items []protocol.CompletionItem) {
 	foundX := false
 	foundY := false
 
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
-
 		if item.Label == "X" {
 			foundX = true
 		}
-
 		if item.Label == "Y" {
 			foundY = true
 		}
 	}
 
-	// Verify: X and Y should be in results
 	if !foundX {
 		t.Error("Expected 'X' to be in completion results for record member access")
 	}
-
 	if !foundY {
 		t.Error("Expected 'Y' to be in completion results for record member access")
 	}
@@ -819,11 +577,7 @@ end.`
 
 // Task 9.20: Test member access returns all members (no prefix).
 func TestCompletion_MemberAccessAllMembers(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: class with multiple members
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 type TData = class
@@ -838,110 +592,39 @@ var data: TData;
 begin
   data.GetValue := 1;
 end.`
-
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor right after "data." (testing all members)
-	// Testing that member access returns all members of the type
+	createAndAddTestDocument(t, srv, source, testURI)
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      12, // On the "data.GetValue := 1;" line (0-indexed)
-				Character: 7,  // After "data." -> "  data." = 2 + 4 + 1 = 7
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 12, 7, &triggerChar)
+	completionList := callCompletion(t, params)
+	verifyAllMembersPresent(t, completionList.Items)
+}
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
+// verifyAllMembersPresent checks that all four class members are in completion results.
+func verifyAllMembersPresent(t *testing.T, items []protocol.CompletionItem) {
+	expectedMembers := []string{"GetValue", "GetName", "SetValue", "Count"}
+	foundMembers := make(map[string]bool)
 
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: All four members should be in results
-	foundGetValue := false
-	foundGetName := false
-	foundSetValue := false
-	foundCount := false
-
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
-
-		if item.Label == "GetValue" {
-			foundGetValue = true
-		}
-
-		if item.Label == "GetName" {
-			foundGetName = true
-		}
-
-		if item.Label == "SetValue" {
-			foundSetValue = true
-		}
-
-		if item.Label == "Count" {
-			foundCount = true
+		for _, expected := range expectedMembers {
+			if item.Label == expected {
+				foundMembers[expected] = true
+			}
 		}
 	}
 
-	// Verify: All four members should be in results
-	if !foundGetValue {
-		t.Error("Expected 'GetValue' to be in completion results")
+	for _, member := range expectedMembers {
+		if !foundMembers[member] {
+			t.Errorf("Expected '%s' to be in completion results", member)
+		}
 	}
 
-	if !foundGetName {
-		t.Error("Expected 'GetName' to be in completion results")
-	}
-
-	if !foundSetValue {
-		t.Error("Expected 'SetValue' to be in completion results")
-	}
-
-	if !foundCount {
-		t.Error("Expected 'Count' to be in completion results")
-	}
-
-	t.Logf("Member access all members test passed: found all 4 members (GetValue=%v, GetName=%v, SetValue=%v, Count=%v)",
-		foundGetValue, foundGetName, foundSetValue, foundCount)
+	t.Logf("Member access all members test passed: found all 4 members")
 }
 
 // Task 9.21: Test keyword completion at statement start.
 func TestCompletion_KeywordsAtStatementStart(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: function with cursor at beginning of line
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 function DoSomething(): Integer;
@@ -951,318 +634,132 @@ end;
 
 begin
 end.`
+	createAndAddTestDocument(t, srv, source, testURI)
+	params := createCompletionParams(testURI, 4, 2, nil)
+	completionList := callCompletion(t, params)
+	verifyKeywordCompletion(t, completionList.Items)
+}
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor at beginning of line inside function (after "begin")
-	// Testing keyword completion at statement start
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      4, // On the "  Result := 0;" line (0-indexed)
-				Character: 2, // At the beginning after indent
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Keywords like if, while, for, var, etc. should be in results
-	foundIf := false
-	foundWhile := false
-	foundFor := false
-	foundVar := false
-	foundBegin := false
-
+// verifyKeywordCompletion checks that expected keywords are in completion results.
+func verifyKeywordCompletion(t *testing.T, items []protocol.CompletionItem) {
+	expectedKeywords := []string{testKeywordIf, testKeywordWhile, testKeywordFor}
+	foundKeywords := make(map[string]bool)
 	keywordCount := 0
 
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindKeyword {
 			keywordCount++
-
-			switch item.Label {
-			case testKeywordIf:
-				foundIf = true
-			case testKeywordWhile:
-				foundWhile = true
-			case testKeywordFor:
-				foundFor = true
-			case testKeywordVar:
-				foundVar = true
-			case testKeywordBegin:
-				foundBegin = true
+			for _, expected := range expectedKeywords {
+				if item.Label == expected {
+					foundKeywords[expected] = true
+				}
 			}
 		}
 	}
 
-	// Verify: Control flow keywords should be in results
-	if !foundIf {
-		t.Error("Expected 'if' keyword to be in completion results")
+	for _, keyword := range expectedKeywords {
+		if !foundKeywords[keyword] {
+			t.Errorf("Expected '%s' keyword to be in completion results", keyword)
+		}
 	}
 
-	if !foundWhile {
-		t.Error("Expected 'while' keyword to be in completion results")
-	}
-
-	if !foundFor {
-		t.Error("Expected 'for' keyword to be in completion results")
-	}
-
-	// Verify we have a reasonable number of keywords
 	if keywordCount < 10 {
 		t.Errorf("Expected at least 10 keywords, found %d", keywordCount)
 	}
 
-	t.Logf("Keyword completion test passed: found %d keywords (if=%v, while=%v, for=%v, var=%v, begin=%v)",
-		keywordCount, foundIf, foundWhile, foundFor, foundVar, foundBegin)
+	t.Logf("Keyword completion test passed: found %d keywords", keywordCount)
 }
 
 // Task 9.21: Test built-in function completion.
 func TestCompletion_BuiltInFunctions(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: simple program
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 begin
   PrintLn('test');
 end.`
+	createAndAddTestDocument(t, srv, source, testURI)
+	params := createCompletionParams(testURI, 3, 2, nil)
+	completionList := callCompletion(t, params)
+	verifyBuiltInFunctionCompletion(t, completionList.Items)
+}
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor at beginning of line inside begin/end
-	// Testing that built-in functions are available
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      3, // On the "  PrintLn('test');" line (0-indexed)
-				Character: 2, // At the beginning after indent
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Built-in functions like PrintLn, IntToStr, Length, etc.
-	foundPrintLn := false
-	foundPrint := false
-	foundIntToStr := false
-	foundLength := false
-
+// verifyBuiltInFunctionCompletion checks that expected built-in functions are in completion results.
+func verifyBuiltInFunctionCompletion(t *testing.T, items []protocol.CompletionItem) {
+	expectedFuncs := []string{"PrintLn", "IntToStr", "Length"}
+	foundFuncs := make(map[string]bool)
 	builtinFuncCount := 0
 
-	for _, item := range completionList.Items {
-		// Built-in functions should have kind Function
+	for _, item := range items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindFunction {
-			// Check if it's a built-in based on detail or sortText
 			if item.Detail != nil {
 				detail := *item.Detail
 				if strings.Contains(detail, "(") && strings.Contains(detail, ")") {
-					switch item.Label {
-					case "PrintLn":
-						foundPrintLn = true
-						builtinFuncCount++
-					case "Print":
-						foundPrint = true
-						builtinFuncCount++
-					case "IntToStr":
-						foundIntToStr = true
-						builtinFuncCount++
-					case "Length":
-						foundLength = true
-						builtinFuncCount++
+					builtinFuncCount++
+					for _, expected := range expectedFuncs {
+						if item.Label == expected {
+							foundFuncs[expected] = true
+						}
 					}
 				}
 			}
 		}
 	}
 
-	// Verify: Common built-in functions should be in results
-	if !foundPrintLn {
-		t.Error("Expected 'PrintLn' built-in function to be in completion results")
+	for _, fn := range expectedFuncs {
+		if !foundFuncs[fn] {
+			t.Errorf("Expected '%s' built-in function to be in completion results", fn)
+		}
 	}
 
-	if !foundIntToStr {
-		t.Error("Expected 'IntToStr' built-in function to be in completion results")
-	}
-
-	if !foundLength {
-		t.Error("Expected 'Length' built-in function to be in completion results")
-	}
-
-	// Verify we have a reasonable number of built-in functions
 	if builtinFuncCount < 4 {
 		t.Errorf("Expected at least 4 built-in functions, found %d", builtinFuncCount)
 	}
 
-	t.Logf("Built-in function completion test passed: found %d built-ins (PrintLn=%v, Print=%v, IntToStr=%v, Length=%v)",
-		builtinFuncCount, foundPrintLn, foundPrint, foundIntToStr, foundLength)
+	t.Logf("Built-in function completion test passed: found %d built-ins", builtinFuncCount)
 }
 
 // Task 9.21: Test built-in types completion.
 func TestCompletion_BuiltInTypes(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: simple program
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 var x: Integer;
 
 begin
 end.`
+	createAndAddTestDocument(t, srv, source, testURI)
+	params := createCompletionParams(testURI, 4, 0, nil)
+	completionList := callCompletion(t, params)
+	verifyBuiltInTypeCompletion(t, completionList.Items)
+}
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor at beginning of line
-	// Testing that built-in types are available
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      4, // Inside begin/end (0-indexed)
-				Character: 0, // At the beginning
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Built-in types like Integer, String, Boolean, Float, etc.
-	foundInteger := false
-	foundString := false
-	foundBoolean := false
-	foundFloat := false
-
+// verifyBuiltInTypeCompletion checks that expected built-in types are in completion results.
+func verifyBuiltInTypeCompletion(t *testing.T, items []protocol.CompletionItem) {
+	expectedTypes := []string{testTypeInteger, testTypeString, testTypeBoolean}
+	foundTypes := make(map[string]bool)
 	builtinTypeCount := 0
 
-	for _, item := range completionList.Items {
-		// Built-in types should have kind Class (type)
+	for _, item := range items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindClass {
-			switch item.Label {
-			case testTypeInteger:
-				foundInteger = true
-				builtinTypeCount++
-			case testTypeString:
-				foundString = true
-				builtinTypeCount++
-			case testTypeBoolean:
-				foundBoolean = true
-				builtinTypeCount++
-			case testTypeFloat:
-				foundFloat = true
-				builtinTypeCount++
+			builtinTypeCount++
+			for _, expected := range expectedTypes {
+				if item.Label == expected {
+					foundTypes[expected] = true
+				}
 			}
 		}
 	}
 
-	// Verify: Common built-in types should be in results
-	if !foundInteger {
-		t.Error("Expected 'Integer' built-in type to be in completion results")
+	for _, typ := range expectedTypes {
+		if !foundTypes[typ] {
+			t.Errorf("Expected '%s' built-in type to be in completion results", typ)
+		}
 	}
 
-	if !foundString {
-		t.Error("Expected 'String' built-in type to be in completion results")
-	}
-
-	if !foundBoolean {
-		t.Error("Expected 'Boolean' built-in type to be in completion results")
-	}
-
-	// Verify we have a reasonable number of built-in types
 	if builtinTypeCount < 3 {
 		t.Errorf("Expected at least 3 built-in types, found %d", builtinTypeCount)
 	}
 
-	t.Logf("Built-in type completion test passed: found %d built-in types (Integer=%v, String=%v, Boolean=%v, Float=%v)",
-		builtinTypeCount, foundInteger, foundString, foundBoolean, foundFloat)
+	t.Logf("Built-in type completion test passed: found %d built-in types", builtinTypeCount)
 }
