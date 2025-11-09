@@ -348,12 +348,12 @@ func findOpeningParenthesis(runes []rune) int {
 // extractFunctionNameFromRunes extracts the function name before the opening parenthesis.
 func extractFunctionNameFromRunes(runes []rune, openParenIndex int) string {
 	// Skip whitespace before the opening parenthesis
-	i := openParenIndex - 1
-	for i >= 0 && isWhitespace(runes[i]) {
-		i--
+	index := openParenIndex - 1
+	for index >= 0 && isWhitespace(runes[index]) {
+		index--
 	}
 
-	if i < 0 {
+	if index < 0 {
 		return ""
 	}
 
