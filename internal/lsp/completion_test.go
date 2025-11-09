@@ -672,115 +672,51 @@ func verifyKeywordCompletion(t *testing.T, items []protocol.CompletionItem) {
 
 // Task 9.21: Test built-in function completion.
 func TestCompletion_BuiltInFunctions(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: simple program
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 begin
   PrintLn('test');
 end.`
+	createAndAddTestDocument(t, srv, source, testURI)
+	params := createCompletionParams(testURI, 3, 2, nil)
+	completionList := callCompletion(t, params)
+	verifyBuiltInFunctionCompletion(t, completionList.Items)
+}
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor at beginning of line inside begin/end
-	// Testing that built-in functions are available
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      3, // On the "  PrintLn('test');" line (0-indexed)
-				Character: 2, // At the beginning after indent
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Built-in functions like PrintLn, IntToStr, Length, etc.
-	foundPrintLn := false
-	foundPrint := false
-	foundIntToStr := false
-	foundLength := false
-
+// verifyBuiltInFunctionCompletion checks that expected built-in functions are in completion results.
+func verifyBuiltInFunctionCompletion(t *testing.T, items []protocol.CompletionItem) {
+	expectedFuncs := []string{"PrintLn", "IntToStr", "Length"}
+	foundFuncs := make(map[string]bool)
 	builtinFuncCount := 0
 
-	for _, item := range completionList.Items {
-		// Built-in functions should have kind Function
+	for _, item := range items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindFunction {
-			// Check if it's a built-in based on detail or sortText
 			if item.Detail != nil {
 				detail := *item.Detail
 				if strings.Contains(detail, "(") && strings.Contains(detail, ")") {
-					switch item.Label {
-					case "PrintLn":
-						foundPrintLn = true
-						builtinFuncCount++
-					case "Print":
-						foundPrint = true
-						builtinFuncCount++
-					case "IntToStr":
-						foundIntToStr = true
-						builtinFuncCount++
-					case "Length":
-						foundLength = true
-						builtinFuncCount++
+					builtinFuncCount++
+					for _, expected := range expectedFuncs {
+						if item.Label == expected {
+							foundFuncs[expected] = true
+						}
 					}
 				}
 			}
 		}
 	}
 
-	// Verify: Common built-in functions should be in results
-	if !foundPrintLn {
-		t.Error("Expected 'PrintLn' built-in function to be in completion results")
+	for _, fn := range expectedFuncs {
+		if !foundFuncs[fn] {
+			t.Errorf("Expected '%s' built-in function to be in completion results", fn)
+		}
 	}
 
-	if !foundIntToStr {
-		t.Error("Expected 'IntToStr' built-in function to be in completion results")
-	}
-
-	if !foundLength {
-		t.Error("Expected 'Length' built-in function to be in completion results")
-	}
-
-	// Verify we have a reasonable number of built-in functions
 	if builtinFuncCount < 4 {
 		t.Errorf("Expected at least 4 built-in functions, found %d", builtinFuncCount)
 	}
 
-	t.Logf("Built-in function completion test passed: found %d built-ins (PrintLn=%v, Print=%v, IntToStr=%v, Length=%v)",
-		builtinFuncCount, foundPrintLn, foundPrint, foundIntToStr, foundLength)
+	t.Logf("Built-in function completion test passed: found %d built-ins", builtinFuncCount)
 }
 
 // Task 9.21: Test built-in types completion.
