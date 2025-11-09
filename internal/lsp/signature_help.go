@@ -14,84 +14,19 @@ import (
 // SignatureHelp handles textDocument/signatureHelp requests
 // Shows function signatures and parameter hints during function calls.
 func SignatureHelp(context *glsp.Context, params *protocol.SignatureHelpParams) (*protocol.SignatureHelp, error) {
-	// Get server instance
-	srv, ok := serverInstance.(*server.Server)
-	if !ok || srv == nil {
-		log.Println("Warning: server instance not available in SignatureHelp")
-		return nil, nil //nolint:nilnil // nil is valid LSP response
-	}
-
-	// Extract document URI and position from params
 	uri := params.TextDocument.URI
 	position := params.Position
 
 	log.Printf("SignatureHelp request: URI=%s, Line=%d, Character=%d\n", uri, position.Line, position.Character)
 
-	// Retrieve document from DocumentStore
-	doc, exists := srv.Documents().Get(uri)
-	if !exists {
-		log.Printf("Document not found: %s\n", uri)
+	// Validate and get document
+	srv, doc := validateSignatureHelpRequest(uri)
+	if srv == nil || doc == nil {
 		return nil, nil //nolint:nilnil // nil is valid LSP response
 	}
 
-	// Check if document and AST are available
-	if doc.Program == nil {
-		log.Printf("No program available for document: %s\n", uri)
-		return nil, nil //nolint:nilnil // nil is valid LSP response
-	}
-
-	programAST := doc.Program.AST()
-	if programAST == nil {
-		log.Printf("No AST available for document: %s\n", uri)
-		return nil, nil //nolint:nilnil // nil is valid LSP response
-	}
-
-	// Convert LSP position (0-based, UTF-16) to document position (1-based, UTF-8)
-	astLine := int(position.Line) + 1
-	astColumn := int(position.Character) + 1
-
-	log.Printf("Converted position: line=%d, column=%d\n", astLine, astColumn)
-
-	// Task 10.4: Detect signature help triggers
-	if params.Context != nil {
-		triggerKind := params.Context.TriggerKind
-		log.Printf("Signature help trigger kind: %d\n", triggerKind)
-
-		// Handle different trigger types
-		switch triggerKind {
-		case protocol.SignatureHelpTriggerKindInvoked:
-			// Manual invocation (Ctrl+Shift+Space)
-			log.Println("Signature help manually invoked")
-
-		case protocol.SignatureHelpTriggerKindTriggerCharacter:
-			// Triggered by typing a character
-			triggerChar := ""
-			if params.Context.TriggerCharacter != nil {
-				triggerChar = *params.Context.TriggerCharacter
-			}
-
-			log.Printf("Signature help triggered by character: '%s'\n", triggerChar)
-
-			// Validate trigger character
-			switch triggerChar {
-			case "(":
-				log.Println("Start of function call")
-			case ",":
-				log.Println("Moving to next parameter")
-			default:
-				log.Printf("Warning: Unexpected trigger character: '%s'\n", triggerChar)
-			}
-
-		case protocol.SignatureHelpTriggerKindContentChange:
-			// Retrigger on typing (content change)
-			log.Println("Signature help retriggered on content change")
-
-		default:
-			log.Printf("Warning: Unknown trigger kind: %d\n", triggerKind)
-		}
-	} else {
-		log.Println("No trigger context provided")
-	}
+	// Log trigger information
+	logSignatureHelpTrigger(params.Context)
 
 	// Compute signature help using implemented functions
 	signatureHelp := computeSignatureHelp(doc, int(position.Line), int(position.Character), srv)
@@ -176,6 +111,67 @@ func computeSignatureHelp(doc *server.Document, line, character int, srv *server
 		len(signatureInfos), activeSignature, activeParameter)
 
 	return signatureHelp
+}
+
+// validateSignatureHelpRequest validates the request and returns server and document.
+func validateSignatureHelpRequest(uri string) (*server.Server, *server.Document) {
+	srv, ok := serverInstance.(*server.Server)
+	if !ok || srv == nil {
+		log.Println("Warning: server instance not available in SignatureHelp")
+		return nil, nil
+	}
+
+	doc, exists := srv.Documents().Get(uri)
+	if !exists {
+		log.Printf("Document not found: %s\n", uri)
+		return nil, nil
+	}
+
+	if doc.Program == nil {
+		log.Printf("No program available for document: %s\n", uri)
+		return nil, nil
+	}
+
+	if doc.Program.AST() == nil {
+		log.Printf("No AST available for document: %s\n", uri)
+		return nil, nil
+	}
+
+	return srv, doc
+}
+
+// logSignatureHelpTrigger logs information about the signature help trigger.
+func logSignatureHelpTrigger(context *protocol.SignatureHelpContext) {
+	if context == nil {
+		log.Println("No trigger context provided")
+		return
+	}
+
+	triggerKind := context.TriggerKind
+	log.Printf("Signature help trigger kind: %d\n", triggerKind)
+
+	switch triggerKind {
+	case protocol.SignatureHelpTriggerKindInvoked:
+		log.Println("Signature help manually invoked")
+	case protocol.SignatureHelpTriggerKindTriggerCharacter:
+		triggerChar := ""
+		if context.TriggerCharacter != nil {
+			triggerChar = *context.TriggerCharacter
+		}
+		log.Printf("Signature help triggered by character: '%s'\n", triggerChar)
+		switch triggerChar {
+		case "(":
+			log.Println("Start of function call")
+		case ",":
+			log.Println("Moving to next parameter")
+		default:
+			log.Printf("Warning: Unexpected trigger character: '%s'\n", triggerChar)
+		}
+	case protocol.SignatureHelpTriggerKindContentChange:
+		log.Println("Signature help retriggered on content change")
+	default:
+		log.Printf("Warning: Unknown trigger kind: %d\n", triggerKind)
+	}
 }
 
 // determineActiveSignature selects the best matching signature based on parameter index
