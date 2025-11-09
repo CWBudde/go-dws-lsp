@@ -386,11 +386,8 @@ end.`
 
 // Task 9.19: Test local variable shadowing global.
 func TestCompletion_LocalVariableShadowsGlobal(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
+	srv := setupCompletionTestServer()
 
-	// Setup: local variable shadows global variable
 	source := `program Test;
 
 var value: Integer; // Global variable
@@ -404,98 +401,51 @@ end;
 begin
 end.`
 
-	// Add document to server
-	uri := testURI
+	createAndAddTestDocument(t, srv, source, testURI)
 
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
+	// Input: cursor after "val" inside the function
+	params := createCompletionParams(testURI, 7, 5, nil)
+	completionList := callCompletion(t, params)
 
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
+	verifyLocalShadowsGlobal(t, completionList.Items)
+}
 
-	// Input: cursor after "val" inside the function (in the middle of "value")
-	// We're testing if typing "val" would suggest the local "value" with higher priority
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      7, // On the "value := 'test';" line
-				Character: 5, // After "value" (position 5 is after 'e')
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: local "value" should appear in results
-	// Note: Both local and global "value" might appear, but local should have higher priority
-	foundValue := false
-	valueCount := 0
+// verifyLocalShadowsGlobal checks that local variables appear before global ones in completion results.
+func verifyLocalShadowsGlobal(t *testing.T, items []protocol.CompletionItem) {
 	localValueIndex, globalValueIndex := -1, -1
+	valueCount := 0
 
-	for i, item := range completionList.Items {
-		t.Logf("Found completion item: %s (kind: %v, sortText: %v, detail: %v)",
-			item.Label, item.Kind, item.SortText, item.Detail)
-
+	for i, item := range items {
 		if item.Label == "value" {
-			foundValue = true
 			valueCount++
-			// Check if it's marked as local or global based on detail or sortText
-			if item.Detail != nil && (*item.Detail == "Local variable: String" || *item.Detail == "Local variable") {
+			// Check if it's marked as local or global based on detail
+			if item.Detail != nil && (strings.Contains(*item.Detail, "Local variable") || strings.Contains(*item.Detail, "String")) {
 				localValueIndex = i
-			} else if item.Detail != nil && (*item.Detail == "Global variable: Integer" || *item.Detail == "Global variable") {
+			} else if item.Detail != nil && (strings.Contains(*item.Detail, "Global variable") || strings.Contains(*item.Detail, "Integer")) {
 				globalValueIndex = i
 			}
 		}
 	}
 
-	// Verify: "value" should be in results
-	if !foundValue {
+	if valueCount == 0 {
 		t.Error("Expected 'value' to be in completion results")
+		return
 	}
 
-	t.Logf("Found %d 'value' entries: localIndex=%d, globalIndex=%d",
-		valueCount, localValueIndex, globalValueIndex)
+	t.Logf("Found %d 'value' entries: localIndex=%d, globalIndex=%d", valueCount, localValueIndex, globalValueIndex)
 
 	// If both are present, verify local comes before global (based on sortText)
-	// Local variables should have sortText starting with "0", globals with "1"
 	if localValueIndex >= 0 && globalValueIndex >= 0 {
-		localItem := completionList.Items[localValueIndex]
-		globalItem := completionList.Items[globalValueIndex]
+		localItem := items[localValueIndex]
+		globalItem := items[globalValueIndex]
 
 		if localItem.SortText != nil && globalItem.SortText != nil {
 			if *localItem.SortText >= *globalItem.SortText {
 				t.Errorf("Local variable should sort before global: local sortText=%s, global sortText=%s",
 					*localItem.SortText, *globalItem.SortText)
-			} else {
-				t.Logf("Correct sorting: local sortText=%s < global sortText=%s",
-					*localItem.SortText, *globalItem.SortText)
 			}
 		}
 	}
-
-	t.Logf("Shadowing test passed: found 'value' in results (count=%d)", valueCount)
 }
 
 // Task 9.20: Test member access on class instance.
