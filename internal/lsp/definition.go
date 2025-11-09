@@ -16,44 +16,17 @@ import (
 // This provides "go-to definition" functionality, allowing users to navigate
 // to where a symbol is defined.
 func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
-	// Get server instance
-	srv, ok := serverInstance.(*server.Server)
-	if !ok || srv == nil {
-		log.Println("Warning: server instance not available in Definition")
-		return []protocol.Location{}, nil
-	}
-
-	// Extract document URI and position from params
 	uri := params.TextDocument.URI
 	position := params.Position
 
 	log.Printf("Definition request at %s line %d, character %d\n",
 		uri, position.Line, position.Character)
 
-	// Retrieve document from DocumentStore
-	doc, exists := srv.Documents().Get(uri)
-	if !exists {
-		log.Printf("Document not found for definition: %s\n", uri)
-		return []protocol.Location{}, nil
-	}
-
-	// Check if document and AST are available
-	if doc.Program == nil {
-		log.Printf("No AST available for definition (document has parse errors): %s\n", uri)
-		return []protocol.Location{}, nil
-	}
-
-	// Get AST from Program
-	programAST := doc.Program.AST()
+	// Validate and get required components
+	programAST, astLine, astColumn := validateDefinitionRequest(uri, position)
 	if programAST == nil {
-		log.Printf("AST is nil for document: %s\n", uri)
 		return []protocol.Location{}, nil
 	}
-
-	// Convert LSP position (0-based, UTF-16) to AST position (1-based, UTF-8)
-	// LSP uses 0-based positions, AST uses 1-based
-	astLine := int(position.Line) + 1
-	astColumn := int(position.Character) + 1
 
 	// Find the AST node at this position
 	node := analysis.FindNodeAtPosition(programAST, astLine, astColumn)
@@ -101,6 +74,39 @@ func Definition(context *glsp.Context, params *protocol.DefinitionParams) (any, 
 	log.Printf("Found %d definitions for symbol %s", len(locations), symbolInfo.Name)
 
 	return locations, nil // Return array of locations
+}
+
+// validateDefinitionRequest validates the definition request and returns the AST and position.
+// Returns nil AST if validation fails.
+func validateDefinitionRequest(uri string, position protocol.Position) (*ast.Program, int, int) {
+	srv, ok := serverInstance.(*server.Server)
+	if !ok || srv == nil {
+		log.Println("Warning: server instance not available in Definition")
+		return nil, 0, 0
+	}
+
+	doc, exists := srv.Documents().Get(uri)
+	if !exists {
+		log.Printf("Document not found for definition: %s\n", uri)
+		return nil, 0, 0
+	}
+
+	if doc.Program == nil {
+		log.Printf("No AST available for definition (document has parse errors): %s\n", uri)
+		return nil, 0, 0
+	}
+
+	programAST := doc.Program.AST()
+	if programAST == nil {
+		log.Printf("AST is nil for document: %s\n", uri)
+		return nil, 0, 0
+	}
+
+	// Convert LSP position to AST position (0-based to 1-based)
+	astLine := int(position.Line) + 1
+	astColumn := int(position.Character) + 1
+
+	return programAST, astLine, astColumn
 }
 
 // findDefinitionLocation finds the definition location for an AST node.
