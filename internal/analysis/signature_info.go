@@ -6,6 +6,7 @@ import (
 	"github.com/CWBudde/go-dws-lsp/internal/server"
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
+	"github.com/cwbudde/go-dws/pkg/dwscript"
 	"github.com/cwbudde/go-dws/pkg/token"
 )
 
@@ -41,7 +42,7 @@ type ParameterInfo struct {
 // GetFunctionSignature retrieves function definition to get parameters and documentation
 // This implements task 10.8 - it reuses symbol resolution from go-to-definition (Phase 5).
 func GetFunctionSignature(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) (*FunctionSignature, error) {
-	signatures, err := GetFunctionSignatures(doc, functionName, line, character, workspaceIndex)
+	signatures, err := GetFunctionSignatures(doc, functionName, line, character, workspaceIndex, nil)
 	if err != nil || len(signatures) == 0 {
 		return nil, err
 	}
@@ -51,13 +52,20 @@ func GetFunctionSignature(doc *server.Document, functionName string, line, chara
 
 // GetFunctionSignatures retrieves all function definitions (supports overloading)
 // This implements task 10.15 - it collects all overloaded signatures.
-func GetFunctionSignatures(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) ([]*FunctionSignature, error) {
-	if doc.Program == nil {
+// If tempProgram is provided (non-nil), it will be used instead of doc.Program for signature lookup.
+func GetFunctionSignatures(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex, tempProgram *dwscript.Program) ([]*FunctionSignature, error) {
+	// Use temporary Program if provided, otherwise use doc.Program
+	program := tempProgram
+	if program == nil {
+		program = doc.Program
+	}
+
+	if program == nil {
 		log.Printf("GetFunctionSignatures: No program available\n")
 		return nil, nil
 	}
 
-	programAST := doc.Program.AST()
+	programAST := program.AST()
 	if programAST == nil {
 		log.Printf("GetFunctionSignatures: No AST available\n")
 		return nil, nil

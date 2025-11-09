@@ -26,6 +26,9 @@ type CallContext struct {
 
 	// Whether cursor is inside the parentheses of a call
 	IsInsideCall bool
+
+	// Temporary Program created for incomplete code (may be nil)
+	TempProgram *dwscript.Program
 }
 
 // DetermineCallContext analyzes the cursor position to determine if it's inside a function call
@@ -280,8 +283,12 @@ func FindFunctionAtCall(doc *server.Document, line, character int) (string, erro
 	}
 
 	currentLine := lines[line]
-	if character < 0 || character > len(currentLine) {
+	if character < 0 {
 		return "", nil
+	}
+	// Clamp character to line length if it's beyond (cursor at end of line)
+	if character > len(currentLine) {
+		character = len(currentLine)
 	}
 
 	textBefore := buildTextBeforeCursor(lines, line, currentLine, character)
@@ -388,9 +395,9 @@ func isIdentifierChar(r rune) bool {
 
 // ParseWithTemporaryClosingParen handles incomplete AST by temporarily inserting a closing parenthesis
 // This helps parse incomplete function calls like `foo(x, ` to get a complete AST
-// Returns the temporary AST or nil if parsing fails
-// The temporary AST should be discarded after use and not stored.
-func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Program {
+// Returns the temporary Program or nil if parsing fails
+// The temporary Program should be discarded after use and not stored.
+func ParseWithTemporaryClosingParen(text string, line, character int) *dwscript.Program {
 	if text == "" {
 		return nil
 	}
@@ -401,8 +408,14 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 	}
 
 	currentLine := lines[line]
-	if character < 0 || character > len(currentLine) {
+	// Allow character to be at the end of the line (one past last character)
+	// This is valid in LSP when cursor is at end of line
+	if character < 0 {
 		return nil
+	}
+	// Clamp character to line length if it's beyond
+	if character > len(currentLine) {
+		character = len(currentLine)
 	}
 
 	// Create modified text with `)` inserted at cursor position
@@ -414,8 +427,17 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 		modifiedText.WriteString("\n")
 	}
 
-	// Add the current line up to cursor, then insert `)`, then rest of line
-	modifiedText.WriteString(currentLine[:character])
+	// Add the current line up to cursor
+	prefix := currentLine[:character]
+	modifiedText.WriteString(prefix)
+
+	// If cursor is right after a comma or opening paren, insert a dummy value before the )
+	// This helps parse incomplete calls like "foo(5," -> "foo(5,0)" or "foo(" -> "foo(0)"
+	trimmedPrefix := strings.TrimSpace(prefix)
+	if strings.HasSuffix(trimmedPrefix, ",") || strings.HasSuffix(trimmedPrefix, "(") {
+		modifiedText.WriteString("0")
+	}
+
 	modifiedText.WriteString(")")
 	modifiedText.WriteString(currentLine[character:])
 
@@ -455,8 +477,8 @@ func ParseWithTemporaryClosingParen(text string, line, character int) *ast.Progr
 
 	log.Printf("ParseWithTemporaryClosingParen: Successfully parsed modified source\n")
 
-	// Return the temporary AST (caller should discard it after use)
-	return tempAST
+	// Return the temporary Program (caller should discard it after use)
+	return tempProgram
 }
 
 // DetermineCallContextWithTempAST uses a temporary AST with closing paren inserted
@@ -487,9 +509,16 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 	log.Printf("DetermineCallContextWithTempAST: Normal approach failed, trying with temporary AST\n")
 
 	// Try parsing with a temporary closing parenthesis
-	tempAST := ParseWithTemporaryClosingParen(doc.Text, line, character)
-	if tempAST == nil {
+	tempProgram := ParseWithTemporaryClosingParen(doc.Text, line, character)
+	if tempProgram == nil {
 		log.Printf("DetermineCallContextWithTempAST: Temporary parsing failed, falling back to token-based analysis\n")
+		return buildFallbackContext()
+	}
+
+	// Get AST from temporary Program
+	tempAST := tempProgram.AST()
+	if tempAST == nil {
+		log.Printf("DetermineCallContextWithTempAST: Temporary AST is nil, falling back to token-based analysis\n")
 		return buildFallbackContext()
 	}
 
@@ -515,15 +544,14 @@ func DetermineCallContextWithTempAST(doc *server.Document, line, character int) 
 	// Use text-based analysis for parameter index (more reliable than AST during typing)
 	paramIndex := findParameterIndex(doc.Text, line, character, callNode)
 
-	// Discard the temporary AST (don't store it)
-	// Go's garbage collector will clean it up
-
+	// Return the CallContext with the temporary Program for signature lookup
 	return &CallContext{
 		CallNode:       callNode,
 		FunctionName:   functionName,
 		ObjectExpr:     objectExpr,
 		ParameterIndex: paramIndex,
 		IsInsideCall:   true,
+		TempProgram:    tempProgram,
 	}, nil
 }
 

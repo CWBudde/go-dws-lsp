@@ -49,7 +49,8 @@ func computeSignatureHelp(doc *server.Document, line, character int, srv *server
 	var funcSignatures []*analysis.FunctionSignature
 
 	// First try to get user-defined function signatures (may have multiple overloads)
-	funcSignatures, err = analysis.GetFunctionSignatures(doc, callCtx.FunctionName, line, character, srv.WorkspaceIndex())
+	// Pass the temporary Program from CallContext if available
+	funcSignatures, err = analysis.GetFunctionSignatures(doc, callCtx.FunctionName, line, character, srv.WorkspaceIndex(), callCtx.TempProgram)
 	if err != nil {
 		log.Printf("computeSignatureHelp: Error getting function signatures: %v\n", err)
 	}
@@ -127,15 +128,8 @@ func validateSignatureHelpRequest(uri string) (*server.Server, *server.Document)
 		return nil, nil
 	}
 
-	if doc.Program == nil {
-		log.Printf("No program available for document: %s\n", uri)
-		return nil, nil
-	}
-
-	if doc.Program.AST() == nil {
-		log.Printf("No AST available for document: %s\n", uri)
-		return nil, nil
-	}
+	// Allow signature help even when doc.Program is nil or has no AST
+	// The temporary AST parsing in DetermineCallContextWithTempAST will handle incomplete code
 
 	return srv, doc
 }

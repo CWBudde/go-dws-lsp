@@ -4,14 +4,10 @@ on:
   push:
     branches:
       - main
-      - master
-      - develop
       - "claude/*"
   pull_request:
     branches:
       - main
-      - master
-      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
