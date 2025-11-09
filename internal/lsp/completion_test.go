@@ -345,11 +345,8 @@ end.`
 
 // Task 9.19: Test parameter completion in function.
 func TestCompletion_ParameterCompletion(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
+	srv := setupCompletionTestServer()
 
-	// Setup: function with parameters
 	source := `program Test;
 
 function Calculate(firstParam: Integer; secondParam: Float): String;
@@ -363,82 +360,28 @@ end;
 begin
 end.`
 
-	// Add document to server
-	uri := testURI
+	createAndAddTestDocument(t, srv, source, testURI)
 
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
+	// Input: cursor after "fir" (testing "firstParam" completion)
+	params := createCompletionParams(testURI, 6, 13, nil)
+	completionList := callCompletion(t, params)
 
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
+	// Expected: firstParam in results, secondParam should NOT be
+	foundFirstParam := findCompletionItem(completionList.Items, "firstParam")
+	foundSecondParam := findCompletionItem(completionList.Items, "secondParam")
 
-	// Input: cursor after "fir" (in the middle of "firstParam")
-	// Testing if typing "fir" would suggest "firstParam"
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      6,  // On the line with "temp := firstParam;"
-				Character: 13, // After "fir" in "firstParam"
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: firstParam in results
-	foundFirstParam := false
-	foundSecondParam := false
-
-	for _, item := range completionList.Items {
-		t.Logf("Found completion item: %s (kind: %v)", item.Label, item.Kind)
-
-		if item.Label == "firstParam" {
-			foundFirstParam = true
-			// Verify it's marked as a parameter
-			if item.Kind != nil && *item.Kind != protocol.CompletionItemKindVariable {
-				t.Logf("Warning: firstParam has kind %v, expected Variable", *item.Kind)
-			}
-		}
-
-		if item.Label == "secondParam" {
-			foundSecondParam = true
-		}
-	}
-
-	// Verify: firstParam should be in results (matches prefix "fir")
-	if !foundFirstParam {
+	if foundFirstParam == nil {
 		t.Error("Expected 'firstParam' to be in completion results")
+	} else if foundFirstParam.Kind != nil && *foundFirstParam.Kind != protocol.CompletionItemKindVariable {
+		t.Logf("Warning: firstParam has kind %v, expected Variable", *foundFirstParam.Kind)
 	}
 
-	// Verify: secondParam should NOT be in results (doesn't match prefix "fir")
-	if foundSecondParam {
+	if foundSecondParam != nil {
 		t.Error("Expected 'secondParam' to NOT be in completion results (doesn't match prefix)")
 	}
 
 	t.Logf("Parameter completion test passed: found firstParam=%v, secondParam=%v",
-		foundFirstParam, foundSecondParam)
+		foundFirstParam != nil, foundSecondParam != nil)
 }
 
 // Task 9.19: Test local variable shadowing global.
