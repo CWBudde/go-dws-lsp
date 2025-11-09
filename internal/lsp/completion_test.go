@@ -450,11 +450,7 @@ func verifyLocalShadowsGlobal(t *testing.T, items []protocol.CompletionItem) {
 
 // Task 9.20: Test member access on class instance.
 func TestCompletion_MemberAccessOnClass(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: class with fields Name, Age, method GetInfo()
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 type TPerson = class
@@ -474,106 +470,55 @@ var person: TPerson;
 begin
   person.Name := 'John';
 end.`
-
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor after "person." (after the dot)
-	// Testing member access completion
+	createAndAddTestDocument(t, srv, source, testURI)
 	triggerChar := "."
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      17, // On the "person.Name := 'John';" line (0-indexed)
-				Character: 9,  // After "person." -> "  person." = 2 spaces + 6 chars + 1 dot = position 9
-			},
-		},
-		Context: &protocol.CompletionContext{
-			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-			TriggerCharacter: &triggerChar,
-		},
-	}
+	params := createCompletionParams(testURI, 17, 9, &triggerChar)
+	completionList := callCompletion(t, params)
+	verifyClassMemberCompletion(t, completionList.Items)
+}
 
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Name, Age, GetInfo in results
+// verifyClassMemberCompletion checks that Name, Age, and GetInfo are in completion results with correct kinds.
+func verifyClassMemberCompletion(t *testing.T, items []protocol.CompletionItem) {
 	foundName := false
 	foundAge := false
 	foundGetInfo := false
 	var nameKind, ageKind, getInfoKind *protocol.CompletionItemKind
 
-	for _, item := range completionList.Items {
+	for _, item := range items {
 		t.Logf("Found completion item: %s (kind: %v, detail: %v)",
 			item.Label, item.Kind, item.Detail)
 
-		if item.Label == "Name" {
+		switch item.Label {
+		case "Name":
 			foundName = true
 			nameKind = item.Kind
-		}
-
-		if item.Label == "Age" {
+		case "Age":
 			foundAge = true
 			ageKind = item.Kind
-		}
-
-		if item.Label == "GetInfo" {
+		case "GetInfo":
 			foundGetInfo = true
 			getInfoKind = item.Kind
 		}
 	}
 
-	// Verify: Name, Age, and GetInfo should be in results
 	if !foundName {
 		t.Error("Expected 'Name' to be in completion results")
 	}
-
 	if !foundAge {
 		t.Error("Expected 'Age' to be in completion results")
 	}
-
 	if !foundGetInfo {
 		t.Error("Expected 'GetInfo' to be in completion results")
 	}
 
-	// Verify completion item kinds are correct
 	if nameKind != nil && *nameKind != protocol.CompletionItemKindField {
 		t.Errorf("Expected 'Name' to have kind Field (%d), got %d",
 			protocol.CompletionItemKindField, *nameKind)
 	}
-
 	if ageKind != nil && *ageKind != protocol.CompletionItemKindField {
 		t.Errorf("Expected 'Age' to have kind Field (%d), got %d",
 			protocol.CompletionItemKindField, *ageKind)
 	}
-
 	if getInfoKind != nil && *getInfoKind != protocol.CompletionItemKindMethod {
 		t.Errorf("Expected 'GetInfo' to have kind Method (%d), got %d",
 			protocol.CompletionItemKindMethod, *getInfoKind)
