@@ -721,108 +721,45 @@ func verifyBuiltInFunctionCompletion(t *testing.T, items []protocol.CompletionIt
 
 // Task 9.21: Test built-in types completion.
 func TestCompletion_BuiltInTypes(t *testing.T) {
-	// Create a test server
-	srv := server.New()
-	SetServer(srv)
-
-	// Setup: simple program
+	srv := setupCompletionTestServer()
 	source := `program Test;
 
 var x: Integer;
 
 begin
 end.`
+	createAndAddTestDocument(t, srv, source, testURI)
+	params := createCompletionParams(testURI, 4, 0, nil)
+	completionList := callCompletion(t, params)
+	verifyBuiltInTypeCompletion(t, completionList.Items)
+}
 
-	// Add document to server
-	uri := testURI
-
-	program, _, err := analysis.ParseDocument(source, uri)
-	if err != nil {
-		t.Fatalf("Failed to parse document: %v", err)
-	}
-
-	doc := &server.Document{
-		URI:        uri,
-		Text:       source,
-		Version:    1,
-		LanguageID: "dwscript",
-		Program:    program,
-	}
-	srv.Documents().Set(uri, doc)
-
-	// Input: cursor at beginning of line
-	// Testing that built-in types are available
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
-			},
-			Position: protocol.Position{
-				Line:      4, // Inside begin/end (0-indexed)
-				Character: 0, // At the beginning
-			},
-		},
-	}
-
-	// Call Completion handler
-	ctx := &glsp.Context{}
-
-	result, err := Completion(ctx, params)
-	if err != nil {
-		t.Fatalf("Completion returned error: %v", err)
-	}
-
-	completionList, ok := result.(*protocol.CompletionList)
-	if !ok {
-		t.Fatalf("Expected CompletionList, got %T", result)
-	}
-
-	// Expected: Built-in types like Integer, String, Boolean, Float, etc.
-	foundInteger := false
-	foundString := false
-	foundBoolean := false
-	foundFloat := false
-
+// verifyBuiltInTypeCompletion checks that expected built-in types are in completion results.
+func verifyBuiltInTypeCompletion(t *testing.T, items []protocol.CompletionItem) {
+	expectedTypes := []string{testTypeInteger, testTypeString, testTypeBoolean}
+	foundTypes := make(map[string]bool)
 	builtinTypeCount := 0
 
-	for _, item := range completionList.Items {
-		// Built-in types should have kind Class (type)
+	for _, item := range items {
 		if item.Kind != nil && *item.Kind == protocol.CompletionItemKindClass {
-			switch item.Label {
-			case testTypeInteger:
-				foundInteger = true
-				builtinTypeCount++
-			case testTypeString:
-				foundString = true
-				builtinTypeCount++
-			case testTypeBoolean:
-				foundBoolean = true
-				builtinTypeCount++
-			case testTypeFloat:
-				foundFloat = true
-				builtinTypeCount++
+			builtinTypeCount++
+			for _, expected := range expectedTypes {
+				if item.Label == expected {
+					foundTypes[expected] = true
+				}
 			}
 		}
 	}
 
-	// Verify: Common built-in types should be in results
-	if !foundInteger {
-		t.Error("Expected 'Integer' built-in type to be in completion results")
+	for _, typ := range expectedTypes {
+		if !foundTypes[typ] {
+			t.Errorf("Expected '%s' built-in type to be in completion results", typ)
+		}
 	}
 
-	if !foundString {
-		t.Error("Expected 'String' built-in type to be in completion results")
-	}
-
-	if !foundBoolean {
-		t.Error("Expected 'Boolean' built-in type to be in completion results")
-	}
-
-	// Verify we have a reasonable number of built-in types
 	if builtinTypeCount < 3 {
 		t.Errorf("Expected at least 3 built-in types, found %d", builtinTypeCount)
 	}
 
-	t.Logf("Built-in type completion test passed: found %d built-in types (Integer=%v, String=%v, Boolean=%v, Float=%v)",
-		builtinTypeCount, foundInteger, foundString, foundBoolean, foundFloat)
+	t.Logf("Built-in type completion test passed: found %d built-in types", builtinTypeCount)
 }
