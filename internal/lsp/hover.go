@@ -118,12 +118,7 @@ func getIdentifierHover(ident *ast.Identifier) string {
 	var parts []string
 
 	parts = append(parts, fmt.Sprintf("```dwscript\n%s\n```", ident.Value))
-
-	if ident.Type != nil && ident.Type.Name != "" {
-		parts = append(parts, fmt.Sprintf("Type: `%s`", ident.Type.Name))
-	} else {
-		parts = append(parts, "(identifier)")
-	}
+	parts = append(parts, "(identifier)")
 
 	return strings.Join(parts, "\n\n")
 }
@@ -159,9 +154,7 @@ func getFunctionHover(fn *ast.FunctionDecl) string {
 			sig.WriteString(": ")
 		}
 
-		if param.Type != nil {
-			sig.WriteString(param.Type.Name)
-		}
+		sig.WriteString(getTypeName(param.Type))
 
 		if param.DefaultValue != nil {
 			sig.WriteString(" = ")
@@ -172,9 +165,9 @@ func getFunctionHover(fn *ast.FunctionDecl) string {
 	sig.WriteString(")")
 
 	// Add return type
-	if fn.ReturnType != nil && fn.ReturnType.Name != "" {
+	if returnType := getTypeName(fn.ReturnType); returnType != "" {
 		sig.WriteString(": ")
-		sig.WriteString(fn.ReturnType.Name)
+		sig.WriteString(returnType)
 	}
 
 	return fmt.Sprintf("```dwscript\n%s\n```", sig.String())
@@ -193,9 +186,9 @@ func getVariableHover(varDecl *ast.VarDeclStatement) string {
 		decl.WriteString("var ")
 		decl.WriteString(name.Value)
 
-		if varDecl.Type != nil && varDecl.Type.Name != "" {
+		if typeName := getTypeName(varDecl.Type); typeName != "" {
 			decl.WriteString(": ")
-			decl.WriteString(varDecl.Type.Name)
+			decl.WriteString(typeName)
 		}
 
 		parts = append(parts, decl.String())
@@ -210,9 +203,9 @@ func getConstHover(constDecl *ast.ConstDecl) string {
 	sig.WriteString("const ")
 	sig.WriteString(constDecl.Name.Value)
 
-	if constDecl.Type != nil && constDecl.Type.Name != "" {
+	if typeName := getTypeName(constDecl.Type); typeName != "" {
 		sig.WriteString(": ")
-		sig.WriteString(constDecl.Type.Name)
+		sig.WriteString(typeName)
 	}
 
 	if constDecl.Value != nil {

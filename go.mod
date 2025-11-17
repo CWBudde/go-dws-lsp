@@ -1,9 +1,11 @@
 module github.com/CWBudde/go-dws-lsp
 
-go 1.24
+go 1.24.0
+
+toolchain go1.24.7
 
 require (
-	github.com/cwbudde/go-dws v0.3.1-0.20251108175356-790bc43db6be
+	github.com/cwbudde/go-dws v0.3.1-0.20251117215942-4e054521b740
 	github.com/stretchr/testify v1.11.1
 	github.com/tliron/glsp v0.2.2
 )
@@ -30,6 +32,7 @@ require (
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

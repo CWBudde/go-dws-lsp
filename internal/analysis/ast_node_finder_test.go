@@ -170,17 +170,24 @@ func TestGetSymbolName(t *testing.T) {
 var testProgram = &ast.Program{
 	Statements: []ast.Statement{
 		&ast.VarDeclStatement{
-			Token: token.Token{
-				Pos: token.Position{Line: 1, Column: 1},
+			BaseNode: ast.BaseNode{
+				Token: token.Token{
+					Pos: token.Position{Line: 1, Column: 1},
+				},
+				EndPos: token.Position{Line: 1, Column: 21},
 			},
 			Names: []*ast.Identifier{
 				{
-					Token: token.Token{
-						Pos:     token.Position{Line: 1, Column: 5},
-						Literal: "x",
+					TypedExpressionBase: ast.TypedExpressionBase{
+						BaseNode: ast.BaseNode{
+							Token: token.Token{
+								Pos:     token.Position{Line: 1, Column: 5},
+								Literal: "x",
+							},
+							EndPos: token.Position{Line: 1, Column: 6},
+						},
 					},
-					Value:  "x",
-					EndPos: token.Position{Line: 1, Column: 6},
+					Value: "x",
 				},
 			},
 			Type: &ast.TypeAnnotation{
@@ -192,15 +199,18 @@ var testProgram = &ast.Program{
 				EndPos: token.Position{Line: 1, Column: 15},
 			},
 			Value: &ast.IntegerLiteral{
-				Token: token.Token{
-					Type:    token.INT,
-					Literal: "42",
-					Pos:     token.Position{Line: 1, Column: 18},
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{
+							Type:    token.INT,
+							Literal: "42",
+							Pos:     token.Position{Line: 1, Column: 18},
+						},
+						EndPos: token.Position{Line: 1, Column: 20},
+					},
 				},
-				Value:  42,
-				EndPos: token.Position{Line: 1, Column: 20},
+				Value: 42,
 			},
-			EndPos: token.Position{Line: 1, Column: 21},
 		},
 	},
 }

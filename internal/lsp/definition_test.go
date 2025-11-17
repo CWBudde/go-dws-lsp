@@ -26,10 +26,14 @@ const testUsesMyUnit = "uses MyUnit;"
 func TestNodeToLocation(t *testing.T) {
 	// Create a test node with position information
 	ident := &ast.Identifier{
-		Value: "testVar",
-		Token: token.Token{
-			Pos: token.Position{Line: 5, Column: 10},
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{
+					Pos: token.Position{Line: 5, Column: 10},
+				},
+			},
 		},
+		Value: "testVar",
 	}
 
 	// Set the end position (normally done by parser)
@@ -61,8 +65,12 @@ func TestFindDefinitionLocation_VarDecl(t *testing.T) {
 	varDecl := &ast.VarDeclStatement{
 		Names: []*ast.Identifier{
 			{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+					},
+				},
 				Value: "x",
-				Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
 			},
 		},
 		Type: &ast.TypeAnnotation{Name: "Integer"},
@@ -88,8 +96,12 @@ func TestFindDefinitionLocation_FunctionDecl(t *testing.T) {
 	// Test finding definition for a function declaration
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 10, Column: 10}},
+				},
+			},
 			Value: "TestFunc",
-			Token: token.Token{Pos: token.Position{Line: 10, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{},
 		Body:       &ast.BlockStatement{},
@@ -114,12 +126,18 @@ func TestFindDefinitionLocation_FunctionDecl(t *testing.T) {
 func TestFindIdentifierDefinition_Variable(t *testing.T) {
 	// Create a program with a variable declaration
 	varName := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+			},
+		},
 		Value: "myVar",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
 	}
 
 	varDecl := &ast.VarDeclStatement{
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+		},
 		Names: []*ast.Identifier{varName},
 		Type:  &ast.TypeAnnotation{Name: "Integer"},
 	}
@@ -130,8 +148,12 @@ func TestFindIdentifierDefinition_Variable(t *testing.T) {
 
 	// Create an identifier reference to search for
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
+			},
+		},
 		Value: "myVar",
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
 	}
 
 	uri := testDefinitionURI
@@ -154,8 +176,12 @@ func TestFindIdentifierDefinition_Variable(t *testing.T) {
 func TestFindIdentifierDefinition_Function(t *testing.T) {
 	// Create a program with a function declaration
 	funcName := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
+			},
+		},
 		Value: "MyFunction",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
 	}
 
 	funcDecl := &ast.FunctionDecl{
@@ -170,8 +196,12 @@ func TestFindIdentifierDefinition_Function(t *testing.T) {
 
 	// Create an identifier reference to the function
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
+			},
+		},
 		Value: "MyFunction",
-		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -189,14 +219,22 @@ func TestFindIdentifierDefinition_Function(t *testing.T) {
 func TestFindIdentifierDefinition_FunctionParameter(t *testing.T) {
 	// Create a program with a function that has parameters
 	paramName := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 20}},
+			},
+		},
 		Value: "param1",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 20}},
 	}
 
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
+				},
+			},
 			Value: "TestFunc",
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{
 			{
@@ -213,8 +251,12 @@ func TestFindIdentifierDefinition_FunctionParameter(t *testing.T) {
 
 	// Create an identifier reference to the parameter
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
+			},
+		},
 		Value: "param1",
-		Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -232,8 +274,12 @@ func TestFindIdentifierDefinition_FunctionParameter(t *testing.T) {
 func TestFindIdentifierDefinition_Class(t *testing.T) {
 	// Create a program with a class declaration
 	className := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
+			},
+		},
 		Value: "MyClass",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 	}
 
 	classDecl := &ast.ClassDecl{
@@ -248,8 +294,12 @@ func TestFindIdentifierDefinition_Class(t *testing.T) {
 
 	// Create an identifier reference to the class
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 10, Column: 10}},
+			},
+		},
 		Value: "MyClass",
-		Token: token.Token{Pos: token.Position{Line: 10, Column: 10}},
 	}
 
 	uri := testDefinitionURI
@@ -272,8 +322,12 @@ func TestFindIdentifierDefinition_NotFound(t *testing.T) {
 
 	// Try to find a non-existent identifier
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
+			},
+		},
 		Value: "nonExistent",
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
 	}
 
 	uri := testDefinitionURI
@@ -287,8 +341,12 @@ func TestFindIdentifierDefinition_NotFound(t *testing.T) {
 func TestFindIdentifierDefinition_Constant(t *testing.T) {
 	// Create a program with a constant declaration
 	constName := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 7}},
+			},
+		},
 		Value: "PI",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 7}},
 	}
 
 	constDecl := &ast.ConstDecl{
@@ -303,8 +361,12 @@ func TestFindIdentifierDefinition_Constant(t *testing.T) {
 
 	// Create an identifier reference to the constant
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
+			},
+		},
 		Value: "PI",
-		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -322,8 +384,12 @@ func TestFindIdentifierDefinition_Constant(t *testing.T) {
 func TestFindIdentifierDefinition_Enum(t *testing.T) {
 	// Create a program with an enum declaration
 	enumName := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
+			},
+		},
 		Value: testEnumTypeTColor,
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 	}
 
 	enumDecl := &ast.EnumDecl{
@@ -341,8 +407,12 @@ func TestFindIdentifierDefinition_Enum(t *testing.T) {
 
 	// Create an identifier reference to the enum
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
+			},
+		},
 		Value: testEnumTypeTColor,
-		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -361,8 +431,12 @@ func TestFindIdentifierDefinition_EnumValue(t *testing.T) {
 	// Create a program with an enum that has values
 	enumDecl := &ast.EnumDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
+				},
+			},
 			Value: testEnumTypeTColor,
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 		},
 		Values: []ast.EnumValue{
 			{Name: "Red"},
@@ -377,8 +451,12 @@ func TestFindIdentifierDefinition_EnumValue(t *testing.T) {
 
 	// Create an identifier reference to an enum value
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
+			},
+		},
 		Value: "Red",
-		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -415,22 +493,34 @@ func TestFindIdentifierDefinition_ShadowedVariable(t *testing.T) {
 	// Test that go-to-definition finds the nearest variable in case of shadowing
 	// Create a program with shadowed variables
 	outerVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+			},
+		},
 		Value: "x",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
 	}
 	outerVarDecl := &ast.VarDeclStatement{
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+		},
 		Names: []*ast.Identifier{outerVar},
 		Type:  &ast.TypeAnnotation{Name: "Integer"},
 	}
 
 	// Inner block with shadowing variable
 	innerVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 3, Column: 7}},
+			},
+		},
 		Value: "x",
-		Token: token.Token{Pos: token.Position{Line: 3, Column: 7}},
 	}
 	innerVarDecl := &ast.VarDeclStatement{
-		Token: token.Token{Pos: token.Position{Line: 3, Column: 3}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 3, Column: 3}},
+		},
 		Names: []*ast.Identifier{innerVar},
 		Type:  &ast.TypeAnnotation{Name: "String"},
 	}
@@ -442,8 +532,12 @@ func TestFindIdentifierDefinition_ShadowedVariable(t *testing.T) {
 
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
+				},
+			},
 			Value: "TestFunc",
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{},
 		Body: &ast.BlockStatement{
@@ -457,8 +551,12 @@ func TestFindIdentifierDefinition_ShadowedVariable(t *testing.T) {
 
 	// Create an identifier reference in the inner block (should find inner 'x')
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 4, Column: 5}},
+			},
+		},
 		Value: "x",
-		Token: token.Token{Pos: token.Position{Line: 4, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -481,8 +579,12 @@ func TestFindIdentifierDefinition_NestedBlocks(t *testing.T) {
 	// Outer function
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
+				},
+			},
 			Value: "OuterFunc",
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{},
 		Body: &ast.BlockStatement{
@@ -492,11 +594,17 @@ func TestFindIdentifierDefinition_NestedBlocks(t *testing.T) {
 
 	// Variable in nested block
 	nestedVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 5, Column: 9}},
+			},
+		},
 		Value: "nestedVar",
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 9}},
 	}
 	nestedVarDecl := &ast.VarDeclStatement{
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 5}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 5, Column: 5}},
+		},
 		Names: []*ast.Identifier{nestedVar},
 		Type:  &ast.TypeAnnotation{Name: "Float"},
 	}
@@ -512,8 +620,12 @@ func TestFindIdentifierDefinition_NestedBlocks(t *testing.T) {
 
 	// Create an identifier reference to the nested variable
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 7, Column: 5}},
+			},
+		},
 		Value: "nestedVar",
-		Token: token.Token{Pos: token.Position{Line: 7, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -537,22 +649,36 @@ func TestFindIdentifierDefinition_LoopVariable(t *testing.T) {
 	// Test go-to-definition on a loop variable (for loop)
 	// Create a for loop with a loop variable
 	loopVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 2, Column: 7}},
+			},
+		},
 		Value: "i",
-		Token: token.Token{Pos: token.Position{Line: 2, Column: 7}},
 	}
 
 	// For DWScript: for i := 1 to 10 do
 	// The loop variable is declared in the for statement
 	forStmt := &ast.ForStatement{
-		Token:    token.Token{Pos: token.Position{Line: 2, Column: 3}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 2, Column: 3}},
+		},
 		Variable: loopVar,
 		Start: &ast.IntegerLiteral{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 2, Column: 12}},
+				},
+			},
 			Value: 1,
-			Token: token.Token{Pos: token.Position{Line: 2, Column: 12}},
 		},
 		EndValue: &ast.IntegerLiteral{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 2, Column: 17}},
+				},
+			},
 			Value: 10,
-			Token: token.Token{Pos: token.Position{Line: 2, Column: 17}},
 		},
 		Direction: ast.ForTo,
 		Body:      &ast.BlockStatement{},
@@ -560,8 +686,12 @@ func TestFindIdentifierDefinition_LoopVariable(t *testing.T) {
 
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
+				},
+			},
 			Value: "TestLoop",
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{},
 		Body: &ast.BlockStatement{
@@ -575,8 +705,12 @@ func TestFindIdentifierDefinition_LoopVariable(t *testing.T) {
 
 	// Create an identifier reference to the loop variable
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
+			},
+		},
 		Value: "i",
-		Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
 	}
 
 	uri := testDefinitionURI
@@ -601,8 +735,12 @@ func TestFindIdentifierDefinition_InvalidPosition(t *testing.T) {
 
 	// Try to find an identifier at an invalid position (empty program)
 	identRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 100, Column: 100}},
+			},
+		},
 		Value: "nonExistent",
-		Token: token.Token{Pos: token.Position{Line: 100, Column: 100}},
 	}
 
 	uri := testDefinitionURI
@@ -617,36 +755,56 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 	// Test resolution across multiple scopes (parameter, local var, global)
 	// Global variable
 	globalVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+			},
+		},
 		Value: "global",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
 	}
 	globalVarDecl := &ast.VarDeclStatement{
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+		},
 		Names: []*ast.Identifier{globalVar},
 		Type:  &ast.TypeAnnotation{Name: "Integer"},
 	}
 
 	// Function parameter
 	paramVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 3, Column: 20}},
+			},
+		},
 		Value: "param",
-		Token: token.Token{Pos: token.Position{Line: 3, Column: 20}},
 	}
 
 	// Local variable inside function
 	localVar := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 5, Column: 7}},
+			},
+		},
 		Value: "local",
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 7}},
 	}
 	localVarDecl := &ast.VarDeclStatement{
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 3}},
+		BaseNode: ast.BaseNode{
+			Token: token.Token{Pos: token.Position{Line: 5, Column: 3}},
+		},
 		Names: []*ast.Identifier{localVar},
 		Type:  &ast.TypeAnnotation{Name: "String"},
 	}
 
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 3, Column: 10}},
+				},
+			},
 			Value: "TestScopes",
-			Token: token.Token{Pos: token.Position{Line: 3, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{
 			{
@@ -667,8 +825,12 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 
 	// Test finding global variable
 	globalRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
+			},
+		},
 		Value: "global",
-		Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 	}
 
 	globalLoc := findIdentifierDefinition(globalRef, programAST, uri)
@@ -678,8 +840,12 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 
 	// Test finding parameter
 	paramRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 6, Column: 5}},
+			},
+		},
 		Value: "param",
-		Token: token.Token{Pos: token.Position{Line: 6, Column: 5}},
 	}
 
 	paramLoc := findIdentifierDefinition(paramRef, programAST, uri)
@@ -689,8 +855,12 @@ func TestFindIdentifierDefinition_MultipleScopes(t *testing.T) {
 
 	// Test finding local variable
 	localRef := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 7, Column: 5}},
+			},
+		},
 		Value: "local",
-		Token: token.Token{Pos: token.Position{Line: 7, Column: 5}},
 	}
 
 	localLoc := findIdentifierDefinition(localRef, programAST, uri)
@@ -711,8 +881,12 @@ func TestNodeToLocation_CorrectRangeConversion(t *testing.T) {
 		{
 			name: "identifier at line 1, column 1",
 			node: &ast.Identifier{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+					},
+				},
 				Value: "test",
-				Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
 			},
 			uri:     "file:///test/test.dws",
 			expLine: 0,
@@ -721,8 +895,12 @@ func TestNodeToLocation_CorrectRangeConversion(t *testing.T) {
 		{
 			name: "identifier at line 10, column 15",
 			node: &ast.Identifier{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 10, Column: 15}},
+					},
+				},
 				Value: "myVar",
-				Token: token.Token{Pos: token.Position{Line: 10, Column: 15}},
 			},
 			uri:     "file:///test/vars.dws",
 			expLine: 9,
@@ -731,9 +909,18 @@ func TestNodeToLocation_CorrectRangeConversion(t *testing.T) {
 		{
 			name: "variable declaration at line 5, column 3",
 			node: &ast.VarDeclStatement{
-				Token: token.Token{Pos: token.Position{Line: 5, Column: 3}},
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 5, Column: 3}},
+				},
 				Names: []*ast.Identifier{
-					{Value: "x", Token: token.Token{Pos: token.Position{Line: 5, Column: 7}}},
+					{
+						TypedExpressionBase: ast.TypedExpressionBase{
+							BaseNode: ast.BaseNode{
+								Token: token.Token{Pos: token.Position{Line: 5, Column: 7}},
+							},
+						},
+						Value: "x",
+					},
 				},
 			},
 			uri:     "file:///test/decls.dws",
@@ -963,8 +1150,12 @@ var obj: TMyClass;
 			if typeAnnot.Name == "TMyClass" && foundDecl {
 				// This is the usage in the variable declaration
 				classIdent = &ast.Identifier{
+					TypedExpressionBase: ast.TypedExpressionBase{
+						BaseNode: ast.BaseNode{
+							Token: token.Token{Pos: token.Position{Line: 7, Column: 10}},
+						},
+					},
 					Value: "TMyClass",
-					Token: token.Token{Pos: token.Position{Line: 7, Column: 10}},
 				}
 
 				return false
@@ -983,8 +1174,12 @@ var obj: TMyClass;
 	if classIdent == nil {
 		// If we didn't find it via TypeAnnotation, create it manually for the test
 		classIdent = &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 7, Column: 10}},
+				},
+			},
 			Value: "TMyClass",
-			Token: token.Token{Pos: token.Position{Line: 7, Column: 10}},
 		}
 	}
 
@@ -1297,8 +1492,12 @@ func TestGlobalDefinition_EnumDeclaration(t *testing.T) {
 		if typeAnnot, ok := node.(*ast.TypeAnnotation); ok {
 			if typeAnnot.Name == testEnumTypeTColor && foundDecl {
 				enumIdent = &ast.Identifier{
+					TypedExpressionBase: ast.TypedExpressionBase{
+						BaseNode: ast.BaseNode{
+							Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
+						},
+					},
 					Value: testEnumTypeTColor,
-					Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
 				}
 
 				return false
@@ -1316,8 +1515,12 @@ func TestGlobalDefinition_EnumDeclaration(t *testing.T) {
 
 	if enumIdent == nil {
 		enumIdent = &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
+				},
+			},
 			Value: testEnumTypeTColor,
-			Token: token.Token{Pos: token.Position{Line: 5, Column: 13}},
 		}
 	}
 
