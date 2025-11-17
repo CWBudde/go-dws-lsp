@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/CWBudde/go-dws-lsp/internal/util"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/dwscript"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -30,22 +31,7 @@ func NewIndexer(index *SymbolIndex) *Indexer {
 	}
 }
 
-// getTypeName extracts the type name from a TypeExpression.
-// TypeExpression is an interface that can be implemented by TypeAnnotation,
-// FunctionPointerTypeNode, or ArrayTypeNode.
-func getTypeName(typeExpr ast.TypeExpression) string {
-	if typeExpr == nil {
-		return ""
-	}
 
-	// Try to type assert to *TypeAnnotation, which has a Name field
-	if typeAnnotation, ok := typeExpr.(*ast.TypeAnnotation); ok {
-		return typeAnnotation.Name
-	}
-
-	// For other types (FunctionPointerTypeNode, ArrayTypeNode), use String()
-	return typeExpr.String()
-}
 
 // BuildWorkspaceIndex scans workspace folders and indexes all .dws files.
 // This runs in the background and doesn't block the caller.
@@ -246,7 +232,7 @@ func (idx *Indexer) addVariableSymbols(uri string, varDecl *ast.VarDeclStatement
 		}
 
 		detail := "var"
-		if typeName := getTypeName(varDecl.Type); typeName != "" {
+		if typeName := util.GetTypeName(varDecl.Type); typeName != "" {
 			detail += ": " + typeName
 		}
 
@@ -275,7 +261,7 @@ func (idx *Indexer) addConstSymbol(uri string, constDecl *ast.ConstDecl, contain
 	}
 
 	detail := "const"
-	if typeName := getTypeName(constDecl.Type); typeName != "" {
+	if typeName := util.GetTypeName(constDecl.Type); typeName != "" {
 		detail += ": " + typeName
 	}
 
@@ -373,7 +359,7 @@ func (idx *Indexer) addClassSymbol(uri string, classDecl *ast.ClassDecl) {
 		}
 
 		propDetail := "property"
-		if typeName := getTypeName(prop.Type); typeName != "" {
+		if typeName := util.GetTypeName(prop.Type); typeName != "" {
 			propDetail += ": " + typeName
 		}
 
@@ -428,7 +414,7 @@ func (idx *Indexer) addRecordSymbol(uri string, recordDecl *ast.RecordDecl) {
 		}
 
 		propDetail := "field"
-		if typeName := getTypeName(prop.Type); typeName != "" {
+		if typeName := util.GetTypeName(prop.Type); typeName != "" {
 			propDetail += ": " + typeName
 		}
 
@@ -522,7 +508,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		if param.Name != nil {
 			sigSb483.WriteString(param.Name.Value)
 
-			if typeName := getTypeName(param.Type); typeName != "" {
+			if typeName := util.GetTypeName(param.Type); typeName != "" {
 				sigSb483.WriteString(": " + typeName)
 			}
 		}
@@ -536,7 +522,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 	sig += ")"
 
-	if returnType := getTypeName(fn.ReturnType); returnType != "" {
+	if returnType := util.GetTypeName(fn.ReturnType); returnType != "" {
 		sig += ": " + returnType
 	}
 

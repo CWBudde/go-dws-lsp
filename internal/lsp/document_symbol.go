@@ -7,27 +7,12 @@ import (
 	"strings"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/CWBudde/go-dws-lsp/internal/util"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// getTypeName extracts the type name from a TypeExpression.
-// TypeExpression is an interface that can be implemented by TypeAnnotation,
-// FunctionPointerTypeNode, or ArrayTypeNode.
-func getTypeName(typeExpr ast.TypeExpression) string {
-	if typeExpr == nil {
-		return ""
-	}
-
-	// Try to type assert to *TypeAnnotation, which has a Name field
-	if typeAnnotation, ok := typeExpr.(*ast.TypeAnnotation); ok {
-		return typeAnnotation.Name
-	}
-
-	// For other types (FunctionPointerTypeNode, ArrayTypeNode), use String()
-	return typeExpr.String()
-}
 
 // DocumentSymbol handles the textDocument/documentSymbol request.
 // It returns a hierarchical list of symbols in the document for the outline view.
@@ -193,7 +178,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		if param.Name != nil {
 			sigSb157.WriteString(param.Name.Value)
 
-			if typeName := getTypeName(param.Type); typeName != "" {
+			if typeName := util.GetTypeName(param.Type); typeName != "" {
 				sigSb157.WriteString(": " + typeName)
 			}
 		}
@@ -208,7 +193,7 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	sig += ")"
 
 	// Add return type
-	if returnType := getTypeName(fn.ReturnType); returnType != "" {
+	if returnType := util.GetTypeName(fn.ReturnType); returnType != "" {
 		sig += ": " + returnType
 	}
 
@@ -229,7 +214,7 @@ func createVariableSymbols(varDecl *ast.VarDeclStatement) []protocol.DocumentSym
 		}
 
 		detail := "var"
-		if typeName := getTypeName(varDecl.Type); typeName != "" {
+		if typeName := util.GetTypeName(varDecl.Type); typeName != "" {
 			detail += ": " + typeName
 		}
 
@@ -278,7 +263,7 @@ func createConstSymbol(constDecl *ast.ConstDecl) *protocol.DocumentSymbol {
 	}
 
 	detail := "const"
-	if typeName := getTypeName(constDecl.Type); typeName != "" {
+	if typeName := util.GetTypeName(constDecl.Type); typeName != "" {
 		detail += ": " + typeName
 	}
 
@@ -425,7 +410,7 @@ func addClassProperties(children *[]protocol.DocumentSymbol, properties []*ast.P
 		}
 
 		propDetail := "property"
-		if typeName := getTypeName(prop.Type); typeName != "" {
+		if typeName := util.GetTypeName(prop.Type); typeName != "" {
 			propDetail += ": " + typeName
 		}
 
@@ -523,7 +508,7 @@ func createRecordSymbol(recordDecl *ast.RecordDecl) *protocol.DocumentSymbol {
 		}
 
 		fieldDetail := "field"
-		if typeName := getTypeName(prop.Type); typeName != "" {
+		if typeName := util.GetTypeName(prop.Type); typeName != "" {
 			fieldDetail += ": " + typeName
 		}
 
