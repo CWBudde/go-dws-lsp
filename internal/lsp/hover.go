@@ -8,6 +8,7 @@ import (
 
 	"github.com/CWBudde/go-dws-lsp/internal/analysis"
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/CWBudde/go-dws-lsp/internal/util"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -154,7 +155,7 @@ func getFunctionHover(fn *ast.FunctionDecl) string {
 			sig.WriteString(": ")
 		}
 
-		sig.WriteString(getTypeName(param.Type))
+		sig.WriteString(util.GetTypeName(param.Type))
 
 		if param.DefaultValue != nil {
 			sig.WriteString(" = ")
@@ -165,7 +166,7 @@ func getFunctionHover(fn *ast.FunctionDecl) string {
 	sig.WriteString(")")
 
 	// Add return type
-	if returnType := getTypeName(fn.ReturnType); returnType != "" {
+	if returnType := util.GetTypeName(fn.ReturnType); returnType != "" {
 		sig.WriteString(": ")
 		sig.WriteString(returnType)
 	}
@@ -186,7 +187,7 @@ func getVariableHover(varDecl *ast.VarDeclStatement) string {
 		decl.WriteString("var ")
 		decl.WriteString(name.Value)
 
-		if typeName := getTypeName(varDecl.Type); typeName != "" {
+		if typeName := util.GetTypeName(varDecl.Type); typeName != "" {
 			decl.WriteString(": ")
 			decl.WriteString(typeName)
 		}
@@ -203,7 +204,7 @@ func getConstHover(constDecl *ast.ConstDecl) string {
 	sig.WriteString("const ")
 	sig.WriteString(constDecl.Name.Value)
 
-	if typeName := getTypeName(constDecl.Type); typeName != "" {
+	if typeName := util.GetTypeName(constDecl.Type); typeName != "" {
 		sig.WriteString(": ")
 		sig.WriteString(typeName)
 	}
