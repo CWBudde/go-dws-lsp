@@ -30,6 +30,23 @@ func NewIndexer(index *SymbolIndex) *Indexer {
 	}
 }
 
+// getTypeName extracts the type name from a TypeExpression.
+// TypeExpression is an interface that can be implemented by TypeAnnotation,
+// FunctionPointerTypeNode, or ArrayTypeNode.
+func getTypeName(typeExpr ast.TypeExpression) string {
+	if typeExpr == nil {
+		return ""
+	}
+
+	// Try to type assert to *TypeAnnotation, which has a Name field
+	if typeAnnotation, ok := typeExpr.(*ast.TypeAnnotation); ok {
+		return typeAnnotation.Name
+	}
+
+	// For other types (FunctionPointerTypeNode, ArrayTypeNode), use String()
+	return typeExpr.String()
+}
+
 // BuildWorkspaceIndex scans workspace folders and indexes all .dws files.
 // This runs in the background and doesn't block the caller.
 func (idx *Indexer) BuildWorkspaceIndex(workspaceFolders []protocol.WorkspaceFolder) {
@@ -229,8 +246,8 @@ func (idx *Indexer) addVariableSymbols(uri string, varDecl *ast.VarDeclStatement
 		}
 
 		detail := "var"
-		if varDecl.Type != nil && varDecl.Type.Name != "" {
-			detail += ": " + varDecl.Type.Name
+		if typeName := getTypeName(varDecl.Type); typeName != "" {
+			detail += ": " + typeName
 		}
 
 		start := varDecl.Pos()
@@ -258,8 +275,8 @@ func (idx *Indexer) addConstSymbol(uri string, constDecl *ast.ConstDecl, contain
 	}
 
 	detail := "const"
-	if constDecl.Type != nil && constDecl.Type.Name != "" {
-		detail += ": " + constDecl.Type.Name
+	if typeName := getTypeName(constDecl.Type); typeName != "" {
+		detail += ": " + typeName
 	}
 
 	if constDecl.Value != nil {
@@ -356,8 +373,8 @@ func (idx *Indexer) addClassSymbol(uri string, classDecl *ast.ClassDecl) {
 		}
 
 		propDetail := "property"
-		if prop.Type != nil && prop.Type.Name != "" {
-			propDetail += ": " + prop.Type.Name
+		if typeName := getTypeName(prop.Type); typeName != "" {
+			propDetail += ": " + typeName
 		}
 
 		propStart := prop.Pos()
@@ -411,8 +428,8 @@ func (idx *Indexer) addRecordSymbol(uri string, recordDecl *ast.RecordDecl) {
 		}
 
 		propDetail := "field"
-		if prop.Type != nil && prop.Type.Name != "" {
-			propDetail += ": " + prop.Type.Name
+		if typeName := getTypeName(prop.Type); typeName != "" {
+			propDetail += ": " + typeName
 		}
 
 		propStart := prop.Name.Pos()
@@ -505,8 +522,8 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		if param.Name != nil {
 			sigSb483.WriteString(param.Name.Value)
 
-			if param.Type != nil {
-				sigSb483.WriteString(": " + param.Type.Name)
+			if typeName := getTypeName(param.Type); typeName != "" {
+				sigSb483.WriteString(": " + typeName)
 			}
 		}
 
@@ -519,8 +536,8 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 
 	sig += ")"
 
-	if fn.ReturnType != nil && fn.ReturnType.Name != "" {
-		sig += ": " + fn.ReturnType.Name
+	if returnType := getTypeName(fn.ReturnType); returnType != "" {
+		sig += ": " + returnType
 	}
 
 	return sig

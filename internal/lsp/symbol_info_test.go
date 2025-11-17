@@ -14,8 +14,12 @@ const (
 
 func TestIdentifySymbolAtPosition_Identifier(t *testing.T) {
 	ident := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
+			},
+		},
 		Value: "myVar",
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
 	}
 
 	info := IdentifySymbolAtPosition(ident)
@@ -36,7 +40,14 @@ func TestIdentifySymbolAtPosition_Identifier(t *testing.T) {
 func TestIdentifySymbolAtPosition_VarDecl(t *testing.T) {
 	varDecl := &ast.VarDeclStatement{
 		Names: []*ast.Identifier{
-			{Value: "x", Token: token.Token{Pos: token.Position{Line: 1, Column: 5}}},
+			{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+					},
+				},
+				Value: "x",
+			},
 		},
 		Type: &ast.TypeAnnotation{Name: "Integer"},
 	}
@@ -59,8 +70,12 @@ func TestIdentifySymbolAtPosition_VarDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_FunctionDecl(t *testing.T) {
 	funcDecl := &ast.FunctionDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
+				},
+			},
 			Value: "MyFunc",
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 10}},
 		},
 		Parameters: []*ast.Parameter{},
 		Body:       &ast.BlockStatement{},
@@ -84,8 +99,12 @@ func TestIdentifySymbolAtPosition_FunctionDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_ClassDecl(t *testing.T) {
 	classDecl := &ast.ClassDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
+				},
+			},
 			Value: testClassNameMyClass,
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 		},
 		Fields:  []*ast.FieldDecl{},
 		Methods: []*ast.FunctionDecl{},
@@ -109,8 +128,12 @@ func TestIdentifySymbolAtPosition_ClassDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_ConstDecl(t *testing.T) {
 	constDecl := &ast.ConstDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 7}},
+				},
+			},
 			Value: "PI",
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 7}},
 		},
 		Type:  &ast.TypeAnnotation{Name: "Float"},
 		Value: &ast.FloatLiteral{Value: 3.14159},
@@ -134,8 +157,12 @@ func TestIdentifySymbolAtPosition_ConstDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_EnumDecl(t *testing.T) {
 	enumDecl := &ast.EnumDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
+				},
+			},
 			Value: testEnumTypeTColor,
-			Token: token.Token{Pos: token.Position{Line: 1, Column: 6}},
 		},
 		Values: []ast.EnumValue{
 			{Name: "Red"},
@@ -161,8 +188,12 @@ func TestIdentifySymbolAtPosition_EnumDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_FieldDecl(t *testing.T) {
 	fieldDecl := &ast.FieldDecl{
 		Name: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
+				},
+			},
 			Value: "FValue",
-			Token: token.Token{Pos: token.Position{Line: 3, Column: 5}},
 		},
 		Type: &ast.TypeAnnotation{Name: "Integer"},
 	}
@@ -185,12 +216,20 @@ func TestIdentifySymbolAtPosition_FieldDecl(t *testing.T) {
 func TestIdentifySymbolAtPosition_MemberExpression(t *testing.T) {
 	memberExpr := &ast.MemberAccessExpression{
 		Object: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 5, Column: 1}},
+				},
+			},
 			Value: "obj",
-			Token: token.Token{Pos: token.Position{Line: 5, Column: 1}},
 		},
 		Member: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 5, Column: 5}},
+				},
+			},
 			Value: testFieldName,
-			Token: token.Token{Pos: token.Position{Line: 5, Column: 5}},
 		},
 	}
 
@@ -213,8 +252,12 @@ func TestIdentifySymbolAtPosition_MemberExpression(t *testing.T) {
 func TestIdentifySymbolAtPosition_CallExpression_Function(t *testing.T) {
 	callExpr := &ast.CallExpression{
 		Function: &ast.Identifier{
+			TypedExpressionBase: ast.TypedExpressionBase{
+				BaseNode: ast.BaseNode{
+					Token: token.Token{Pos: token.Position{Line: 10, Column: 1}},
+				},
+			},
 			Value: "DoWork",
-			Token: token.Token{Pos: token.Position{Line: 10, Column: 1}},
 		},
 		Arguments: []ast.Expression{},
 	}
@@ -238,12 +281,20 @@ func TestIdentifySymbolAtPosition_CallExpression_Method(t *testing.T) {
 	callExpr := &ast.CallExpression{
 		Function: &ast.MemberAccessExpression{
 			Object: &ast.Identifier{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 10, Column: 1}},
+					},
+				},
 				Value: "obj",
-				Token: token.Token{Pos: token.Position{Line: 10, Column: 1}},
 			},
 			Member: &ast.Identifier{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
+					},
+				},
 				Value: "DoWork",
-				Token: token.Token{Pos: token.Position{Line: 10, Column: 5}},
 			},
 		},
 		Arguments: []ast.Expression{},
@@ -285,8 +336,12 @@ func TestIdentifySymbolAtPosition_UnsupportedNode(t *testing.T) {
 
 func TestExtractSymbolName_Identifier(t *testing.T) {
 	ident := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
+			},
+		},
 		Value: "testName",
-		Token: token.Token{Pos: token.Position{Line: 1, Column: 1}},
 	}
 
 	name := ExtractSymbolName(ident)
@@ -299,8 +354,22 @@ func TestExtractSymbolName_Identifier(t *testing.T) {
 func TestExtractSymbolName_VarDecl(t *testing.T) {
 	varDecl := &ast.VarDeclStatement{
 		Names: []*ast.Identifier{
-			{Value: "x", Token: token.Token{Pos: token.Position{Line: 1, Column: 5}}},
-			{Value: "y", Token: token.Token{Pos: token.Position{Line: 1, Column: 8}}},
+			{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+					},
+				},
+				Value: "x",
+			},
+			{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 1, Column: 8}},
+					},
+				},
+				Value: "y",
+			},
 		},
 	}
 
@@ -323,7 +392,14 @@ func TestExtractSymbolName_Nil(t *testing.T) {
 func TestIsDeclaration_VarDecl(t *testing.T) {
 	varDecl := &ast.VarDeclStatement{
 		Names: []*ast.Identifier{
-			{Value: "x", Token: token.Token{Pos: token.Position{Line: 1, Column: 5}}},
+			{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Pos: token.Position{Line: 1, Column: 5}},
+					},
+				},
+				Value: "x",
+			},
 		},
 	}
 
@@ -346,8 +422,12 @@ func TestIsDeclaration_FunctionDecl(t *testing.T) {
 
 func TestIsDeclaration_Identifier(t *testing.T) {
 	ident := &ast.Identifier{
+		TypedExpressionBase: ast.TypedExpressionBase{
+			BaseNode: ast.BaseNode{
+				Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
+			},
+		},
 		Value: "x",
-		Token: token.Token{Pos: token.Position{Line: 5, Column: 10}},
 	}
 
 	if IsDeclaration(ident) {

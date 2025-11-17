@@ -12,6 +12,23 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// getTypeName extracts the type name from a TypeExpression.
+// TypeExpression is an interface that can be implemented by TypeAnnotation,
+// FunctionPointerTypeNode, or ArrayTypeNode.
+func getTypeName(typeExpr ast.TypeExpression) string {
+	if typeExpr == nil {
+		return ""
+	}
+
+	// Try to type assert to *TypeAnnotation, which has a Name field
+	if typeAnnotation, ok := typeExpr.(*ast.TypeAnnotation); ok {
+		return typeAnnotation.Name
+	}
+
+	// For other types (FunctionPointerTypeNode, ArrayTypeNode), use String()
+	return typeExpr.String()
+}
+
 // DocumentSymbol handles the textDocument/documentSymbol request.
 // It returns a hierarchical list of symbols in the document for the outline view.
 func DocumentSymbol(context *glsp.Context, params *protocol.DocumentSymbolParams) (any, error) {
@@ -176,8 +193,8 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 		if param.Name != nil {
 			sigSb157.WriteString(param.Name.Value)
 
-			if param.Type != nil {
-				sigSb157.WriteString(": " + param.Type.Name)
+			if typeName := getTypeName(param.Type); typeName != "" {
+				sigSb157.WriteString(": " + typeName)
 			}
 		}
 
@@ -191,8 +208,8 @@ func buildFunctionSignature(fn *ast.FunctionDecl) string {
 	sig += ")"
 
 	// Add return type
-	if fn.ReturnType != nil && fn.ReturnType.Name != "" {
-		sig += ": " + fn.ReturnType.Name
+	if returnType := getTypeName(fn.ReturnType); returnType != "" {
+		sig += ": " + returnType
 	}
 
 	return sig
@@ -212,8 +229,8 @@ func createVariableSymbols(varDecl *ast.VarDeclStatement) []protocol.DocumentSym
 		}
 
 		detail := "var"
-		if varDecl.Type != nil && varDecl.Type.Name != "" {
-			detail += ": " + varDecl.Type.Name
+		if typeName := getTypeName(varDecl.Type); typeName != "" {
+			detail += ": " + typeName
 		}
 
 		// For variables, the range is the entire declaration statement
@@ -261,8 +278,8 @@ func createConstSymbol(constDecl *ast.ConstDecl) *protocol.DocumentSymbol {
 	}
 
 	detail := "const"
-	if constDecl.Type != nil && constDecl.Type.Name != "" {
-		detail += ": " + constDecl.Type.Name
+	if typeName := getTypeName(constDecl.Type); typeName != "" {
+		detail += ": " + typeName
 	}
 
 	if constDecl.Value != nil {
@@ -408,8 +425,8 @@ func addClassProperties(children *[]protocol.DocumentSymbol, properties []*ast.P
 		}
 
 		propDetail := "property"
-		if prop.Type != nil && prop.Type.Name != "" {
-			propDetail += ": " + prop.Type.Name
+		if typeName := getTypeName(prop.Type); typeName != "" {
+			propDetail += ": " + typeName
 		}
 
 		*children = append(*children, createDocSymbol(
@@ -506,8 +523,8 @@ func createRecordSymbol(recordDecl *ast.RecordDecl) *protocol.DocumentSymbol {
 		}
 
 		fieldDetail := "field"
-		if prop.Type != nil && prop.Type.Name != "" {
-			fieldDetail += ": " + prop.Type.Name
+		if typeName := getTypeName(prop.Type); typeName != "" {
+			fieldDetail += ": " + typeName
 		}
 
 		// Use the name's position since RecordPropertyDecl doesn't have Pos()

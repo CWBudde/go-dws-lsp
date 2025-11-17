@@ -39,6 +39,23 @@ type ParameterInfo struct {
 	IsOptional   bool
 }
 
+// getTypeName extracts the type name from a TypeExpression.
+// TypeExpression is an interface that can be implemented by TypeAnnotation,
+// FunctionPointerTypeNode, or ArrayTypeNode.
+func getTypeName(typeExpr ast.TypeExpression) string {
+	if typeExpr == nil {
+		return ""
+	}
+
+	// Try to type assert to *TypeAnnotation, which has a Name field
+	if typeAnnotation, ok := typeExpr.(*ast.TypeAnnotation); ok {
+		return typeAnnotation.Name
+	}
+
+	// For other types (FunctionPointerTypeNode, ArrayTypeNode), use String()
+	return typeExpr.String()
+}
+
 // GetFunctionSignature retrieves function definition to get parameters and documentation
 // This implements task 10.8 - it reuses symbol resolution from go-to-definition (Phase 5).
 func GetFunctionSignature(doc *server.Document, functionName string, line, character int, workspaceIndex *workspace.SymbolIndex) (*FunctionSignature, error) {
@@ -188,10 +205,7 @@ func extractSignatureFromDeclaration(funcDecl *ast.FunctionDecl) *FunctionSignat
 	// In the go-dws AST, Parameters is a slice of Parameter structs
 	for _, param := range funcDecl.Parameters {
 		// Get parameter type
-		paramType := ""
-		if param.Type != nil && param.Type.Name != "" {
-			paramType = param.Type.Name
-		}
+		paramType := getTypeName(param.Type)
 
 		// Get parameter name
 		paramName := ""
@@ -214,9 +228,7 @@ func extractSignatureFromDeclaration(funcDecl *ast.FunctionDecl) *FunctionSignat
 	}
 
 	// Extract return type
-	if funcDecl.ReturnType != nil && funcDecl.ReturnType.Name != "" {
-		signature.ReturnType = funcDecl.ReturnType.Name
-	}
+	signature.ReturnType = getTypeName(funcDecl.ReturnType)
 
 	// Extract documentation from leading comments
 	// TODO: Implement documentation extraction from comments
