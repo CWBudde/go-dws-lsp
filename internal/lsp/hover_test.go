@@ -18,12 +18,9 @@ func TestGetIdentifierHover(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "identifier with type",
+			name: "identifier with value",
 			ident: &ast.Identifier{
 				Value: "myVar",
-				Type: &ast.TypeAnnotation{
-					Name: "Integer",
-				},
 			},
 			expected: "myVar",
 		},
@@ -266,29 +263,45 @@ func TestGetHoverContent_Literals(t *testing.T) {
 		{
 			name: "integer literal",
 			node: &ast.IntegerLiteral{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Type: token.INT},
+					},
+				},
 				Value: 42,
-				Token: token.Token{Type: token.INT},
 			},
 		},
 		{
 			name: "float literal",
 			node: &ast.FloatLiteral{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Type: token.FLOAT},
+					},
+				},
 				Value: 3.14,
-				Token: token.Token{Type: token.FLOAT},
 			},
 		},
 		{
 			name: "string literal",
 			node: &ast.StringLiteral{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Type: token.STRING},
+					},
+				},
 				Value: "hello",
-				Token: token.Token{Type: token.STRING},
 			},
 		},
 		{
 			name: "boolean literal",
 			node: &ast.BooleanLiteral{
+				TypedExpressionBase: ast.TypedExpressionBase{
+					BaseNode: ast.BaseNode{
+						Token: token.Token{Type: token.TRUE},
+					},
+				},
 				Value: true,
-				Token: token.Token{Type: token.TRUE},
 			},
 		},
 	}

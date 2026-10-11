@@ -99,7 +99,10 @@ This document tracks the implementation status of the go-dws Language Server Pro
   - [x] Mark tasks, which have been listed under Phase 14 as done in the original Phase
     - Add a note that it is deferred to Phase 14.
   - **Results**:
-    - Updated go-dws to latest commit (v0.3.1-0.20251108175356-790bc43db6be)
+    - Updated go-dws to latest commit (v0.3.1-0.20251117215942-4e054521b740)
+    - Adapted code to TypeExpression interface changes (replaced direct .Name access with helper function)
+    - Fixed AST struct literal initialization (BaseNode/TypedExpressionBase embedding)
+    - All compilation errors resolved
     - Found 2 genuinely incomplete tasks, added to Phase 14
     - Marked 3 tasks as complete that were already implemented
     - All manual testing tasks properly ignored

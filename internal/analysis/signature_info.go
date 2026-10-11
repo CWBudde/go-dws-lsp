@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/CWBudde/go-dws-lsp/internal/server"
+	"github.com/CWBudde/go-dws-lsp/internal/util"
 	"github.com/CWBudde/go-dws-lsp/internal/workspace"
 	"github.com/cwbudde/go-dws/pkg/ast"
 	"github.com/cwbudde/go-dws/pkg/dwscript"
@@ -38,6 +39,7 @@ type ParameterInfo struct {
 	DefaultValue string // Optional default value
 	IsOptional   bool
 }
+
 
 // GetFunctionSignature retrieves function definition to get parameters and documentation
 // This implements task 10.8 - it reuses symbol resolution from go-to-definition (Phase 5).
@@ -188,10 +190,7 @@ func extractSignatureFromDeclaration(funcDecl *ast.FunctionDecl) *FunctionSignat
 	// In the go-dws AST, Parameters is a slice of Parameter structs
 	for _, param := range funcDecl.Parameters {
 		// Get parameter type
-		paramType := ""
-		if param.Type != nil && param.Type.Name != "" {
-			paramType = param.Type.Name
-		}
+		paramType := util.GetTypeName(param.Type)
 
 		// Get parameter name
 		paramName := ""
@@ -214,9 +213,7 @@ func extractSignatureFromDeclaration(funcDecl *ast.FunctionDecl) *FunctionSignat
 	}
 
 	// Extract return type
-	if funcDecl.ReturnType != nil && funcDecl.ReturnType.Name != "" {
-		signature.ReturnType = funcDecl.ReturnType.Name
-	}
+	signature.ReturnType = util.GetTypeName(funcDecl.ReturnType)
 
 	// Extract documentation from leading comments
 	// TODO: Implement documentation extraction from comments

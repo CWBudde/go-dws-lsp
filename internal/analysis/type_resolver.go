@@ -142,7 +142,7 @@ func findVariableType(program *ast.Program, varName string) *TypeInfo {
 			// Check if any of the declared names match
 			for _, name := range varDecl.Names {
 				if name.Value == varName && varDecl.Type != nil {
-					typeInfo = typeAnnotationToTypeInfo(varDecl.Type)
+					typeInfo = typeExpressionToTypeInfo(varDecl.Type)
 					return false
 				}
 			}
@@ -167,7 +167,7 @@ func findParameterType(program *ast.Program, paramName string) *TypeInfo {
 		if funcDecl, ok := node.(*ast.FunctionDecl); ok {
 			for _, param := range funcDecl.Parameters {
 				if param.Name != nil && param.Name.Value == paramName && param.Type != nil {
-					typeInfo = typeAnnotationToTypeInfo(param.Type)
+					typeInfo = typeExpressionToTypeInfo(param.Type)
 					return false
 				}
 			}
